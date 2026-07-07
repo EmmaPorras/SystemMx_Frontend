@@ -1,12 +1,15 @@
 type InputFieldProps = {
   label: string;
-  value: string;
+  value: string | number;
   onChange: (value: string) => void;
   placeholder?: string;
   type?: string;
   required?: boolean;
   error?: string;
   maxLength?: number;
+  min?: number;
+  max?: number;
+  step?: number | string;
   helperText?: string;
   showCharacterCount?: boolean;
 };
@@ -20,9 +23,14 @@ function InputField({
   required = false,
   error,
   maxLength,
+  min,
+  max,
+  step,
   helperText,
   showCharacterCount = false,
 }: InputFieldProps) {
+  const stringValue = String(value ?? "");
+
   return (
     <div>
       <label className="mb-1.5 block text-sm font-semibold text-slate-700">
@@ -35,7 +43,10 @@ function InputField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        maxLength={maxLength}
+        maxLength={type === "number" ? undefined : maxLength}
+        min={min}
+        max={max}
+        step={step}
         aria-invalid={Boolean(error)}
         className={`w-full rounded-2xl border px-4 py-2.5 text-sm outline-none transition ${
           error
@@ -53,13 +64,13 @@ function InputField({
           ) : null}
         </div>
 
-        {showCharacterCount && maxLength ? (
+        {showCharacterCount && maxLength && type !== "number" ? (
           <p
             className={`shrink-0 text-xs ${
-              value.length >= maxLength ? "text-red-500" : "text-slate-400"
+              stringValue.length >= maxLength ? "text-red-500" : "text-slate-400"
             }`}
           >
-            {value.length}/{maxLength}
+            {stringValue.length}/{maxLength}
           </p>
         ) : null}
       </div>
