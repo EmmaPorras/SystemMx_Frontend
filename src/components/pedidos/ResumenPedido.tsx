@@ -7,27 +7,42 @@ type ResumenPedidoProps = {
 };
 
 function ResumenPedido({ detalles }: ResumenPedidoProps) {
-  const subtotal = detalles.reduce((acc, item) => acc + item.subtotal, 0);
-  const impuesto = detalles.reduce((acc, item) => acc + item.impuesto, 0);
-  const total = detalles.reduce((acc, item) => acc + item.total, 0);
+  const costoTotal = detalles.reduce(
+    (acc, item) => acc + item.costoUnitarioReal * item.cantidad,
+    0,
+  );
+
+  const valorVentaEstimado = detalles.reduce(
+    (acc, item) => acc + item.precioVentaRecomendado * item.cantidad,
+    0,
+  );
+
+  const stockActual = detalles.reduce(
+    (acc, item) => acc + item.cantidadDisponible,
+    0,
+  );
 
   return (
     <SectionCard
       title="Resumen del pedido"
-      description="Este bloque replica la idea del maestro-detalle, pero adaptado a pedido de compra."
+      description="Resumen basado en los lotes asociados al pedido."
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl bg-zinc-100 p-4">
-          <p className="text-sm text-zinc-500">Subtotal</p>
-          <p className="mt-2 text-xl font-semibold">{formatCurrency(subtotal)}</p>
+          <p className="text-sm text-zinc-500">Costo total real</p>
+          <p className="mt-2 text-xl font-semibold">{formatCurrency(costoTotal)}</p>
         </div>
+
         <div className="rounded-xl bg-zinc-100 p-4">
-          <p className="text-sm text-zinc-500">Impuesto</p>
-          <p className="mt-2 text-xl font-semibold">{formatCurrency(impuesto)}</p>
+          <p className="text-sm text-zinc-500">Venta estimada</p>
+          <p className="mt-2 text-xl font-semibold">
+            {formatCurrency(valorVentaEstimado)}
+          </p>
         </div>
+
         <div className="rounded-xl bg-zinc-100 p-4">
-          <p className="text-sm text-zinc-500">Total</p>
-          <p className="mt-2 text-xl font-semibold">{formatCurrency(total)}</p>
+          <p className="text-sm text-zinc-500">Stock actual</p>
+          <p className="mt-2 text-xl font-semibold">{stockActual}</p>
         </div>
       </div>
     </SectionCard>
