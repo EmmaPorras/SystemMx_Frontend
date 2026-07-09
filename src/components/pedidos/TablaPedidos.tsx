@@ -34,7 +34,9 @@ function getEstadoPedidoVariant(estado: EstadoPedidoCompra) {
 }
 
 function TablaPedidos({ pedidos, onEdit, onDelete }: TablaPedidosProps) {
-  const [pedidoExpandidoId, setPedidoExpandidoId] = useState<number | null>(null);
+  const [pedidoExpandidoId, setPedidoExpandidoId] = useState<number | null>(
+    null,
+  );
 
   function alternarDetalle(id: number) {
     setPedidoExpandidoId((prev) => (prev === id ? null : id));
@@ -102,7 +104,9 @@ function TablaPedidos({ pedidos, onEdit, onDelete }: TablaPedidosProps) {
                         <p className="font-semibold text-slate-900">
                           {pedido.numeroPedido}
                         </p>
-                        <p className="text-xs text-slate-500">{pedido.origen}</p>
+                        <p className="text-xs text-slate-500">
+                          {pedido.origen}
+                        </p>
                       </div>
                     </td>
 
@@ -210,7 +214,10 @@ function TablaPedidos({ pedidos, onEdit, onDelete }: TablaPedidosProps) {
                           </div>
                         </div>
 
-                        <PedidoDetalleTable detalles={pedido.detalles} />
+                        <PedidoDetalleTable
+                          detalles={pedido.detalles}
+                          monedaCompra={pedido.monedaCompra}
+                        />
                       </td>
                     </tr>
                   ) : null}

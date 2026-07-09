@@ -6,6 +6,7 @@ import PrimaryButton from "../common/PrimaryButton";
 import SelectField from "../common/SelectField";
 import { formatCurrency } from "../common/formatters";
 import type {
+  MonedaCompra,
   PedidoCompra,
   PedidoDetalle,
   PedidoDetalleForm,
@@ -37,6 +38,39 @@ const loteOptions = Array.from({ length: 10 }, (_, index) => {
   };
 });
 
+const monedaSimbolos: Record<MonedaCompra, string> = {
+  CRC: "₡",
+  USD: "$",
+  EUR: "€",
+  COP: "COP",
+  BRL: "R$",
+};
+
+function getMonedaSymbol(moneda: MonedaCompra) {
+  return monedaSimbolos[moneda] ?? "";
+}
+
+function formatMoneyByMoneda(value: number, moneda: MonedaCompra) {
+  const numericValue = Number(value);
+
+  const safeValue = Number.isFinite(numericValue) ? numericValue : 0;
+
+  const decimals = moneda === "CRC" || moneda === "COP" ? 0 : 2;
+
+  const formattedValue = new Intl.NumberFormat("es-CR", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(safeValue);
+
+  const symbol = getMonedaSymbol(moneda);
+
+  if (moneda === "COP") {
+    return `${symbol} ${formattedValue}`;
+  }
+
+  return `${symbol}${formattedValue}`;
+}
+
 function FormularioDetallePedido({
   pedido,
   detalleForm,
@@ -52,6 +86,8 @@ function FormularioDetallePedido({
   onSave,
   onCancel,
 }: FormularioDetallePedidoProps) {
+  const simboloMoneda = getMonedaSymbol(pedido.monedaCompra);
+
   return (
     <div className="space-y-5">
       {alertMessage ? (
@@ -124,10 +160,12 @@ function FormularioDetallePedido({
             type="text"
             value={detalleForm.costoUnitarioOrigen}
             onChange={(value) => onDetalleChange("costoUnitarioOrigen", value)}
+            placeholder="0.00"
             required
             error={errors.costoUnitarioOrigen}
             maxLength={8}
             showCharacterCount
+            prefix={simboloMoneda}
           />
 
           <InputField
@@ -137,10 +175,12 @@ function FormularioDetallePedido({
             onChange={(value) =>
               onDetalleChange("precioVentaRecomendado", value)
             }
+            placeholder="0"
             required
             error={errors.precioVentaRecomendado}
             maxLength={8}
             showCharacterCount
+            prefix="₡"
           />
 
           <SelectField
@@ -160,7 +200,9 @@ function FormularioDetallePedido({
 
         <div className="mt-5 flex flex-wrap gap-3">
           <PrimaryButton onClick={onAgregarDetalle}>
-            {isEditingDetail ? "Actualizar artículo/lote" : "+ Agregar artículo/lote"}
+            {isEditingDetail
+              ? "Actualizar artículo/lote"
+              : "+ Agregar artículo/lote"}
           </PrimaryButton>
 
           {isEditingDetail ? (
@@ -204,7 +246,10 @@ function FormularioDetallePedido({
               key: "costo",
               header: "Costo",
               render: (row: PedidoDetalle) =>
-                formatCurrency(row.costoUnitarioOrigen),
+                formatMoneyByMoneda(
+                  row.costoUnitarioOrigen,
+                  pedido.monedaCompra,
+                ),
             },
             {
               key: "precio",
