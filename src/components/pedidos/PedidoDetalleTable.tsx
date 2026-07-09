@@ -1,11 +1,49 @@
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
 import { formatCurrency } from "../common/formatters";
-import type { EstadoLoteProducto, PedidoDetalle } from "./pedidos.types";
+import type {
+  EstadoLoteProducto,
+  MonedaCompra,
+  PedidoDetalle,
+} from "./pedidos.types";
 
 type PedidoDetalleTableProps = {
   detalles: PedidoDetalle[];
+  monedaCompra: MonedaCompra;
 };
+
+const monedaSimbolos: Record<MonedaCompra, string> = {
+  CRC: "₡",
+  USD: "$",
+  EUR: "€",
+  COP: "COP",
+  BRL: "R$",
+};
+
+function getMonedaSymbol(moneda: MonedaCompra) {
+  return monedaSimbolos[moneda] ?? "";
+}
+
+function formatMoneyByMoneda(value: number, moneda: MonedaCompra) {
+  const numericValue = Number(value);
+
+  const safeValue = Number.isFinite(numericValue) ? numericValue : 0;
+
+  const decimals = moneda === "CRC" || moneda === "COP" ? 0 : 2;
+
+  const formattedValue = new Intl.NumberFormat("es-CR", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(safeValue);
+
+  const symbol = getMonedaSymbol(moneda);
+
+  if (moneda === "COP") {
+    return `${symbol} ${formattedValue}`;
+  }
+
+  return `${symbol}${formattedValue}`;
+}
 
 function getEstadoLoteLabel(estado: EstadoLoteProducto) {
   const labels: Record<EstadoLoteProducto, string> = {
@@ -24,7 +62,10 @@ function getEstadoLoteVariant(estado: EstadoLoteProducto) {
   return "neutral";
 }
 
-function PedidoDetalleTable({ detalles }: PedidoDetalleTableProps) {
+function PedidoDetalleTable({
+  detalles,
+  monedaCompra,
+}: PedidoDetalleTableProps) {
   return (
     <DataTableShell
       data={detalles}
@@ -67,7 +108,8 @@ function PedidoDetalleTable({ detalles }: PedidoDetalleTableProps) {
         {
           key: "costoOrigen",
           header: "Costo origen",
-          render: (row) => row.costoUnitarioOrigen,
+          render: (row) =>
+            formatMoneyByMoneda(row.costoUnitarioOrigen, monedaCompra),
         },
         {
           key: "costoReal",
