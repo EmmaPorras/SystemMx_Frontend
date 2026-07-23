@@ -26,7 +26,16 @@ export type PedidoDetalle = {
   productoNombre: string;
   loteCodigo: string;
   cantidad: number;
+
+  // Cantidad recibida total del lote.
+  cantidadRecibida?: number;
+
+  // Pendiente por llegar.
+  cantidadPendiente?: number;
+
+  // Disponible para vender.
   cantidadDisponible: number;
+
   costoUnitarioOrigen: number;
   costoUnitarioReal: number;
   precioVentaRecomendado: number;
@@ -38,6 +47,13 @@ export type PedidoDetalleForm = {
   productoNombre: string;
   loteCodigo: string;
   cantidad: string;
+
+  // Cantidad que llegó en esta acción del formulario.
+  cantidadRecibida: string;
+
+  // Cantidad ya recibida antes de esta acción. Es interna del formulario.
+  cantidadRecibidaPrevia: string;
+
   costoUnitarioOrigen: string;
   precioVentaRecomendado: string;
   estadoLote: EstadoLoteProducto;

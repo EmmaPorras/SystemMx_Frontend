@@ -45,6 +45,22 @@ function formatMoneyByMoneda(value: number, moneda: MonedaCompra) {
   return `${symbol}${formattedValue}`;
 }
 
+function getNumber(value: unknown, fallback = 0) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
+function getCantidadRecibida(row: PedidoDetalle) {
+  return getNumber(row.cantidadRecibida ?? row.cantidadDisponible);
+}
+
+function getCantidadPendiente(row: PedidoDetalle) {
+  return getNumber(
+    row.cantidadPendiente,
+    Math.max(row.cantidad - getCantidadRecibida(row), 0),
+  );
+}
+
 function getEstadoLoteLabel(estado: EstadoLoteProducto) {
   const labels: Record<EstadoLoteProducto, string> = {
     EN_PROCESO: "En proceso",
@@ -97,8 +113,18 @@ function PedidoDetalleTable({
         },
         {
           key: "cantidad",
-          header: "Cantidad",
+          header: "Pedida",
           render: (row) => row.cantidad,
+        },
+        {
+          key: "recibida",
+          header: "Recibida",
+          render: (row) => getCantidadRecibida(row),
+        },
+        {
+          key: "pendiente",
+          header: "Pendiente",
+          render: (row) => getCantidadPendiente(row),
         },
         {
           key: "stock",

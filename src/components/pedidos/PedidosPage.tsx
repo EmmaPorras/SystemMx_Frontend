@@ -18,6 +18,7 @@ import FormularioDetallePedido from "./FormularioDetallePedido";
 import FormularioPedido from "./FormularioPedido";
 import TablaPedidos from "./TablaPedidos";
 import type {
+  EstadoLoteProducto,
   MonedaCompra,
   PedidoCabeceraFormErrors,
   PedidoCompra,
@@ -47,6 +48,8 @@ const detalleInicial: PedidoDetalleForm = {
   productoNombre: "",
   loteCodigo: "",
   cantidad: "1",
+  cantidadRecibida: "",
+  cantidadRecibidaPrevia: "0",
   costoUnitarioOrigen: "",
   precioVentaRecomendado: "",
   estadoLote: "EN_PROCESO",
@@ -89,6 +92,59 @@ function limpiarDecimalPorDigitos(
   }
 
   return entero;
+}
+
+function getNumber(value: unknown, fallback = 0) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
+function estadoPermiteCantidadRecibida(estado: EstadoLoteProducto) {
+  return estado === "EN_STOCK" || estado === "VENDIDO_PARCIAL";
+}
+
+function calcularResumenRecepcion(
+  estadoLote: EstadoLoteProducto,
+  cantidad: number,
+  cantidadRecibidaActual: string,
+  cantidadRecibidaPrevia: string,
+) {
+  const recibidaPrevia = getNumber(cantidadRecibidaPrevia);
+  const recibidaActual = getNumber(cantidadRecibidaActual);
+
+  if (estadoLote === "EN_PROCESO") {
+    return {
+      cantidadRecibidaTotal: 0,
+      cantidadPendiente: cantidad,
+      cantidadDisponible: 0,
+    };
+  }
+
+  if (estadoLote === "AGOTADO") {
+    const cantidadRecibidaTotal = recibidaPrevia + recibidaActual;
+
+    return {
+      cantidadRecibidaTotal,
+      cantidadPendiente: Math.max(cantidad - cantidadRecibidaTotal, 0),
+      cantidadDisponible: 0,
+    };
+  }
+
+  if (estadoPermiteCantidadRecibida(estadoLote)) {
+    const cantidadRecibidaTotal = recibidaPrevia + recibidaActual;
+
+    return {
+      cantidadRecibidaTotal,
+      cantidadPendiente: Math.max(cantidad - cantidadRecibidaTotal, 0),
+      cantidadDisponible: cantidadRecibidaTotal,
+    };
+  }
+
+  return {
+    cantidadRecibidaTotal: 0,
+    cantidadPendiente: cantidad,
+    cantidadDisponible: 0,
+  };
 }
 
 function PedidosPage() {
@@ -312,9 +368,26 @@ function PedidosPage() {
       }
 
       if (field === "cantidad") {
+        const cantidadLimpia = limpiarEntero(value, 5);
+        const cantidad = getNumber(cantidadLimpia);
+        const recibidaPrevia = getNumber(prev.cantidadRecibidaPrevia);
+        const recibidaActual = getNumber(prev.cantidadRecibida);
+        const maxActual = Math.max(cantidad - recibidaPrevia, 0);
+
         return {
           ...prev,
-          cantidad: limpiarEntero(value, 5),
+          cantidad: cantidadLimpia,
+          cantidadRecibida:
+            recibidaActual > maxActual && estadoPermiteCantidadRecibida(prev.estadoLote)
+              ? String(maxActual)
+              : prev.cantidadRecibida,
+        };
+      }
+
+      if (field === "cantidadRecibida") {
+        return {
+          ...prev,
+          cantidadRecibida: limpiarEntero(value, 5),
         };
       }
 
@@ -325,6 +398,27 @@ function PedidosPage() {
         return {
           ...prev,
           [field]: limpiarDecimalPorDigitos(value, 8, 2),
+        };
+      }
+
+      if (field === "estadoLote") {
+        const nuevoEstado = value as EstadoLoteProducto;
+
+        if (nuevoEstado === "EN_PROCESO") {
+          return {
+            ...prev,
+            estadoLote: nuevoEstado,
+            cantidadRecibida: "",
+            cantidadRecibidaPrevia: "0",
+          };
+        }
+
+        return {
+          ...prev,
+          estadoLote: nuevoEstado,
+          cantidadRecibida: estadoPermiteCantidadRecibida(nuevoEstado)
+            ? prev.cantidadRecibida
+            : "",
         };
       }
 
@@ -417,6 +511,16 @@ function PedidosPage() {
   function validarDetalle() {
     const errors: PedidoDetalleFormErrors = {};
 
+    const cantidad = getNumber(detalleForm.cantidad);
+    const cantidadRecibidaPrevia = getNumber(
+      detalleForm.cantidadRecibidaPrevia,
+    );
+    const cantidadRecibidaActual = getNumber(detalleForm.cantidadRecibida);
+    const maxCantidadRecibidaActual = Math.max(
+      cantidad - cantidadRecibidaPrevia,
+      0,
+    );
+
     if (!detalleForm.productoNombre.trim()) {
       errors.productoNombre = "El nombre del artículo es obligatorio.";
     } else if (detalleForm.productoNombre.trim().length > 50) {
@@ -431,8 +535,26 @@ function PedidosPage() {
       errors.cantidad = "La cantidad es obligatoria.";
     } else if (detalleForm.cantidad.length > 5) {
       errors.cantidad = "Máximo 5 dígitos.";
-    } else if (Number(detalleForm.cantidad) <= 0) {
+    } else if (cantidad <= 0) {
       errors.cantidad = "Debe ser mayor a cero.";
+    }
+
+    if (estadoPermiteCantidadRecibida(detalleForm.estadoLote)) {
+      if (
+        cantidadRecibidaPrevia <= 0 &&
+        !detalleForm.cantidadRecibida.trim()
+      ) {
+        errors.cantidadRecibida =
+          "Indicá cuántas unidades llegaron.";
+      } else if (
+        detalleForm.cantidadRecibida.trim() &&
+        cantidadRecibidaActual <= 0
+      ) {
+        errors.cantidadRecibida =
+          "Debe ser mayor a cero.";
+      } else if (cantidadRecibidaActual > maxCantidadRecibidaActual) {
+        errors.cantidadRecibida = `Máximo pendiente: ${maxCantidadRecibidaActual}.`;
+      }
     }
 
     if (!detalleForm.costoUnitarioOrigen.trim()) {
@@ -484,32 +606,48 @@ function PedidosPage() {
     return Number((costoOrigen * tipoCambio).toFixed(2));
   }
 
-  function agregarOActualizarDetalle() {
-    if (!validarDetalle()) return;
-
+  function construirDetalleDesdeFormulario(
+    detalleBase?: PedidoDetalle,
+  ): PedidoDetalle {
     const cantidad = Number(detalleForm.cantidad);
     const costoUnitarioOrigen = Number(detalleForm.costoUnitarioOrigen);
     const precioVentaRecomendado = Number(detalleForm.precioVentaRecomendado);
     const costoUnitarioReal = calcularCostoReal(costoUnitarioOrigen);
+
+    const resumenRecepcion = calcularResumenRecepcion(
+      detalleForm.estadoLote,
+      cantidad,
+      detalleForm.cantidadRecibida,
+      detalleForm.cantidadRecibidaPrevia,
+    );
+
+    return {
+      ...(detalleBase ?? {
+        idTemporal: crypto.randomUUID(),
+      }),
+      productoId: detalleForm.productoId,
+      productoNombre: detalleForm.productoNombre.trim(),
+      loteCodigo: detalleForm.loteCodigo,
+      cantidad,
+      cantidadRecibida: resumenRecepcion.cantidadRecibidaTotal,
+      cantidadPendiente: resumenRecepcion.cantidadPendiente,
+      cantidadDisponible: resumenRecepcion.cantidadDisponible,
+      costoUnitarioOrigen,
+      costoUnitarioReal,
+      precioVentaRecomendado,
+      estadoLote: detalleForm.estadoLote,
+    };
+  }
+
+  function agregarOActualizarDetalle() {
+    if (!validarDetalle()) return;
 
     if (detalleEditandoId) {
       setPedido((prev) => ({
         ...prev,
         detalles: prev.detalles.map((detalle) =>
           detalle.idTemporal === detalleEditandoId
-            ? {
-                ...detalle,
-                productoId: detalleForm.productoId,
-                productoNombre: detalleForm.productoNombre.trim(),
-                loteCodigo: detalleForm.loteCodigo,
-                cantidad,
-                cantidadDisponible:
-                  detalleForm.estadoLote === "AGOTADO" ? 0 : cantidad,
-                costoUnitarioOrigen,
-                costoUnitarioReal,
-                precioVentaRecomendado,
-                estadoLote: detalleForm.estadoLote,
-              }
+            ? construirDetalleDesdeFormulario(detalle)
             : detalle,
         ),
       }));
@@ -518,19 +656,7 @@ function PedidosPage() {
         ...prev,
         detalles: [
           ...prev.detalles,
-          {
-            idTemporal: crypto.randomUUID(),
-            productoId: detalleForm.productoId,
-            productoNombre: detalleForm.productoNombre.trim(),
-            loteCodigo: detalleForm.loteCodigo,
-            cantidad,
-            cantidadDisponible:
-              detalleForm.estadoLote === "AGOTADO" ? 0 : cantidad,
-            costoUnitarioOrigen,
-            costoUnitarioReal,
-            precioVentaRecomendado,
-            estadoLote: detalleForm.estadoLote,
-          },
+          construirDetalleDesdeFormulario(),
         ],
       }));
     }
@@ -542,6 +668,10 @@ function PedidosPage() {
   }
 
   function iniciarEdicionDetalle(detalle: PedidoDetalle) {
+    const cantidadRecibidaPrevia = getNumber(
+      detalle.cantidadRecibida ?? detalle.cantidadDisponible,
+    );
+
     setDetalleEditandoId(detalle.idTemporal);
 
     setDetalleForm({
@@ -549,6 +679,8 @@ function PedidosPage() {
       productoNombre: detalle.productoNombre,
       loteCodigo: detalle.loteCodigo,
       cantidad: String(detalle.cantidad),
+      cantidadRecibida: "",
+      cantidadRecibidaPrevia: String(cantidadRecibidaPrevia),
       costoUnitarioOrigen: String(detalle.costoUnitarioOrigen),
       precioVentaRecomendado: String(detalle.precioVentaRecomendado),
       estadoLote: detalle.estadoLote,
@@ -587,28 +719,11 @@ function PedidosPage() {
       return null;
     }
 
-    const cantidad = Number(detalleForm.cantidad);
-    const costoUnitarioOrigen = Number(detalleForm.costoUnitarioOrigen);
-    const precioVentaRecomendado = Number(detalleForm.precioVentaRecomendado);
-    const costoUnitarioReal = calcularCostoReal(costoUnitarioOrigen);
-
     return {
       ...pedido,
       detalles: pedido.detalles.map((detalle) =>
         detalle.idTemporal === detalleEditandoId
-          ? {
-              ...detalle,
-              productoId: detalleForm.productoId,
-              productoNombre: detalleForm.productoNombre.trim(),
-              loteCodigo: detalleForm.loteCodigo,
-              cantidad,
-              cantidadDisponible:
-                detalleForm.estadoLote === "AGOTADO" ? 0 : cantidad,
-              costoUnitarioOrigen,
-              costoUnitarioReal,
-              precioVentaRecomendado,
-              estadoLote: detalleForm.estadoLote,
-            }
+          ? construirDetalleDesdeFormulario(detalle)
           : detalle,
       ),
     };
