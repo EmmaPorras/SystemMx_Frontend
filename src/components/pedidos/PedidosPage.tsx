@@ -24,6 +24,7 @@ import type {
   PedidoDetalle,
   PedidoDetalleForm,
   PedidoDetalleFormErrors,
+  ProductoSugerido,
 } from "./pedidos.types";
 
 const pedidoInicial: PedidoCompra = {
@@ -42,6 +43,7 @@ const pedidoInicial: PedidoCompra = {
 };
 
 const detalleInicial: PedidoDetalleForm = {
+  productoId: undefined,
   productoNombre: "",
   loteCodigo: "",
   cantidad: "1",
@@ -111,12 +113,14 @@ function PedidosPage() {
 
   const [detalleForm, setDetalleForm] =
     useState<PedidoDetalleForm>({ ...detalleInicial });
+
   const [detalleEditandoId, setDetalleEditandoId] = useState<string | null>(
     null,
   );
 
   const [cabeceraErrors, setCabeceraErrors] =
     useState<PedidoCabeceraFormErrors>({});
+
   const [detalleErrors, setDetalleErrors] =
     useState<PedidoDetalleFormErrors>({});
 
@@ -211,6 +215,7 @@ function PedidosPage() {
         ...detalle,
       })),
     });
+
     setDetalleForm({ ...detalleInicial });
     setPedidoEditandoId(pedidoSeleccionado.id);
     setDetalleEditandoId(null);
@@ -236,6 +241,7 @@ function PedidosPage() {
 
   function actualizarPedido(field: keyof PedidoCompra, value: string) {
     setModalAlert(null);
+
     setCabeceraErrors((prev) => ({
       ...prev,
       [field]: undefined,
@@ -283,12 +289,28 @@ function PedidosPage() {
 
   function actualizarDetalle(field: keyof PedidoDetalleForm, value: string) {
     setModalAlert(null);
+
     setDetalleErrors((prev) => ({
       ...prev,
       [field]: undefined,
     }));
 
     setDetalleForm((prev) => {
+      if (field === "productoNombre") {
+        return {
+          ...prev,
+          productoId: undefined,
+          productoNombre: value,
+        };
+      }
+
+      if (field === "productoId") {
+        return {
+          ...prev,
+          productoId: value ? Number(value) : undefined,
+        };
+      }
+
       if (field === "cantidad") {
         return {
           ...prev,
@@ -311,6 +333,26 @@ function PedidosPage() {
         [field]: value,
       };
     });
+  }
+
+  function seleccionarProductoSugerido(productoSugerido: ProductoSugerido) {
+    setModalAlert(null);
+
+    setDetalleErrors((prev) => ({
+      ...prev,
+      productoNombre: undefined,
+    }));
+
+    setDetalleForm((prev) => ({
+      ...prev,
+      productoId: productoSugerido.id,
+      productoNombre: productoSugerido.nombre,
+      precioVentaRecomendado:
+        !prev.precioVentaRecomendado.trim() &&
+        productoSugerido.precioVentaSugerido > 0
+          ? String(productoSugerido.precioVentaSugerido)
+          : prev.precioVentaRecomendado,
+    }));
   }
 
   function validarCabecera() {
@@ -457,6 +499,7 @@ function PedidosPage() {
           detalle.idTemporal === detalleEditandoId
             ? {
                 ...detalle,
+                productoId: detalleForm.productoId,
                 productoNombre: detalleForm.productoNombre.trim(),
                 loteCodigo: detalleForm.loteCodigo,
                 cantidad,
@@ -477,6 +520,7 @@ function PedidosPage() {
           ...prev.detalles,
           {
             idTemporal: crypto.randomUUID(),
+            productoId: detalleForm.productoId,
             productoNombre: detalleForm.productoNombre.trim(),
             loteCodigo: detalleForm.loteCodigo,
             cantidad,
@@ -499,7 +543,9 @@ function PedidosPage() {
 
   function iniciarEdicionDetalle(detalle: PedidoDetalle) {
     setDetalleEditandoId(detalle.idTemporal);
+
     setDetalleForm({
+      productoId: detalle.productoId,
       productoNombre: detalle.productoNombre,
       loteCodigo: detalle.loteCodigo,
       cantidad: String(detalle.cantidad),
@@ -507,6 +553,7 @@ function PedidosPage() {
       precioVentaRecomendado: String(detalle.precioVentaRecomendado),
       estadoLote: detalle.estadoLote,
     });
+
     setDetalleErrors({});
     setModalAlert(null);
   }
@@ -551,6 +598,7 @@ function PedidosPage() {
         detalle.idTemporal === detalleEditandoId
           ? {
               ...detalle,
+              productoId: detalleForm.productoId,
               productoNombre: detalleForm.productoNombre.trim(),
               loteCodigo: detalleForm.loteCodigo,
               cantidad,
@@ -753,6 +801,7 @@ function PedidosPage() {
             alertMessage={modalAlert}
             isEditingDetail={Boolean(detalleEditandoId)}
             onDetalleChange={actualizarDetalle}
+            onSeleccionarProducto={seleccionarProductoSugerido}
             onAgregarDetalle={agregarOActualizarDetalle}
             onEditarDetalle={iniciarEdicionDetalle}
             onCancelarEdicionDetalle={cancelarEdicionDetalle}

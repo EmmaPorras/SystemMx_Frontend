@@ -12,6 +12,14 @@ export type EstadoLoteProducto =
 
 export type MonedaCompra = "CRC" | "USD" | "EUR" | "COP" | "BRL";
 
+export type ProductoSugerido = {
+  id: number;
+  nombre: string;
+  nombreBusqueda: string;
+  precioVentaSugerido: number;
+  activo: boolean;
+};
+
 export type PedidoDetalle = {
   idTemporal: string;
   productoId?: number;
@@ -26,6 +34,7 @@ export type PedidoDetalle = {
 };
 
 export type PedidoDetalleForm = {
+  productoId?: number;
   productoNombre: string;
   loteCodigo: string;
   cantidad: string;

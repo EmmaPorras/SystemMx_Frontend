@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import AlertMessage from "../common/AlertMessage";
 import DataTableShell from "../common/DataTableShell";
@@ -5,12 +6,14 @@ import InputField from "../common/InputField";
 import PrimaryButton from "../common/PrimaryButton";
 import SelectField from "../common/SelectField";
 import { formatCurrency } from "../common/formatters";
+import { buscarProductosSugeridosApi } from "../../services/pedidosApi";
 import type {
   MonedaCompra,
   PedidoCompra,
   PedidoDetalle,
   PedidoDetalleForm,
   PedidoDetalleFormErrors,
+  ProductoSugerido,
 } from "./pedidos.types";
 
 type FormularioDetallePedidoProps = {
@@ -20,6 +23,7 @@ type FormularioDetallePedidoProps = {
   alertMessage?: string | null;
   isEditingDetail: boolean;
   onDetalleChange: (field: keyof PedidoDetalleForm, value: string) => void;
+  onSeleccionarProducto: (producto: ProductoSugerido) => void;
   onAgregarDetalle: () => void;
   onEditarDetalle: (detalle: PedidoDetalle) => void;
   onCancelarEdicionDetalle: () => void;
@@ -78,6 +82,7 @@ function FormularioDetallePedido({
   alertMessage,
   isEditingDetail,
   onDetalleChange,
+  onSeleccionarProducto,
   onAgregarDetalle,
   onEditarDetalle,
   onCancelarEdicionDetalle,
@@ -87,6 +92,59 @@ function FormularioDetallePedido({
   onCancel,
 }: FormularioDetallePedidoProps) {
   const simboloMoneda = getMonedaSymbol(pedido.monedaCompra);
+
+  const [sugerencias, setSugerencias] = useState<ProductoSugerido[]>([]);
+  const [cargandoSugerencias, setCargandoSugerencias] = useState(false);
+  const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
+
+  useEffect(() => {
+    const busqueda = detalleForm.productoNombre.trim();
+
+    if (detalleForm.productoId || busqueda.length < 2) {
+      setSugerencias([]);
+      setCargandoSugerencias(false);
+      return;
+    }
+
+    let cancelado = false;
+
+    setCargandoSugerencias(true);
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const data = await buscarProductosSugeridosApi(busqueda);
+
+        if (!cancelado) {
+          setSugerencias(data);
+        }
+      } catch {
+        if (!cancelado) {
+          setSugerencias([]);
+        }
+      } finally {
+        if (!cancelado) {
+          setCargandoSugerencias(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      cancelado = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [detalleForm.productoNombre, detalleForm.productoId]);
+
+  function seleccionarSugerencia(producto: ProductoSugerido) {
+    onSeleccionarProducto(producto);
+    setMostrarSugerencias(false);
+    setSugerencias([]);
+  }
+
+  const debeMostrarListaSugerencias =
+    mostrarSugerencias &&
+    !detalleForm.productoId &&
+    detalleForm.productoNombre.trim().length >= 2 &&
+    (cargandoSugerencias || sugerencias.length > 0);
 
   return (
     <div className="space-y-5">
@@ -121,17 +179,103 @@ function FormularioDetallePedido({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="xl:col-span-2">
-            <InputField
-              label="Nombre del artículo"
+          <div className="relative xl:col-span-2">
+            <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+              Nombre del artículo
+              <span className="ml-1 text-red-500">*</span>
+            </label>
+
+            <input
+              type="text"
               value={detalleForm.productoNombre}
-              onChange={(value) => onDetalleChange("productoNombre", value)}
+              onChange={(event) => {
+                onDetalleChange("productoNombre", event.target.value);
+                setMostrarSugerencias(true);
+              }}
+              onFocus={() => setMostrarSugerencias(true)}
+              onBlur={() => {
+                window.setTimeout(() => {
+                  setMostrarSugerencias(false);
+                }, 150);
+              }}
               placeholder="Careta blanca, led blanco/amarillo..."
-              required
-              error={errors.productoNombre}
               maxLength={50}
-              showCharacterCount
+              aria-invalid={Boolean(errors.productoNombre)}
+              className={`w-full rounded-2xl border px-4 py-2.5 text-sm outline-none transition ${
+                errors.productoNombre
+                  ? "border-red-400 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                  : "border-slate-300 bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-100"
+              }`}
             />
+
+            <div className="mt-1 flex items-start justify-between gap-3">
+              <div>
+                {errors.productoNombre ? (
+                  <p className="text-xs font-medium text-red-600">
+                    {errors.productoNombre}
+                  </p>
+                ) : detalleForm.productoId ? (
+                  <p className="text-xs font-medium text-emerald-700">
+                    Producto existente seleccionado · ID{" "}
+                    {detalleForm.productoId}
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-500">
+                    Escribí al menos 2 letras para buscar productos ya
+                    registrados.
+                  </p>
+                )}
+              </div>
+
+              <p
+                className={`shrink-0 text-xs ${
+                  detalleForm.productoNombre.length >= 50
+                    ? "text-red-500"
+                    : "text-slate-400"
+                }`}
+              >
+                {detalleForm.productoNombre.length}/50
+              </p>
+            </div>
+
+            {debeMostrarListaSugerencias ? (
+              <div className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+                {cargandoSugerencias ? (
+                  <p className="px-4 py-3 text-sm text-slate-500">
+                    Buscando productos...
+                  </p>
+                ) : null}
+
+                {!cargandoSugerencias && sugerencias.length > 0 ? (
+                  <div className="max-h-60 overflow-y-auto">
+                    {sugerencias.map((producto) => (
+                      <button
+                        key={producto.id}
+                        type="button"
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          seleccionarSugerencia(producto);
+                        }}
+                        className="block w-full border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-slate-50"
+                      >
+                        <p className="text-sm font-semibold text-slate-900">
+                          {producto.nombre}
+                        </p>
+
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          ID {producto.id}
+                          {producto.precioVentaSugerido > 0
+                            ? ` · Precio sugerido ${formatCurrency(
+                                producto.precioVentaSugerido,
+                              )}`
+                            : ""}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <SelectField
@@ -230,7 +374,19 @@ function FormularioDetallePedido({
             {
               key: "producto",
               header: "Artículo",
-              render: (row: PedidoDetalle) => row.productoNombre,
+              render: (row: PedidoDetalle) => (
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    {row.productoNombre}
+                  </p>
+
+                  {row.productoId ? (
+                    <p className="text-xs text-slate-500">
+                      ID producto: {row.productoId}
+                    </p>
+                  ) : null}
+                </div>
+              ),
             },
             {
               key: "lote",
