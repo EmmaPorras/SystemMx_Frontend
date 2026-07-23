@@ -52,6 +52,7 @@ function mapPedidoToBackend(pedido: PedidoCompra) {
       productoNombre: detalle.productoNombre,
       loteCodigo: detalle.loteCodigo,
       cantidad: detalle.cantidad,
+      cantidadRecibida: detalle.cantidadRecibida ?? 0,
       costoUnitarioOrigen: detalle.costoUnitarioOrigen,
       precioVentaRecomendado: detalle.precioVentaRecomendado,
       estadoLote: detalle.estadoLote,

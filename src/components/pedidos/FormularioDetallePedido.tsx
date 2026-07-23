@@ -8,6 +8,7 @@ import SelectField from "../common/SelectField";
 import { formatCurrency } from "../common/formatters";
 import { buscarProductosSugeridosApi } from "../../services/pedidosApi";
 import type {
+  EstadoLoteProducto,
   MonedaCompra,
   PedidoCompra,
   PedidoDetalle,
@@ -75,6 +76,26 @@ function formatMoneyByMoneda(value: number, moneda: MonedaCompra) {
   return `${symbol}${formattedValue}`;
 }
 
+function getNumber(value: unknown, fallback = 0) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
+function estadoPermiteCantidadRecibida(estado: EstadoLoteProducto) {
+  return estado === "EN_STOCK" || estado === "VENDIDO_PARCIAL";
+}
+
+function getCantidadRecibidaTotal(row: PedidoDetalle) {
+  return getNumber(row.cantidadRecibida ?? row.cantidadDisponible);
+}
+
+function getCantidadPendiente(row: PedidoDetalle) {
+  return getNumber(
+    row.cantidadPendiente,
+    Math.max(row.cantidad - getCantidadRecibidaTotal(row), 0),
+  );
+}
+
 function FormularioDetallePedido({
   pedido,
   detalleForm,
@@ -96,6 +117,21 @@ function FormularioDetallePedido({
   const [sugerencias, setSugerencias] = useState<ProductoSugerido[]>([]);
   const [cargandoSugerencias, setCargandoSugerencias] = useState(false);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
+
+  const cantidad = getNumber(detalleForm.cantidad);
+  const cantidadRecibidaPrevia = getNumber(
+    detalleForm.cantidadRecibidaPrevia,
+  );
+  const cantidadRecibidaActual = getNumber(detalleForm.cantidadRecibida);
+  const cantidadRecibidaHabilitada = estadoPermiteCantidadRecibida(
+    detalleForm.estadoLote,
+  );
+  const maxCantidadRecibidaActual = Math.max(
+    cantidad - cantidadRecibidaPrevia,
+    0,
+  );
+  const totalRecibidoEstimado = cantidadRecibidaPrevia + cantidadRecibidaActual;
+  const pendienteEstimado = Math.max(cantidad - totalRecibidoEstimado, 0);
 
   useEffect(() => {
     const busqueda = detalleForm.productoNombre.trim();
@@ -138,6 +174,22 @@ function FormularioDetallePedido({
     onSeleccionarProducto(producto);
     setMostrarSugerencias(false);
     setSugerencias([]);
+  }
+
+  function getCantidadRecibidaHelperText() {
+    if (!cantidadRecibidaHabilitada) {
+      return "Se activa cuando el lote esté en stock.";
+    }
+
+    if (maxCantidadRecibidaActual <= 0) {
+      return `Este lote ya tiene recibidas ${cantidadRecibidaPrevia}/${cantidad}.`;
+    }
+
+    if (cantidadRecibidaPrevia > 0) {
+      return `Recibidas antes: ${cantidadRecibidaPrevia}. Máximo nuevo: ${maxCantidadRecibidaActual}. Pendiente quedaría: ${pendienteEstimado}.`;
+    }
+
+    return `Máximo permitido: ${maxCantidadRecibidaActual}. Pendiente quedaría: ${pendienteEstimado}.`;
   }
 
   const debeMostrarListaSugerencias =
@@ -340,6 +392,65 @@ function FormularioDetallePedido({
               { value: "AGOTADO", label: "Agotado" },
             ]}
           />
+
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+              Cantidad recibida
+              {cantidadRecibidaHabilitada ? (
+                <span className="ml-1 text-red-500">*</span>
+              ) : null}
+            </label>
+
+            <input
+              type="text"
+              value={
+                cantidadRecibidaHabilitada ? detalleForm.cantidadRecibida : ""
+              }
+              onChange={(event) =>
+                onDetalleChange("cantidadRecibida", event.target.value)
+              }
+              placeholder={
+                cantidadRecibidaHabilitada
+                  ? `Máx. ${maxCantidadRecibidaActual}`
+                  : "No aplica"
+              }
+              maxLength={5}
+              inputMode="numeric"
+              disabled={!cantidadRecibidaHabilitada || maxCantidadRecibidaActual <= 0}
+              aria-invalid={Boolean(errors.cantidadRecibida)}
+              className={`w-full rounded-2xl border px-4 py-2.5 text-sm outline-none transition disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 ${
+                errors.cantidadRecibida
+                  ? "border-red-400 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                  : "border-slate-300 bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-100"
+              }`}
+            />
+
+            <div className="mt-1 flex items-start justify-between gap-3">
+              <div>
+                {errors.cantidadRecibida ? (
+                  <p className="text-xs font-medium text-red-600">
+                    {errors.cantidadRecibida}
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-500">
+                    {getCantidadRecibidaHelperText()}
+                  </p>
+                )}
+              </div>
+
+              {cantidadRecibidaHabilitada ? (
+                <p
+                  className={`shrink-0 text-xs ${
+                    detalleForm.cantidadRecibida.length >= 5
+                      ? "text-red-500"
+                      : "text-slate-400"
+                  }`}
+                >
+                  {detalleForm.cantidadRecibida.length}/5
+                </p>
+              ) : null}
+            </div>
+          </div>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-3">
@@ -395,8 +506,23 @@ function FormularioDetallePedido({
             },
             {
               key: "cantidad",
-              header: "Cantidad",
+              header: "Pedida",
               render: (row: PedidoDetalle) => row.cantidad,
+            },
+            {
+              key: "recibida",
+              header: "Recibida",
+              render: (row: PedidoDetalle) => getCantidadRecibidaTotal(row),
+            },
+            {
+              key: "pendiente",
+              header: "Pendiente",
+              render: (row: PedidoDetalle) => getCantidadPendiente(row),
+            },
+            {
+              key: "stock",
+              header: "Stock",
+              render: (row: PedidoDetalle) => row.cantidadDisponible,
             },
             {
               key: "costo",
