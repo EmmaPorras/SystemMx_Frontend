@@ -1,4 +1,7 @@
-import type { PedidoCompra } from "../components/pedidos/pedidos.types";
+import type {
+  PedidoCompra,
+  ProductoSugerido,
+} from "../components/pedidos/pedidos.types";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001/api";
 
@@ -45,6 +48,7 @@ function mapPedidoToBackend(pedido: PedidoCompra) {
     estado: pedido.estado,
     observaciones: pedido.observaciones,
     detalles: pedido.detalles.map((detalle) => ({
+      productoId: detalle.productoId,
       productoNombre: detalle.productoNombre,
       loteCodigo: detalle.loteCodigo,
       cantidad: detalle.cantidad,
@@ -58,6 +62,20 @@ function mapPedidoToBackend(pedido: PedidoCompra) {
 export async function obtenerPedidos(): Promise<PedidoCompra[]> {
   const response = await fetch(`${API_URL}/pedidos`);
   return parseResponse<PedidoCompra[]>(response);
+}
+
+export async function buscarProductosSugeridosApi(
+  busqueda: string,
+): Promise<ProductoSugerido[]> {
+  const params = new URLSearchParams({
+    busqueda,
+  });
+
+  const response = await fetch(
+    `${API_URL}/pedidos/productos-sugeridos?${params.toString()}`,
+  );
+
+  return parseResponse<ProductoSugerido[]>(response);
 }
 
 export async function crearPedidoApi(
