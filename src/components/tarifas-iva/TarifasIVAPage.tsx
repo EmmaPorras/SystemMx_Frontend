@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { AiOutlinePercentage } from "react-icons/ai";
+
 import PageHeader from "../common/PageHeader";
 import SectionCard from "../common/SectionCard";
 import StatCard from "../common/StatCard";
@@ -6,15 +8,18 @@ import InputField from "../common/InputField";
 import AppModal from "../common/AppModal";
 import AlertMessage from "../common/AlertMessage";
 import ConfirmDialog from "../common/ConfirmDialog";
+
 import BotonAgregarTarifa from "./BotonAgregarTarifa";
 import FormularioTarifa from "./FormularioTarifa";
 import TablaTarifas from "./TablaTarifas";
+
 import {
   actualizarTarifaIvaApi,
   crearTarifaIva,
   eliminarTarifaIvaApi,
   obtenerTarifasIva,
 } from "../../services/tarifasIvaApi";
+
 import type {
   EstadoTarifaIVA,
   TarifaIVA,
@@ -58,7 +63,8 @@ function validarTarifa(tarifa: TarifaIVA): TarifaIVAFormErrors {
   if (!descripcion) {
     errors.descripcion = "La descripción es obligatoria.";
   } else if (descripcion.length > 45) {
-    errors.descripcion = "La descripción no puede superar los 45 caracteres.";
+    errors.descripcion =
+      "La descripción no puede superar los 45 caracteres.";
   }
 
   if (!tarifa.estado) {
@@ -73,14 +79,18 @@ function validarTarifa(tarifa: TarifaIVA): TarifaIVAFormErrors {
 function TarifasIVAPage() {
   const [tarifas, setTarifas] = useState<TarifaIVA[]>([]);
   const [busqueda, setBusqueda] = useState("");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
+
   const [tarifa, setTarifa] = useState<TarifaIVA>(tarifaInicial);
   const [errors, setErrors] = useState<TarifaIVAFormErrors>({});
-  const [tarifaAEliminar, setTarifaAEliminar] = useState<TarifaIVA | null>(
-    null,
-  );
+
+  const [tarifaAEliminar, setTarifaAEliminar] =
+    useState<TarifaIVA | null>(null);
+
   const [isLoading, setIsLoading] = useState(false);
+
   const [alert, setAlert] = useState<{
     variant: "success" | "error" | "warning" | "info";
     title: string;
@@ -94,32 +104,64 @@ function TarifasIVAPage() {
   const tarifasFiltradas = useMemo(() => {
     const term = busqueda.trim().toLowerCase();
 
-    if (!term) return tarifas;
+    if (!term) {
+      return tarifas;
+    }
 
     return tarifas.filter((item) =>
-      [item.codigo, item.descripcion, String(item.porcentaje), item.estado]
+      [
+        item.codigo,
+        item.descripcion,
+        String(item.porcentaje),
+        item.estado,
+      ]
         .join(" ")
         .toLowerCase()
         .includes(term),
     );
   }, [busqueda, tarifas]);
 
-const tarifaGeneral = useMemo(() => {
-  const tarifa = tarifas.find(
-    (item) => item.codigo.toUpperCase() === "IVA" && item.estado === "ACTIVA",
-  );
+  /**
+   * Tarifa general:
+   * busca una tarifa ACTIVA cuyo código sea exactamente IVA.
+   */
+  const tarifaGeneral = useMemo(() => {
+    const tarifaEncontrada = tarifas.find(
+      (item) =>
+        item.codigo.trim().toUpperCase() === "IVA" &&
+        item.estado === "ACTIVA",
+    );
 
-  return tarifa ? `${tarifa.porcentaje}%` : "No definida";
-}, [tarifas]);
+    return tarifaEncontrada
+      ? `${tarifaEncontrada.porcentaje}%`
+      : "No definida";
+  }, [tarifas]);
 
-const tarifasActivas = useMemo(() => {
-  return tarifas.filter((item) => item.estado === "ACTIVA").length;
-}, [tarifas]);
+  /**
+   * Tarifa más alta:
+   * toma solamente las tarifas activas disponibles para utilizar.
+   */
+  const tarifaMasAlta = useMemo(() => {
+    const porcentajesActivos = tarifas
+      .filter((item) => item.estado === "ACTIVA")
+      .map((item) => Number(item.porcentaje))
+      .filter((porcentaje) => Number.isFinite(porcentaje));
+
+    if (porcentajesActivos.length === 0) {
+      return "No definida";
+    }
+
+    const porcentajeMayor = Math.max(...porcentajesActivos);
+
+    return `${porcentajeMayor}%`;
+  }, [tarifas]);
 
   async function cargarTarifas() {
     try {
       setIsLoading(true);
+
       const data = await obtenerTarifasIva();
+
       setTarifas(data);
     } catch (error) {
       setAlert({
@@ -144,7 +186,7 @@ const tarifasActivas = useMemo(() => {
 
   function abrirModalEditar(tarifaSeleccionada: TarifaIVA) {
     setModalMode("edit");
-    setTarifa(tarifaSeleccionada);
+    setTarifa({ ...tarifaSeleccionada });
     setErrors({});
     setIsModalOpen(true);
   }
@@ -153,9 +195,13 @@ const tarifasActivas = useMemo(() => {
     setIsModalOpen(false);
     setTarifa(tarifaInicial);
     setErrors({});
+    setModalMode("create");
   }
 
-  function actualizarTarifa(field: TarifaIVAFormField, value: string) {
+  function actualizarTarifa(
+    field: TarifaIVAFormField,
+    value: string,
+  ) {
     setTarifa((prev) => ({
       ...prev,
       [field]:
@@ -208,7 +254,9 @@ const tarifasActivas = useMemo(() => {
 
         setTarifas((prev) =>
           prev.map((item) =>
-            item.id === tarifaActualizada.id ? tarifaActualizada : item,
+            item.id === tarifaActualizada.id
+              ? tarifaActualizada
+              : item,
           ),
         );
 
@@ -235,12 +283,16 @@ const tarifasActivas = useMemo(() => {
     }
   }
 
-  function solicitarEliminarTarifa(tarifaSeleccionada: TarifaIVA) {
+  function solicitarEliminarTarifa(
+    tarifaSeleccionada: TarifaIVA,
+  ) {
     setTarifaAEliminar(tarifaSeleccionada);
   }
 
   async function confirmarEliminarTarifa() {
-    if (!tarifaAEliminar) return;
+    if (!tarifaAEliminar) {
+      return;
+    }
 
     try {
       await eliminarTarifaIvaApi(tarifaAEliminar.id);
@@ -273,7 +325,14 @@ const tarifasActivas = useMemo(() => {
       <PageHeader
         title="Tarifas IVA"
         description="Catálogo de impuestos listo para ser consumido por productos, pedidos y ventas."
-        action={<BotonAgregarTarifa onClick={abrirModalCrear} />}
+        icon={AiOutlinePercentage}
+        iconTo="/"
+        iconAriaLabel="Volver al inicio"
+        action={
+          <BotonAgregarTarifa
+            onClick={abrirModalCrear}
+          />
+        }
       />
 
       {alert ? (
@@ -289,25 +348,31 @@ const tarifasActivas = useMemo(() => {
         <StatCard
           label="Tarifas registradas"
           value={String(tarifas.length)}
-          hint="Ideal para centralizar el IVA y evitar duplicados"
+          hint="Cantidad total de tarifas registradas"
+          icon={AiOutlinePercentage}
+          variant="info"
         />
 
-          <StatCard
-            label="Tarifa general"
-            value={tarifaGeneral}
-            hint="Busca la tarifa activa con código IVA13"
-          />
+        <StatCard
+          label="Tarifa general"
+          value={tarifaGeneral}
+          hint="Tarifa activa identificada con el código IVA"
+          icon={AiOutlinePercentage}
+          variant="success"
+        />
 
-          <StatCard
-            label="Tarifas activas"
-            value={String(tarifasActivas)}
-            hint="Cantidad de tarifas disponibles para usar"
-          />
+        <StatCard
+          label="Tarifa más alta"
+          value={tarifaMasAlta}
+          hint="Mayor porcentaje activo registrado"
+          icon={AiOutlinePercentage}
+          variant="danger"
+        />
       </div>
 
       <SectionCard
         title="Listado de tarifas"
-        description="Más adelante aquí también puedes validar si una tarifa está en uso antes de eliminarla."
+        description="Administrá las tarifas disponibles para productos, pedidos y ventas."
       >
         <div className="mb-4">
           <InputField
@@ -319,9 +384,11 @@ const tarifasActivas = useMemo(() => {
         </div>
 
         {isLoading ? (
-          <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            Cargando tarifas IVA...
-          </p>
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-6 py-10 text-center">
+            <p className="text-sm font-medium text-zinc-500">
+              Cargando tarifas IVA...
+            </p>
+          </div>
         ) : (
           <TablaTarifas
             tarifas={tarifasFiltradas}
@@ -334,7 +401,9 @@ const tarifasActivas = useMemo(() => {
       <AppModal
         isOpen={isModalOpen}
         title={
-          modalMode === "create" ? "Agregar tarifa IVA" : "Editar tarifa IVA"
+          modalMode === "create"
+            ? "Agregar tarifa IVA"
+            : "Editar tarifa IVA"
         }
         description={
           modalMode === "create"
@@ -348,7 +417,9 @@ const tarifasActivas = useMemo(() => {
           tarifa={tarifa}
           errors={errors}
           submitLabel={
-            modalMode === "create" ? "Guardar tarifa" : "Actualizar tarifa"
+            modalMode === "create"
+              ? "Guardar tarifa"
+              : "Actualizar tarifa"
           }
           onChange={actualizarTarifa}
           onSubmit={guardarTarifa}

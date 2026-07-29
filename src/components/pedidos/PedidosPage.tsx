@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+
+import { PiAirplaneTiltFill } from "react-icons/pi";
+import { TbClipboardList, TbPackages, TbTruckDelivery } from "react-icons/tb";
+import { LuPackageCheck } from "react-icons/lu";
 import AlertMessage from "../common/AlertMessage";
 import AppModal from "../common/AppModal";
 import ConfirmDialog from "../common/ConfirmDialog";
@@ -6,7 +10,9 @@ import InputField from "../common/InputField";
 import PageHeader from "../common/PageHeader";
 import PrimaryButton from "../common/PrimaryButton";
 import SectionCard from "../common/SectionCard";
+import SelectField from "../common/SelectField";
 import StatCard from "../common/StatCard";
+import { formatCurrency } from "../common/formatters";
 import { obtenerProveedores } from "../../services/proveedoresApi";
 import {
   actualizarPedidoApi,
@@ -16,6 +22,8 @@ import {
 } from "../../services/pedidosApi";
 import FormularioDetallePedido from "./FormularioDetallePedido";
 import FormularioPedido from "./FormularioPedido";
+import PedidoDetalleTable from "./PedidoDetalleTable";
+import ProductoPedidoFilter from "./ProductoPedidoFilter";
 import TablaPedidos from "./TablaPedidos";
 import type {
   EstadoLoteProducto,
@@ -148,14 +156,21 @@ function calcularResumenRecepcion(
 }
 
 function PedidosPage() {
-  const [busqueda, setBusqueda] = useState("");
+  const [filtroProducto, setFiltroProducto] = useState("");
+  const [filtroNumeroPedido, setFiltroNumeroPedido] = useState("");
+  const [filtroProveedorId, setFiltroProveedorId] = useState("");
+
   const [modalAbierto, setModalAbierto] = useState(false);
   const [pasoModal, setPasoModal] = useState<1 | 2>(1);
 
   const [pedidos, setPedidos] = useState<PedidoCompra[]>([]);
-  const [proveedores, setProveedores] = useState<
+  const [proveedoresActivos, setProveedoresActivos] = useState<
     Array<{ id: number; nombre: string }>
   >([]);
+  const [proveedoresFiltro, setProveedoresFiltro] = useState<
+    Array<{ id: number; nombre: string }>
+  >([]);
+  const [pedidoDetalle, setPedidoDetalle] = useState<PedidoCompra | null>(null);
 
   const [pageAlert, setPageAlert] = useState<string | null>(null);
   const [modalAlert, setModalAlert] = useState<string | null>(null);
@@ -191,13 +206,22 @@ function PedidosPage() {
 
       setPedidos(pedidosData);
 
-      setProveedores(
-        proveedoresData
+      const proveedoresMapeados = proveedoresData
+        .map((item) => ({
+          id: item.id,
+          nombre: item.nombre,
+          estado: item.estado,
+        }))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+
+      setProveedoresFiltro(
+        proveedoresMapeados.map(({ id, nombre }) => ({ id, nombre })),
+      );
+
+      setProveedoresActivos(
+        proveedoresMapeados
           .filter((item) => item.estado === "ACTIVO")
-          .map((item) => ({
-            id: item.id,
-            nombre: item.nombre,
-          })),
+          .map(({ id, nombre }) => ({ id, nombre })),
       );
     } catch (error) {
       const message =
@@ -215,29 +239,54 @@ function PedidosPage() {
     cargarDatos();
   }, []);
 
-  const pedidosFiltrados = useMemo(() => {
-    const term = busqueda.trim().toLowerCase();
+  const productosFiltroOptions = useMemo(() => {
+    const nombres = new Map<string, string>();
 
-    if (!term) return pedidos;
+    pedidos.forEach((item) => {
+      item.detalles.forEach((detalle) => {
+        const nombre = detalle.productoNombre.trim();
 
-    return pedidos.filter((item) =>
-      [
-        item.numeroPedido,
-        item.origen,
-        item.proveedorNombre,
-        item.estado,
-        item.monedaCompra,
-        ...item.detalles.map((detalle) =>
-          [detalle.productoNombre, detalle.loteCodigo, detalle.estadoLote].join(
-            " ",
-          ),
-        ),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(term),
+        if (nombre) {
+          nombres.set(nombre.toLowerCase(), nombre);
+        }
+      });
+    });
+
+    return Array.from(nombres.values()).sort((a, b) =>
+      a.localeCompare(b, "es", { sensitivity: "base" }),
     );
-  }, [busqueda, pedidos]);
+  }, [pedidos]);
+
+  const proveedoresFiltroOptions = useMemo(
+    () =>
+      proveedoresFiltro.map((item) => ({
+        value: String(item.id),
+        label: item.nombre,
+      })),
+    [proveedoresFiltro],
+  );
+
+  const pedidosFiltrados = useMemo(() => {
+    const productoTerm = filtroProducto.trim().toLowerCase();
+
+    return pedidos.filter((item) => {
+      const coincideProducto = productoTerm
+        ? item.detalles.some((detalle) =>
+            detalle.productoNombre.toLowerCase().includes(productoTerm),
+          )
+        : true;
+
+      const coincideNumero = filtroNumeroPedido
+        ? String(item.numeroPedido) === filtroNumeroPedido
+        : true;
+
+      const coincideProveedor = filtroProveedorId
+        ? item.proveedorId === Number(filtroProveedorId)
+        : true;
+
+      return coincideProducto && coincideNumero && coincideProveedor;
+    });
+  }, [filtroNumeroPedido, filtroProducto, filtroProveedorId, pedidos]);
 
   const totalEnTransito = pedidos.filter(
     (item) => item.estado === "EN_TRANSITO",
@@ -251,6 +300,25 @@ function PedidosPage() {
     (acc, item) => acc + item.detalles.length,
     0,
   );
+
+  function actualizarFiltroNumeroPedido(value: string) {
+    const numeroLimpio = limpiarEntero(value, 4);
+
+    if (!numeroLimpio || Number(numeroLimpio) === 0) {
+      setFiltroNumeroPedido("");
+      return;
+    }
+
+    setFiltroNumeroPedido(numeroLimpio);
+  }
+
+  function abrirDetallePedido(pedidoSeleccionado: PedidoCompra) {
+    setPedidoDetalle(pedidoSeleccionado);
+  }
+
+  function cerrarDetallePedido() {
+    setPedidoDetalle(null);
+  }
 
   function abrirModalNuevoPedido() {
     setPedido({ ...pedidoInicial });
@@ -313,7 +381,7 @@ function PedidosPage() {
 
       if (field === "proveedorId") {
         const proveedorId = Number(value);
-        const proveedor = proveedores.find((item) => item.id === proveedorId);
+        const proveedor = proveedoresActivos.find((item) => item.id === proveedorId);
 
         return {
           ...prev,
@@ -809,8 +877,11 @@ function PedidosPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Pedidos de compra"
+        title="Pedidos"
         description="Registra y consulta compras completas. Cada pedido puede contener artículos divididos en diferentes lotes para mantener costos reales."
+        icon={PiAirplaneTiltFill}
+        iconTo="/"
+        iconAriaLabel="Volver al inicio"
         action={
           <PrimaryButton onClick={abrirModalNuevoPedido}>
             + Nuevo pedido
@@ -827,59 +898,156 @@ function PedidosPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Pedidos registrados"
           value={String(pedidos.length)}
           hint="Compras registradas en el sistema"
-        />
-
-        <StatCard
-          label="En tránsito"
-          value={String(totalEnTransito)}
-          hint="Pedidos en camino a Costa Rica"
-        />
-
-        <StatCard
-          label="Recibidos"
-          value={String(totalRecibidos)}
-          hint="Pedidos ya disponibles para stock"
+          icon={TbClipboardList}
+          variant="info"
         />
 
         <StatCard
           label="Lotes registrados"
           value={String(totalLotes)}
           hint="Lotes generados desde pedidos"
+          icon={TbPackages}
+          variant="info"
+        />
+
+        <StatCard
+          label="En tránsito"
+          value={String(totalEnTransito)}
+          hint="Pedidos pendientes de recepción"
+          icon={TbTruckDelivery}
+          variant="warning"
+        />
+
+        <StatCard
+          label="Recibidos"
+          value={String(totalRecibidos)}
+          hint="Pedidos recibidos y disponibles"
+          icon={LuPackageCheck}
+          variant="success"
         />
       </div>
 
       <SectionCard
         title="Listado de pedidos"
-        description="Al abrir un pedido se muestran los artículos y los lotes asociados."
+        description="Filtrá por producto, número de pedido o proveedor y abrí el detalle en una ventana independiente."
       >
-        <div className="mb-4">
+        <div className="mb-5 grid gap-4 lg:grid-cols-3">
+          <ProductoPedidoFilter
+            label="Filtrar por producto"
+            value={filtroProducto}
+            options={productosFiltroOptions}
+            onChange={setFiltroProducto}
+            placeholder="Barra led, careta negra..."
+          />
+
           <InputField
-            label="Buscar pedido"
-            value={busqueda}
-            onChange={setBusqueda}
-            placeholder="Pedido, proveedor, producto, lote, estado u origen"
+            label="Número de pedido"
+            type="text"
+            value={filtroNumeroPedido}
+            onChange={actualizarFiltroNumeroPedido}
+            placeholder="1 - 9999"
+            maxLength={4}
+          />
+
+          <SelectField
+            label="Filtrar por proveedor"
+            value={filtroProveedorId}
+            onChange={setFiltroProveedorId}
+            placeholder="Todos los proveedores"
+            options={proveedoresFiltroOptions}
           />
         </div>
 
         {cargando ? (
-          <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center">
-            <p className="text-sm font-medium text-slate-500">
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-6 py-10 text-center">
+            <p className="text-sm font-medium text-zinc-500">
               Cargando pedidos...
             </p>
           </div>
         ) : (
           <TablaPedidos
             pedidos={pedidosFiltrados}
+            onView={abrirDetallePedido}
             onEdit={abrirModalEditarPedido}
             onDelete={setPedidoParaEliminar}
           />
         )}
       </SectionCard>
+
+      <AppModal
+        isOpen={Boolean(pedidoDetalle)}
+        onClose={cerrarDetallePedido}
+        title={
+          pedidoDetalle
+            ? `Detalle del Pedido ${pedidoDetalle.numeroPedido}`
+            : "Detalle del pedido"
+        }
+        description="Información general, artículos y lotes asociados al pedido."
+        maxWidthClassName="max-w-7xl"
+      >
+        {pedidoDetalle ? (
+          <div className="space-y-6">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-zinc-400">
+                  Proveedor
+                </p>
+                <p className="mt-2 font-semibold text-zinc-950">
+                  {pedidoDetalle.proveedorNombre}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-zinc-400">
+                  Fecha
+                </p>
+                <p className="mt-2 font-semibold text-zinc-950">
+                  {pedidoDetalle.fecha}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-zinc-400">
+                  Origen
+                </p>
+                <p className="mt-2 font-semibold text-zinc-950">
+                  {pedidoDetalle.origen}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-600">
+                  Inversión total
+                </p>
+                <p className="mt-2 font-bold text-emerald-900">
+                  {formatCurrency(pedidoDetalle.inversionTotal)}
+                </p>
+              </div>
+            </div>
+
+            {pedidoDetalle.observaciones ? (
+              <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-zinc-400">
+                  Observaciones
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-700">
+                  {pedidoDetalle.observaciones}
+                </p>
+              </div>
+            ) : null}
+
+            <PedidoDetalleTable
+              detalles={pedidoDetalle.detalles}
+              monedaCompra={pedidoDetalle.monedaCompra}
+            />
+          </div>
+        ) : null}
+      </AppModal>
 
       <AppModal
         isOpen={modalAbierto}
@@ -901,7 +1069,7 @@ function PedidosPage() {
         {pasoModal === 1 ? (
           <FormularioPedido
             pedido={pedido}
-            proveedores={proveedores}
+            proveedores={proveedoresActivos}
             errors={cabeceraErrors}
             alertMessage={modalAlert}
             onChange={actualizarPedido}

@@ -1,4 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+
+import { ImAddressBook } from "react-icons/im";
+import {
+  BsPersonFill,
+  BsPersonFillCheck,
+  BsPersonFillSlash,
+} from "react-icons/bs";
+
 import PageHeader from "../common/PageHeader";
 import SectionCard from "../common/SectionCard";
 import StatCard from "../common/StatCard";
@@ -6,9 +14,11 @@ import InputField from "../common/InputField";
 import AppModal from "../common/AppModal";
 import AlertMessage from "../common/AlertMessage";
 import ConfirmDialog from "../common/ConfirmDialog";
+
 import BotonAgregarProveedor from "./BotonAgregarProveedor";
 import FormularioProveedor from "./FormularioProveedor";
 import TablaProveedores from "./TablaProveedores";
+
 import {
   actualizarProveedorApi,
   crearProveedor,
@@ -97,7 +107,7 @@ function validarProveedor(proveedor: Proveedor): ProveedorFormErrors {
     errors.direccion = "La dirección no puede superar los 150 caracteres.";
   }
 
-    if (!proveedor.monedaPreferida) {
+  if (!proveedor.monedaPreferida) {
     errors.monedaPreferida = "Seleccioná una moneda preferida.";
   } else if (!monedasPermitidas.includes(proveedor.monedaPreferida)) {
     errors.monedaPreferida = "La moneda seleccionada no es válida.";
@@ -132,7 +142,9 @@ function ProveedoresPage() {
   const proveedoresFiltrados = useMemo(() => {
     const term = busqueda.trim().toLowerCase();
 
-    if (!term) return proveedores;
+    if (!term) {
+      return proveedores;
+    }
 
     return proveedores.filter((item) =>
       [item.nombre, item.correo, item.telefono, item.direccion]
@@ -142,9 +154,15 @@ function ProveedoresPage() {
     );
   }, [busqueda, proveedores]);
 
-  const totalActivos = proveedores.filter(
-    (item) => item.estado === "ACTIVO",
-  ).length;
+  const totalActivos = useMemo(
+    () => proveedores.filter((item) => item.estado === "ACTIVO").length,
+    [proveedores],
+  );
+
+  const totalInactivos = useMemo(
+    () => proveedores.filter((item) => item.estado === "INACTIVO").length,
+    [proveedores],
+  );
 
   const esEdicion = modalMode === "edit";
 
@@ -207,7 +225,9 @@ function ProveedoresPage() {
   }
 
   function cerrarModalProveedor() {
-    if (isSaving) return;
+    if (isSaving) {
+      return;
+    }
 
     setModalProveedorAbierto(false);
     setProveedor(proveedorInicial);
@@ -215,7 +235,10 @@ function ProveedoresPage() {
     setModalMode("create");
   }
 
-   function actualizarProveedor(field: ProveedorFormField, value: string) {
+  function actualizarProveedor(
+    field: ProveedorFormField,
+    value: string,
+  ) {
     setProveedor((prev) => ({
       ...prev,
       [field]:
@@ -241,7 +264,8 @@ function ProveedoresPage() {
       mostrarAlerta({
         variant: "error",
         title: "Formulario incompleto",
-        message: "Revisá los campos marcados antes de guardar el proveedor.",
+        message:
+          "Revisá los campos marcados antes de guardar el proveedor.",
       });
 
       return;
@@ -267,14 +291,17 @@ function ProveedoresPage() {
 
         setProveedores((prev) =>
           prev.map((item) =>
-            item.id === proveedorActualizado.id ? proveedorActualizado : item,
+            item.id === proveedorActualizado.id
+              ? proveedorActualizado
+              : item,
           ),
         );
 
         mostrarAlerta({
           variant: "success",
           title: "Proveedor actualizado",
-          message: "Los cambios del proveedor se guardaron correctamente.",
+          message:
+            "Los cambios del proveedor se guardaron correctamente.",
         });
       } else {
         const proveedorCreado = await crearProveedor(proveedorLimpio);
@@ -284,7 +311,8 @@ function ProveedoresPage() {
         mostrarAlerta({
           variant: "success",
           title: "Proveedor guardado",
-          message: "El proveedor se agregó correctamente al listado.",
+          message:
+            "El proveedor se agregó correctamente al listado.",
         });
       }
 
@@ -303,7 +331,9 @@ function ProveedoresPage() {
     }
   }
 
-  function abrirConfirmacionEliminar(proveedorSeleccionado: Proveedor) {
+  function abrirConfirmacionEliminar(
+    proveedorSeleccionado: Proveedor,
+  ) {
     setProveedorAEliminar(proveedorSeleccionado);
   }
 
@@ -312,7 +342,9 @@ function ProveedoresPage() {
   }
 
   async function eliminarProveedor() {
-    if (!proveedorAEliminar) return;
+    if (!proveedorAEliminar) {
+      return;
+    }
 
     try {
       await eliminarProveedorApi(proveedorAEliminar.id);
@@ -341,8 +373,15 @@ function ProveedoresPage() {
     <div className="space-y-6">
       <PageHeader
         title="Proveedores"
-        description="Catálogo base de proveedores conectado al backend y a la base de datos."
-        action={<BotonAgregarProveedor onClick={abrirModalNuevoProveedor} />}
+        description="Catálogo base de proveedores."
+        icon={ImAddressBook}
+        iconTo="/"
+        iconAriaLabel="Volver al inicio"
+        action={
+          <BotonAgregarProveedor
+            onClick={abrirModalNuevoProveedor}
+          />
+        }
       />
 
       {alerta ? (
@@ -358,19 +397,25 @@ function ProveedoresPage() {
         <StatCard
           label="Total de proveedores"
           value={String(proveedores.length)}
-          hint="Dato cargado desde SQL Server"
+          hint="Cantidad total de proveedores registrados"
+          icon={BsPersonFill}
+          variant="info"
         />
 
         <StatCard
           label="Proveedores activos"
           value={String(totalActivos)}
           hint="Disponibles para registrar pedidos"
+          icon={BsPersonFillCheck}
+          variant="success"
         />
 
         <StatCard
-          label="Conectado al backend"
-          value="Sí"
-          hint="GET, POST, PATCH y DELETE activos"
+          label="Proveedores inactivos"
+          value={String(totalInactivos)}
+          hint="No disponibles para nuevos pedidos"
+          icon={BsPersonFillSlash}
+          variant="danger"
         />
       </div>
 
@@ -388,8 +433,8 @@ function ProveedoresPage() {
         </div>
 
         {isLoading ? (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-10 text-center">
-            <p className="text-sm font-medium text-slate-500">
+          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-6 py-10 text-center">
+            <p className="text-sm font-medium text-zinc-500">
               Cargando proveedores...
             </p>
           </div>

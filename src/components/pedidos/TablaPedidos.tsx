@@ -1,17 +1,18 @@
-import {
-  ChevronDown,
-  ChevronRight,
-  Pencil,
-  Trash2,
-} from "lucide-react";
-import { Fragment, useState } from "react";
+import { FaEye, FaRegEdit } from "react-icons/fa";
+import { MdDelete } from "react-icons/md";
+
+import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
 import { formatCurrency } from "../common/formatters";
-import PedidoDetalleTable from "./PedidoDetalleTable";
-import type { EstadoPedidoCompra, PedidoCompra } from "./pedidos.types";
+
+import type {
+  EstadoPedidoCompra,
+  PedidoCompra,
+} from "./pedidos.types";
 
 type TablaPedidosProps = {
   pedidos: PedidoCompra[];
+  onView: (pedido: PedidoCompra) => void;
   onEdit: (pedido: PedidoCompra) => void;
   onDelete: (pedido: PedidoCompra) => void;
 };
@@ -28,206 +29,132 @@ function getEstadoPedidoLabel(estado: EstadoPedidoCompra) {
 }
 
 function getEstadoPedidoVariant(estado: EstadoPedidoCompra) {
-  if (estado === "RECIBIDO") return "success";
-  if (estado === "EN_TRANSITO") return "warning";
-  return "neutral";
+  if (estado === "RECIBIDO") return "success" as const;
+  if (estado === "EN_TRANSITO") return "warning" as const;
+  if (estado === "CANCELADO") return "danger" as const;
+  return "neutral" as const;
 }
 
-function TablaPedidos({ pedidos, onEdit, onDelete }: TablaPedidosProps) {
-  const [pedidoExpandidoId, setPedidoExpandidoId] = useState<number | null>(
-    null,
-  );
-
-  function alternarDetalle(id: number) {
-    setPedidoExpandidoId((prev) => (prev === id ? null : id));
-  }
-
-  if (pedidos.length === 0) {
-    return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-        <p className="text-sm font-medium text-slate-500">
-          Todavía no hay pedidos registrados.
-        </p>
-      </div>
-    );
-  }
-
+function TablaPedidos({
+  pedidos,
+  onView,
+  onEdit,
+  onDelete,
+}: TablaPedidosProps) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="border-b border-slate-200 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
-                Pedido
-              </th>
-              <th className="border-b border-slate-200 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
-                Fecha
-              </th>
-              <th className="border-b border-slate-200 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
-                Proveedor
-              </th>
-              <th className="border-b border-slate-200 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
-                Artículos
-              </th>
-              <th className="border-b border-slate-200 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
-                Unidades
-              </th>
-              <th className="border-b border-slate-200 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
-                Inversión total
-              </th>
-              <th className="border-b border-slate-200 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
-                Estado
-              </th>
-              <th className="border-b border-slate-200 px-4 py-3 text-center text-xs font-bold uppercase tracking-wide text-slate-500">
-                Acciones
-              </th>
-            </tr>
-          </thead>
+    <DataTableShell
+      data={pedidos}
+      emptyMessage="No hay pedidos que coincidan con los filtros seleccionados."
+      getRowKey={(row) => row.id}
+      columns={[
+        {
+          key: "pedido",
+          header: "Pedido",
+          render: (row) => (
+            <div>
+              <p className="font-bold text-zinc-950">
+                Pedido {row.numeroPedido}
+              </p>
+              <p className="mt-0.5 text-xs text-zinc-500">{row.origen}</p>
+            </div>
+          ),
+        },
+        {
+          key: "fecha",
+          header: "Fecha",
+          render: (row) => row.fecha,
+        },
+        {
+          key: "proveedor",
+          header: "Proveedor",
+          render: (row) => (
+            <span className="font-medium text-zinc-800">
+              {row.proveedorNombre}
+            </span>
+          ),
+        },
+        {
+          key: "articulos",
+          header: "Artículos",
+          render: (row) => {
+            const cantidadArticulos = new Set(
+              row.detalles.map((detalle) =>
+                detalle.productoNombre.trim().toLowerCase(),
+              ),
+            ).size;
 
-          <tbody className="divide-y divide-slate-100">
-            {pedidos.map((pedido) => {
-              const estaExpandido = pedidoExpandidoId === pedido.id;
-              const cantidadArticulos = new Set(
-                pedido.detalles.map((detalle) => detalle.productoNombre),
-              ).size;
-              const totalUnidades = pedido.detalles.reduce(
-                (acc, detalle) => acc + detalle.cantidad,
-                0,
-              );
+            return cantidadArticulos;
+          },
+        },
+        {
+          key: "lotes",
+          header: "Lotes",
+          render: (row) => row.detalles.length,
+        },
+        {
+          key: "unidades",
+          header: "Unidades",
+          render: (row) =>
+            row.detalles.reduce(
+              (total, detalle) => total + Number(detalle.cantidad || 0),
+              0,
+            ),
+        },
+        {
+          key: "inversion",
+          header: "Inversión total",
+          render: (row) => (
+            <span className="font-semibold text-zinc-950">
+              {formatCurrency(row.inversionTotal)}
+            </span>
+          ),
+        },
+        {
+          key: "estado",
+          header: "Estado",
+          render: (row) => (
+            <StatusBadge
+              label={getEstadoPedidoLabel(row.estado)}
+              variant={getEstadoPedidoVariant(row.estado)}
+            />
+          ),
+        },
+      ]}
+      actionsHeader="Acciones"
+      actions={(row) => (
+        <>
+          <button
+            type="button"
+            onClick={() => onView(row)}
+            className="grid h-10 w-10 place-items-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition duration-200 hover:-translate-y-0.5 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white hover:shadow-md"
+            title="Ver detalle"
+            aria-label={`Ver detalle del pedido ${row.numeroPedido}`}
+          >
+            <FaEye className="h-4 w-4" />
+          </button>
 
-              return (
-                <Fragment key={pedido.id}>
-                  <tr className="transition hover:bg-slate-50/80">
-                    <td className="px-4 py-3 align-middle text-slate-700">
-                      <div>
-                        <p className="font-semibold text-slate-900">
-                          {pedido.numeroPedido}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {pedido.origen}
-                        </p>
-                      </div>
-                    </td>
+          <button
+            type="button"
+            onClick={() => onEdit(row)}
+            className="grid h-10 w-10 place-items-center rounded-xl border border-blue-200 bg-blue-50 text-blue-600 transition duration-200 hover:-translate-y-0.5 hover:border-blue-500 hover:bg-blue-600 hover:text-white hover:shadow-md"
+            title="Editar pedido"
+            aria-label={`Editar pedido ${row.numeroPedido}`}
+          >
+            <FaRegEdit className="h-4 w-4" />
+          </button>
 
-                    <td className="px-4 py-3 align-middle text-slate-700">
-                      {pedido.fecha}
-                    </td>
-
-                    <td className="px-4 py-3 align-middle text-slate-700">
-                      {pedido.proveedorNombre}
-                    </td>
-
-                    <td className="px-4 py-3 align-middle text-slate-700">
-                      {cantidadArticulos}
-                    </td>
-
-                    <td className="px-4 py-3 align-middle text-slate-700">
-                      {totalUnidades}
-                    </td>
-
-                    <td className="px-4 py-3 align-middle text-slate-700">
-                      {formatCurrency(pedido.inversionTotal)}
-                    </td>
-
-                    <td className="px-4 py-3 align-middle text-slate-700">
-                      <StatusBadge
-                        label={getEstadoPedidoLabel(pedido.estado)}
-                        variant={getEstadoPedidoVariant(pedido.estado)}
-                      />
-                    </td>
-
-                    <td className="px-4 py-3 align-middle">
-                      <div className="flex justify-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => alternarDetalle(pedido.id)}
-                          className="inline-flex items-center gap-1 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-900 hover:bg-slate-900 hover:text-white"
-                        >
-                          {estaExpandido ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                          {estaExpandido ? "Ocultar" : "Ver detalle"}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => onEdit(pedido)}
-                          className="rounded-full p-2 text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
-                          aria-label="Editar pedido"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => onDelete(pedido)}
-                          className="rounded-full p-2 text-red-600 transition hover:bg-red-50"
-                          aria-label="Eliminar pedido"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-
-                  {estaExpandido ? (
-                    <tr>
-                      <td colSpan={8} className="bg-slate-50 px-4 py-5">
-                        <div className="mb-4 grid gap-3 md:grid-cols-4">
-                          <div className="rounded-2xl bg-white p-4 shadow-sm">
-                            <p className="text-xs font-semibold uppercase text-slate-500">
-                              Moneda
-                            </p>
-                            <p className="mt-1 text-lg font-bold text-slate-950">
-                              {pedido.monedaCompra}
-                            </p>
-                          </div>
-
-                          <div className="rounded-2xl bg-white p-4 shadow-sm">
-                            <p className="text-xs font-semibold uppercase text-slate-500">
-                              Tipo de cambio
-                            </p>
-                            <p className="mt-1 text-lg font-bold text-slate-950">
-                              {pedido.tipoCambio}
-                            </p>
-                          </div>
-
-                          <div className="rounded-2xl bg-white p-4 shadow-sm">
-                            <p className="text-xs font-semibold uppercase text-slate-500">
-                              Lotes
-                            </p>
-                            <p className="mt-1 text-lg font-bold text-slate-950">
-                              {pedido.detalles.length}
-                            </p>
-                          </div>
-
-                          <div className="rounded-2xl bg-white p-4 shadow-sm">
-                            <p className="text-xs font-semibold uppercase text-slate-500">
-                              Observaciones
-                            </p>
-                            <p className="mt-1 text-sm font-medium text-slate-700">
-                              {pedido.observaciones || "Sin observaciones"}
-                            </p>
-                          </div>
-                        </div>
-
-                        <PedidoDetalleTable
-                          detalles={pedido.detalles}
-                          monedaCompra={pedido.monedaCompra}
-                        />
-                      </td>
-                    </tr>
-                  ) : null}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          <button
+            type="button"
+            onClick={() => onDelete(row)}
+            className="grid h-10 w-10 place-items-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition duration-200 hover:-translate-y-0.5 hover:border-red-500 hover:bg-red-600 hover:text-white hover:shadow-md"
+            title="Eliminar pedido"
+            aria-label={`Eliminar pedido ${row.numeroPedido}`}
+          >
+            <MdDelete className="h-5 w-5" />
+          </button>
+        </>
+      )}
+    />
   );
 }
 
