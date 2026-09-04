@@ -165,7 +165,7 @@ function PedidosPage() {
 
   const [pedidos, setPedidos] = useState<PedidoCompra[]>([]);
   const [proveedoresActivos, setProveedoresActivos] = useState<
-    Array<{ id: number; nombre: string }>
+    Array<{ id: number; nombre: string; pais: string }>
   >([]);
   const [proveedoresFiltro, setProveedoresFiltro] = useState<
     Array<{ id: number; nombre: string }>
@@ -210,6 +210,7 @@ function PedidosPage() {
         .map((item) => ({
           id: item.id,
           nombre: item.nombre,
+          pais: item.pais,
           estado: item.estado,
         }))
         .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
@@ -221,7 +222,7 @@ function PedidosPage() {
       setProveedoresActivos(
         proveedoresMapeados
           .filter((item) => item.estado === "ACTIVO")
-          .map(({ id, nombre }) => ({ id, nombre })),
+          .map(({ id, nombre, pais }) => ({ id, nombre, pais })),
       );
     } catch (error) {
       const message =
@@ -381,12 +382,15 @@ function PedidosPage() {
 
       if (field === "proveedorId") {
         const proveedorId = Number(value);
-        const proveedor = proveedoresActivos.find((item) => item.id === proveedorId);
+        const proveedor = proveedoresActivos.find(
+          (item) => item.id === proveedorId,
+        );
 
         return {
           ...prev,
           proveedorId,
           proveedorNombre: proveedor?.nombre ?? "",
+          origen: proveedor?.pais ?? "",
         };
       }
 

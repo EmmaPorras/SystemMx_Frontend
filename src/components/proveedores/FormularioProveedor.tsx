@@ -1,6 +1,8 @@
 import InputField from "../common/InputField";
-import SelectField from "../common/SelectField";
 import PrimaryButton from "../common/PrimaryButton";
+import SearchableSelectField from "../common/SearchableSelectField";
+import SelectField from "../common/SelectField";
+import { paisesOptions } from "../../data/paises";
 import {
   monedaPreferidaOptions,
   type Proveedor,
@@ -62,6 +64,16 @@ function FormularioProveedor({
           error={errors.correo}
         />
 
+        <SearchableSelectField
+          label="País de origen"
+          required
+          value={proveedor.pais}
+          onChange={(value) => onChange("pais", value)}
+          placeholder="Seleccione el país del proveedor"
+          error={errors.pais}
+          options={paisesOptions}
+        />
+
         <SelectField
           label="Moneda preferida"
           required
@@ -86,13 +98,13 @@ function FormularioProveedor({
 
         <div className="md:col-span-2">
           <InputField
-            label="Dirección"
-            required
+            label="Dirección exacta"
             value={proveedor.direccion}
             onChange={(value) => onChange("direccion", value)}
-            placeholder="Dirección general del proveedor"
+            placeholder="Opcional: ciudad, calle, edificio o referencia"
             maxLength={150}
             showCharacterCount
+            helperText="Este campo es opcional y se mostrará únicamente en el detalle del proveedor."
             error={errors.direccion}
           />
         </div>
