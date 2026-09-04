@@ -1,18 +1,22 @@
 import AlertMessage from "../common/AlertMessage";
 import InputField from "../common/InputField";
 import PrimaryButton from "../common/PrimaryButton";
-import SearchableSelectField from "../common/SearchableSelectField";
 import SelectField from "../common/SelectField";
-import { paisesOptions } from "../../data/paises";
 import type {
   MonedaCompra,
   PedidoCabeceraFormErrors,
   PedidoCompra,
 } from "./pedidos.types";
 
+type ProveedorPedidoOption = {
+  id: number;
+  nombre: string;
+  pais: string;
+};
+
 type FormularioPedidoProps = {
   pedido: PedidoCompra;
-  proveedores: Array<{ id: number; nombre: string }>;
+  proveedores: ProveedorPedidoOption[];
   errors: PedidoCabeceraFormErrors;
   alertMessage?: string | null;
   onChange: (field: keyof PedidoCompra, value: string) => void;
@@ -98,16 +102,6 @@ function FormularioPedido({
           error={errors.fecha}
         />
 
-        <SearchableSelectField
-          label="Origen"
-          value={pedido.origen}
-          onChange={(value) => onChange("origen", value)}
-          placeholder="Seleccione el país de origen"
-          required
-          error={errors.origen}
-          options={paisesOptions}
-        />
-
         <SelectField
           label="Proveedor"
           value={pedido.proveedorId ? String(pedido.proveedorId) : ""}
@@ -120,6 +114,34 @@ function FormularioPedido({
             label: item.nombre,
           }))}
         />
+
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+            País de origen<span className="ml-1 text-red-500">*</span>
+          </label>
+
+          <div
+            className={`flex min-h-[42px] items-center rounded-2xl border px-4 py-2.5 text-sm ${
+              errors.origen
+                ? "border-red-400 bg-red-50 text-red-700"
+                : pedido.origen
+                  ? "border-slate-300 bg-slate-50 font-semibold text-slate-800"
+                  : "border-slate-300 bg-slate-50 text-slate-400"
+            }`}
+          >
+            {pedido.origen || "Se completará al seleccionar el proveedor"}
+          </div>
+
+          {errors.origen ? (
+            <p className="mt-1 text-xs font-medium text-red-600">
+              {errors.origen}
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-slate-400">
+              Este dato se toma automáticamente del proveedor.
+            </p>
+          )}
+        </div>
 
         <SelectField
           label="Moneda"

@@ -59,6 +59,7 @@ export type Proveedor = {
   nombre: string;
   telefono: string;
   correo: string;
+  pais: string;
   direccion: string;
   monedaPreferida: MonedaPreferida;
   estado: EstadoProveedor;

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { ImAddressBook } from "react-icons/im";
+import { RiResetLeftFill } from "react-icons/ri";
 import {
   BsPersonFill,
   BsPersonFillCheck,
@@ -11,12 +12,14 @@ import PageHeader from "../common/PageHeader";
 import SectionCard from "../common/SectionCard";
 import StatCard from "../common/StatCard";
 import InputField from "../common/InputField";
+import SelectField from "../common/SelectField";
 import AppModal from "../common/AppModal";
 import AlertMessage from "../common/AlertMessage";
 import ConfirmDialog from "../common/ConfirmDialog";
 
 import BotonAgregarProveedor from "./BotonAgregarProveedor";
 import FormularioProveedor from "./FormularioProveedor";
+import ProveedorDetalleModal from "./ProveedorDetalleModal";
 import TablaProveedores from "./TablaProveedores";
 
 import {
@@ -27,6 +30,7 @@ import {
 } from "../../services/proveedoresApi";
 
 import {
+  monedaPreferidaOptions,
   monedasPermitidas,
   type EstadoProveedor,
   type MonedaPreferida,
@@ -40,12 +44,16 @@ const proveedorInicial: Proveedor = {
   nombre: "",
   telefono: "",
   correo: "",
+  pais: "",
   direccion: "",
   estado: "ACTIVO",
   monedaPreferida: "CRC",
 };
 
-const estadosPermitidos: EstadoProveedor[] = ["ACTIVO", "INACTIVO"];
+const estadosPermitidos: EstadoProveedor[] = [
+  "ACTIVO",
+  "INACTIVO",
+];
 
 type ModalMode = "create" | "edit";
 
@@ -55,12 +63,15 @@ type AlertState = {
   message: string;
 };
 
-function validarProveedor(proveedor: Proveedor): ProveedorFormErrors {
+function validarProveedor(
+  proveedor: Proveedor,
+): ProveedorFormErrors {
   const errors: ProveedorFormErrors = {};
 
   const nombre = proveedor.nombre.trim();
   const telefono = proveedor.telefono.trim();
   const correo = proveedor.correo.trim();
+  const pais = proveedor.pais.trim();
   const direccion = proveedor.direccion.trim();
 
   const correoValido = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -68,49 +79,72 @@ function validarProveedor(proveedor: Proveedor): ProveedorFormErrors {
   const soloDigitosTelefono = telefono.replace(/\D/g, "");
 
   if (!nombre) {
-    errors.nombre = "El nombre del proveedor es obligatorio.";
+    errors.nombre =
+      "El nombre del proveedor es obligatorio.";
   } else if (nombre.length > 40) {
-    errors.nombre = "El nombre no puede superar los 40 caracteres.";
+    errors.nombre =
+      "El nombre no puede superar los 40 caracteres.";
   }
 
   if (!telefono) {
     errors.telefono = "El teléfono es obligatorio.";
   } else if (telefono.length > 20) {
-    errors.telefono = "El teléfono no puede superar los 20 caracteres.";
+    errors.telefono =
+      "El teléfono no puede superar los 20 caracteres.";
   } else if (!telefonoValido.test(telefono)) {
     errors.telefono =
       "El teléfono solo puede incluir números, +, espacios, guiones o paréntesis.";
   } else if (soloDigitosTelefono.length < 8) {
-    errors.telefono = "El teléfono debe tener al menos 8 dígitos.";
+    errors.telefono =
+      "El teléfono debe tener al menos 8 dígitos.";
   } else if (soloDigitosTelefono.length > 15) {
-    errors.telefono = "El teléfono no debe tener más de 15 dígitos.";
+    errors.telefono =
+      "El teléfono no debe tener más de 15 dígitos.";
   }
 
   if (!correo) {
-    errors.correo = "El correo electrónico es obligatorio.";
+    errors.correo =
+      "El correo electrónico es obligatorio.";
   } else if (correo.length > 100) {
-    errors.correo = "El correo no puede superar los 100 caracteres.";
+    errors.correo =
+      "El correo no puede superar los 100 caracteres.";
   } else if (!correoValido.test(correo)) {
     errors.correo =
       "Ingresá un correo válido, por ejemplo proveedor@gmail.com.";
   }
 
-  if (!proveedor.estado) {
-    errors.estado = "Seleccioná un estado.";
-  } else if (!estadosPermitidos.includes(proveedor.estado)) {
-    errors.estado = "El estado seleccionado no es válido.";
+  if (!pais) {
+    errors.pais =
+      "Seleccioná el país de origen del proveedor.";
+  } else if (pais.length > 100) {
+    errors.pais =
+      "El país no puede superar los 100 caracteres.";
   }
 
-  if (!direccion) {
-    errors.direccion = "La dirección es obligatoria.";
-  } else if (direccion.length > 150) {
-    errors.direccion = "La dirección no puede superar los 150 caracteres.";
+  if (direccion.length > 150) {
+    errors.direccion =
+      "La dirección no puede superar los 150 caracteres.";
+  }
+
+  if (!proveedor.estado) {
+    errors.estado = "Seleccioná un estado.";
+  } else if (
+    !estadosPermitidos.includes(proveedor.estado)
+  ) {
+    errors.estado =
+      "El estado seleccionado no es válido.";
   }
 
   if (!proveedor.monedaPreferida) {
-    errors.monedaPreferida = "Seleccioná una moneda preferida.";
-  } else if (!monedasPermitidas.includes(proveedor.monedaPreferida)) {
-    errors.monedaPreferida = "La moneda seleccionada no es válida.";
+    errors.monedaPreferida =
+      "Seleccioná una moneda preferida.";
+  } else if (
+    !monedasPermitidas.includes(
+      proveedor.monedaPreferida,
+    )
+  ) {
+    errors.monedaPreferida =
+      "La moneda seleccionada no es válida.";
   }
 
   return errors;
@@ -123,44 +157,147 @@ function getErrorMessage(error: unknown) {
 }
 
 function ProveedoresPage() {
-  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+  const [proveedores, setProveedores] = useState<
+    Proveedor[]
+  >([]);
+
   const [busqueda, setBusqueda] = useState("");
+  const [filtroPais, setFiltroPais] = useState("");
+  const [filtroMoneda, setFiltroMoneda] = useState("");
+
+  const [filtroEstado, setFiltroEstado] =
+    useState<EstadoProveedor>("ACTIVO");
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const [modalProveedorAbierto, setModalProveedorAbierto] = useState(false);
-  const [modalMode, setModalMode] = useState<ModalMode>("create");
+  const [
+    modalProveedorAbierto,
+    setModalProveedorAbierto,
+  ] = useState(false);
 
-  const [proveedor, setProveedor] = useState<Proveedor>(proveedorInicial);
-  const [errors, setErrors] = useState<ProveedorFormErrors>({});
-  const [alerta, setAlerta] = useState<AlertState | null>(null);
+  const [modalMode, setModalMode] =
+    useState<ModalMode>("create");
 
-  const [proveedorAEliminar, setProveedorAEliminar] =
+  const [proveedor, setProveedor] =
+    useState<Proveedor>(proveedorInicial);
+
+  const [errors, setErrors] =
+    useState<ProveedorFormErrors>({});
+
+  const [alerta, setAlerta] =
+    useState<AlertState | null>(null);
+
+  const [proveedorDetalle, setProveedorDetalle] =
     useState<Proveedor | null>(null);
 
+  const [
+    proveedorAEliminar,
+    setProveedorAEliminar,
+  ] = useState<Proveedor | null>(null);
+
+  /**
+   * Solo muestra países que ya están asignados
+   * a por lo menos un proveedor.
+   */
+  const paisesRegistradosOptions = useMemo(() => {
+    const paises = new Set(
+      proveedores
+        .map((item) => item.pais.trim())
+        .filter(Boolean),
+    );
+
+    return Array.from(paises)
+      .sort((a, b) =>
+        a.localeCompare(b, "es", {
+          sensitivity: "base",
+        }),
+      )
+      .map((pais) => ({
+        value: pais,
+        label: pais,
+      }));
+  }, [proveedores]);
+
+  /**
+   * Solo muestra monedas utilizadas actualmente
+   * por uno o más proveedores.
+   */
+  const monedasRegistradasOptions = useMemo(() => {
+    const monedasRegistradas = new Set(
+      proveedores.map(
+        (item) => item.monedaPreferida,
+      ),
+    );
+
+    return monedaPreferidaOptions.filter((option) =>
+      monedasRegistradas.has(option.value),
+    );
+  }, [proveedores]);
+
+  /**
+   * El estado siempre se aplica.
+   * Por defecto filtroEstado es ACTIVO.
+   */
   const proveedoresFiltrados = useMemo(() => {
     const term = busqueda.trim().toLowerCase();
 
-    if (!term) {
-      return proveedores;
-    }
+    return proveedores.filter((item) => {
+      const coincideNombre = term
+        ? item.nombre
+            .toLowerCase()
+            .includes(term)
+        : true;
 
-    return proveedores.filter((item) =>
-      [item.nombre, item.correo, item.telefono, item.direccion]
-        .join(" ")
-        .toLowerCase()
-        .includes(term),
-    );
-  }, [busqueda, proveedores]);
+      const coincidePais = filtroPais
+        ? item.pais === filtroPais
+        : true;
+
+      const coincideMoneda = filtroMoneda
+        ? item.monedaPreferida === filtroMoneda
+        : true;
+
+      const coincideEstado =
+        item.estado === filtroEstado;
+
+      return (
+        coincideNombre &&
+        coincidePais &&
+        coincideMoneda &&
+        coincideEstado
+      );
+    });
+  }, [
+    busqueda,
+    filtroEstado,
+    filtroMoneda,
+    filtroPais,
+    proveedores,
+  ]);
+
+  /**
+   * El estado ACTIVO es el estado predeterminado,
+   * por eso no cuenta como filtro personalizado.
+   */
+  const hayFiltrosPersonalizados =
+    Boolean(busqueda.trim()) ||
+    Boolean(filtroPais) ||
+    Boolean(filtroMoneda) ||
+    filtroEstado !== "ACTIVO";
 
   const totalActivos = useMemo(
-    () => proveedores.filter((item) => item.estado === "ACTIVO").length,
+    () =>
+      proveedores.filter(
+        (item) => item.estado === "ACTIVO",
+      ).length,
     [proveedores],
   );
 
   const totalInactivos = useMemo(
-    () => proveedores.filter((item) => item.estado === "INACTIVO").length,
+    () =>
+      proveedores.filter(
+        (item) => item.estado === "INACTIVO",
+      ).length,
     [proveedores],
   );
 
@@ -200,12 +337,21 @@ function ProveedoresPage() {
     };
   }, []);
 
-  function mostrarAlerta(alertaNueva: AlertState) {
+  function mostrarAlerta(
+    alertaNueva: AlertState,
+  ) {
     setAlerta(alertaNueva);
 
     window.setTimeout(() => {
       setAlerta(null);
     }, 3500);
+  }
+
+  function restablecerFiltros() {
+    setBusqueda("");
+    setFiltroPais("");
+    setFiltroMoneda("");
+    setFiltroEstado("ACTIVO");
   }
 
   function abrirModalNuevoProveedor() {
@@ -216,9 +362,13 @@ function ProveedoresPage() {
     setModalProveedorAbierto(true);
   }
 
-  function abrirModalEditarProveedor(proveedorSeleccionado: Proveedor) {
+  function abrirModalEditarProveedor(
+    proveedorSeleccionado: Proveedor,
+  ) {
     setModalMode("edit");
-    setProveedor({ ...proveedorSeleccionado });
+    setProveedor({
+      ...proveedorSeleccionado,
+    });
     setErrors({});
     setAlerta(null);
     setModalProveedorAbierto(true);
@@ -256,9 +406,12 @@ function ProveedoresPage() {
   }
 
   async function guardarProveedor() {
-    const validationErrors = validarProveedor(proveedor);
+    const validationErrors =
+      validarProveedor(proveedor);
 
-    if (Object.keys(validationErrors).length > 0) {
+    if (
+      Object.keys(validationErrors).length > 0
+    ) {
       setErrors(validationErrors);
 
       mostrarAlerta({
@@ -275,19 +428,24 @@ function ProveedoresPage() {
       ...proveedor,
       nombre: proveedor.nombre.trim(),
       telefono: proveedor.telefono.trim(),
-      correo: proveedor.correo.trim().toLowerCase(),
+      correo: proveedor.correo
+        .trim()
+        .toLowerCase(),
+      pais: proveedor.pais.trim(),
       direccion: proveedor.direccion.trim(),
-      monedaPreferida: proveedor.monedaPreferida,
+      monedaPreferida:
+        proveedor.monedaPreferida,
     };
 
     setIsSaving(true);
 
     try {
       if (esEdicion) {
-        const proveedorActualizado = await actualizarProveedorApi(
-          proveedorLimpio.id,
-          proveedorLimpio,
-        );
+        const proveedorActualizado =
+          await actualizarProveedorApi(
+            proveedorLimpio.id,
+            proveedorLimpio,
+          );
 
         setProveedores((prev) =>
           prev.map((item) =>
@@ -304,9 +462,15 @@ function ProveedoresPage() {
             "Los cambios del proveedor se guardaron correctamente.",
         });
       } else {
-        const proveedorCreado = await crearProveedor(proveedorLimpio);
+        const proveedorCreado =
+          await crearProveedor(
+            proveedorLimpio,
+          );
 
-        setProveedores((prev) => [proveedorCreado, ...prev]);
+        setProveedores((prev) => [
+          proveedorCreado,
+          ...prev,
+        ]);
 
         mostrarAlerta({
           variant: "success",
@@ -334,7 +498,9 @@ function ProveedoresPage() {
   function abrirConfirmacionEliminar(
     proveedorSeleccionado: Proveedor,
   ) {
-    setProveedorAEliminar(proveedorSeleccionado);
+    setProveedorAEliminar(
+      proveedorSeleccionado,
+    );
   }
 
   function cerrarConfirmacionEliminar() {
@@ -347,10 +513,15 @@ function ProveedoresPage() {
     }
 
     try {
-      await eliminarProveedorApi(proveedorAEliminar.id);
+      await eliminarProveedorApi(
+        proveedorAEliminar.id,
+      );
 
       setProveedores((prev) =>
-        prev.filter((item) => item.id !== proveedorAEliminar.id),
+        prev.filter(
+          (item) =>
+            item.id !== proveedorAEliminar.id,
+        ),
       );
 
       mostrarAlerta({
@@ -379,7 +550,9 @@ function ProveedoresPage() {
         iconAriaLabel="Volver al inicio"
         action={
           <BotonAgregarProveedor
-            onClick={abrirModalNuevoProveedor}
+            onClick={
+              abrirModalNuevoProveedor
+            }
           />
         }
       />
@@ -396,7 +569,9 @@ function ProveedoresPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
           label="Total de proveedores"
-          value={String(proveedores.length)}
+          value={String(
+            proveedores.length,
+          )}
           hint="Cantidad total de proveedores registrados"
           icon={BsPersonFill}
           variant="info"
@@ -421,15 +596,106 @@ function ProveedoresPage() {
 
       <SectionCard
         title="Listado de proveedores"
-        description="Datos cargados directamente desde el backend."
+        description="Consultá el país directamente en la tabla y abrí el detalle para ver la dirección exacta."
       >
-        <div className="mb-4">
+        <div className="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <InputField
-            label="Buscar proveedor"
+            label="Filtrar por nombre"
             value={busqueda}
             onChange={setBusqueda}
-            placeholder="Nombre, correo, teléfono o dirección"
+            placeholder="Nombre del proveedor"
+            maxLength={1000}
           />
+
+          <SelectField
+            label="País"
+            value={filtroPais}
+            onChange={setFiltroPais}
+            placeholder="Todos los países"
+            options={
+              paisesRegistradosOptions
+            }
+          />
+
+          <SelectField
+            label="Moneda"
+            value={filtroMoneda}
+            onChange={setFiltroMoneda}
+            placeholder="Todas las monedas"
+            options={
+              monedasRegistradasOptions
+            }
+          />
+
+          <SelectField
+            label="Estado"
+            value={filtroEstado}
+            onChange={(value) =>
+              setFiltroEstado(
+                value as EstadoProveedor,
+              )
+            }
+            options={[
+              {
+                value: "ACTIVO",
+                label: "Activos",
+              },
+              {
+                value: "INACTIVO",
+                label: "Inactivos",
+              },
+            ]}
+          />
+
+          <div className="flex items-end">
+            <button
+              type="button"
+              onClick={
+                restablecerFiltros
+              }
+              disabled={
+                !hayFiltrosPersonalizados
+              }
+              className="
+                inline-flex
+                w-full
+                items-center
+                justify-center
+                gap-2
+                rounded-2xl
+                border
+                border-zinc-300
+                bg-white
+                px-4
+                py-2.5
+                text-sm
+                font-semibold
+                text-zinc-700
+                transition
+                duration-200
+                hover:-translate-y-0.5
+                hover:border-zinc-900
+                hover:bg-zinc-900
+                hover:text-white
+                hover:shadow-md
+                active:translate-y-0
+                active:scale-[0.98]
+                disabled:cursor-not-allowed
+                disabled:border-zinc-200
+                disabled:bg-zinc-100
+                disabled:text-zinc-400
+                disabled:shadow-none
+                disabled:hover:translate-y-0
+                disabled:hover:border-zinc-200
+                disabled:hover:bg-zinc-100
+                disabled:hover:text-zinc-400
+                disabled:hover:shadow-none
+              "
+            >
+              <RiResetLeftFill className="h-5 w-5" />
+
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -440,22 +706,49 @@ function ProveedoresPage() {
           </div>
         ) : (
           <TablaProveedores
-            proveedores={proveedoresFiltrados}
-            onEdit={abrirModalEditarProveedor}
-            onDelete={abrirConfirmacionEliminar}
+            proveedores={
+              proveedoresFiltrados
+            }
+            onView={
+              setProveedorDetalle
+            }
+            onEdit={
+              abrirModalEditarProveedor
+            }
+            onDelete={
+              abrirConfirmacionEliminar
+            }
           />
         )}
       </SectionCard>
 
+      <ProveedorDetalleModal
+        proveedor={proveedorDetalle}
+        isOpen={Boolean(
+          proveedorDetalle,
+        )}
+        onClose={() =>
+          setProveedorDetalle(null)
+        }
+      />
+
       <AppModal
-        isOpen={modalProveedorAbierto}
-        title={esEdicion ? "Editar proveedor" : "Nuevo proveedor"}
+        isOpen={
+          modalProveedorAbierto
+        }
+        title={
+          esEdicion
+            ? "Editar proveedor"
+            : "Nuevo proveedor"
+        }
         description={
           esEdicion
             ? "Modifica los datos del proveedor seleccionado."
             : "Los campos marcados con * son obligatorios."
         }
-        onClose={cerrarModalProveedor}
+        onClose={
+          cerrarModalProveedor
+        }
       >
         <FormularioProveedor
           proveedor={proveedor}
@@ -467,14 +760,20 @@ function ProveedoresPage() {
                 ? "Actualizar proveedor"
                 : "Guardar proveedor"
           }
-          onChange={actualizarProveedor}
+          onChange={
+            actualizarProveedor
+          }
           onSubmit={guardarProveedor}
-          onCancel={cerrarModalProveedor}
+          onCancel={
+            cerrarModalProveedor
+          }
         />
       </AppModal>
 
       <ConfirmDialog
-        isOpen={Boolean(proveedorAEliminar)}
+        isOpen={Boolean(
+          proveedorAEliminar,
+        )}
         title="Eliminar proveedor"
         message={
           proveedorAEliminar
@@ -484,8 +783,12 @@ function ProveedoresPage() {
         confirmLabel="Eliminar"
         cancelLabel="Cancelar"
         variant="danger"
-        onConfirm={eliminarProveedor}
-        onCancel={cerrarConfirmacionEliminar}
+        onConfirm={
+          eliminarProveedor
+        }
+        onCancel={
+          cerrarConfirmacionEliminar
+        }
       />
     </div>
   );
