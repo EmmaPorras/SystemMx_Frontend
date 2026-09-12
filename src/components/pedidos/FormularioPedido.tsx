@@ -174,8 +174,6 @@ function FormularioPedido({
           options={[
             { value: "REGISTRADO", label: "Registrado" },
             { value: "EN_TRANSITO", label: "En tránsito" },
-            { value: "RECIBIDO", label: "Recibido" },
-            { value: "CANCELADO", label: "Cancelado" },
           ]}
         />
 

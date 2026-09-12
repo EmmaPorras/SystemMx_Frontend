@@ -1,9 +1,14 @@
-import { FaEye, FaRegEdit } from "react-icons/fa";
-import { MdDelete } from "react-icons/md";
+import { FaEye } from "react-icons/fa";
+import { Ban, PackageCheck, Pencil } from "lucide-react";
 
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
+import TableActionButton from "../common/TableActionButton";
 import { formatCurrency } from "../common/formatters";
+import {
+  puedeCancelarPedido,
+  puedeRecibirPedido,
+} from "./recepcionPedido.utils";
 
 import type {
   EstadoPedidoCompra,
@@ -14,7 +19,8 @@ type TablaPedidosProps = {
   pedidos: PedidoCompra[];
   onView: (pedido: PedidoCompra) => void;
   onEdit: (pedido: PedidoCompra) => void;
-  onDelete: (pedido: PedidoCompra) => void;
+  onCancel: (pedido: PedidoCompra) => void;
+  onReceive: (pedido: PedidoCompra) => void;
 };
 
 function getEstadoPedidoLabel(estado: EstadoPedidoCompra) {
@@ -35,11 +41,19 @@ function getEstadoPedidoVariant(estado: EstadoPedidoCompra) {
   return "neutral" as const;
 }
 
+export function puedeEditarPedido(pedido: PedidoCompra): boolean {
+  return (
+    pedido.estado === "REGISTRADO" ||
+    pedido.estado === "EN_TRANSITO"
+  );
+}
+
 function TablaPedidos({
   pedidos,
   onView,
   onEdit,
-  onDelete,
+  onCancel,
+  onReceive,
 }: TablaPedidosProps) {
   return (
     <DataTableShell
@@ -123,35 +137,39 @@ function TablaPedidos({
       actionsHeader="Acciones"
       actions={(row) => (
         <>
-          <button
-            type="button"
+          <TableActionButton
+            label="Ver detalle"
+            variant="view"
+            icon={<FaEye size={17} />}
             onClick={() => onView(row)}
-            className="grid h-10 w-10 place-items-center rounded-xl border border-zinc-200 bg-white text-zinc-600 transition duration-200 hover:-translate-y-0.5 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white hover:shadow-md"
-            title="Ver detalle"
-            aria-label={`Ver detalle del pedido ${row.numeroPedido}`}
-          >
-            <FaEye className="h-4 w-4" />
-          </button>
+          />
 
-          <button
-            type="button"
-            onClick={() => onEdit(row)}
-            className="grid h-10 w-10 place-items-center rounded-xl border border-blue-200 bg-blue-50 text-blue-600 transition duration-200 hover:-translate-y-0.5 hover:border-blue-500 hover:bg-blue-600 hover:text-white hover:shadow-md"
-            title="Editar pedido"
-            aria-label={`Editar pedido ${row.numeroPedido}`}
-          >
-            <FaRegEdit className="h-4 w-4" />
-          </button>
+          {puedeRecibirPedido(row) ? (
+            <TableActionButton
+              label="Recibir mercancía"
+              variant="view"
+              icon={<PackageCheck size={17} />}
+              onClick={() => onReceive(row)}
+            />
+          ) : null}
 
-          <button
-            type="button"
-            onClick={() => onDelete(row)}
-            className="grid h-10 w-10 place-items-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition duration-200 hover:-translate-y-0.5 hover:border-red-500 hover:bg-red-600 hover:text-white hover:shadow-md"
-            title="Eliminar pedido"
-            aria-label={`Eliminar pedido ${row.numeroPedido}`}
-          >
-            <MdDelete className="h-5 w-5" />
-          </button>
+          {puedeEditarPedido(row) ? (
+            <TableActionButton
+              label="Editar pedido"
+              variant="edit"
+              icon={<Pencil size={17} />}
+              onClick={() => onEdit(row)}
+            />
+          ) : null}
+
+          {puedeCancelarPedido(row) ? (
+            <TableActionButton
+              label="Cancelar pedido"
+              variant="delete"
+              icon={<Ban size={17} />}
+              onClick={() => onCancel(row)}
+            />
+          ) : null}
         </>
       )}
     />

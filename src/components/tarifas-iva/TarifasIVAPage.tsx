@@ -297,25 +297,24 @@ function TarifasIVAPage() {
     try {
       await eliminarTarifaIvaApi(tarifaAEliminar.id);
 
-      setTarifas((prev) =>
-        prev.filter((item) => item.id !== tarifaAEliminar.id),
-      );
+      await cargarTarifas();
 
       setAlert({
         variant: "success",
-        title: "Tarifa eliminada",
-        message: "La tarifa IVA se eliminó correctamente.",
+        title: "Tarifa desactivada",
+        message:
+          "La tarifa IVA quedó inactiva correctamente.",
       });
 
       setTarifaAEliminar(null);
     } catch (error) {
       setAlert({
         variant: "error",
-        title: "Error al eliminar tarifa",
+        title: "No se pudo desactivar la tarifa",
         message:
           error instanceof Error
             ? error.message
-            : "No se pudo eliminar la tarifa IVA.",
+            : "No se pudo desactivar la tarifa IVA.",
       });
     }
   }
@@ -429,15 +428,15 @@ function TarifasIVAPage() {
 
       <ConfirmDialog
         isOpen={Boolean(tarifaAEliminar)}
-        title="Eliminar tarifa IVA"
+        title="Desactivar tarifa IVA"
         message={
           tarifaAEliminar
-            ? `¿Seguro que querés eliminar la tarifa "${tarifaAEliminar.codigo}"? Esta acción no se puede deshacer.`
+            ? `¿Seguro que querés desactivar la tarifa "${tarifaAEliminar.codigo}"? Dejará de estar disponible para nuevas operaciones, pero conservará su historial.`
             : ""
         }
-        confirmLabel="Eliminar"
+        confirmLabel="Desactivar"
         cancelLabel="Cancelar"
-        variant="danger"
+        variant="warning"
         onConfirm={confirmarEliminarTarifa}
         onCancel={() => setTarifaAEliminar(null)}
       />

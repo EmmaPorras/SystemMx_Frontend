@@ -1,4 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  Ban,
+  CircleDollarSign,
+  Plus,
+  ShoppingCart,
+  Users,
+} from "lucide-react";
+
 import AlertMessage from "../common/AlertMessage";
 import AppModal from "../common/AppModal";
 import ConfirmDialog from "../common/ConfirmDialog";
@@ -7,19 +21,24 @@ import PageHeader from "../common/PageHeader";
 import PrimaryButton from "../common/PrimaryButton";
 import SectionCard from "../common/SectionCard";
 import StatCard from "../common/StatCard";
+import StatusBadge from "../common/StatusBadge";
 import { formatCurrency } from "../common/formatters";
+
 import {
-  actualizarPagoVentaApi,
   anularVentaApi,
   crearVentaApi,
-  enviarVentaAPapeleraApi,
-  obtenerInventarioDisponibleVenta,
-  obtenerVentas,
+  enviarVentaPapeleraApi,
+  obtenerInventarioDisponibleVentaApi,
+  obtenerVentasApi,
   restaurarVentaApi,
 } from "../../services/ventasApi";
+
 import FormularioVenta from "./FormularioVenta";
+import HistorialPagosVenta from "./HistorialPagosVenta";
+import ModalRegistrarPago from "./ModalRegistrarPago";
 import TablaVentas from "./TablaVentas";
 import VentaDetalleTable from "./VentaDetalleTable";
+
 import type {
   CrearVentaPayload,
   InventarioDisponibleVenta,
@@ -27,13 +46,6 @@ import type {
 } from "./ventas.types";
 
 type VistaVentas = "ACTIVAS" | "DEUDORES" | "PAPELERA";
-
-function formatCurrencySinDecimales(value: number) {
-  return `₡${new Intl.NumberFormat("es-CR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Number.isFinite(value) ? value : 0)}`;
-}
 
 function getNumeroVentaSugerido(ventas: Venta[]) {
   const numeros = ventas
@@ -46,8 +58,7 @@ function getNumeroVentaSugerido(ventas: Venta[]) {
 }
 
 function VentasPage() {
-  const [ventasActivas, setVentasActivas] = useState<Venta[]>([]);
-  const [ventasPapelera, setVentasPapelera] = useState<Venta[]>([]);
+  const [ventas, setVentas] = useState<Venta[]>([]);
   const [inventarioDisponible, setInventarioDisponible] = useState<
     InventarioDisponibleVenta[]
   >([]);
@@ -62,59 +73,53 @@ function VentasPage() {
   const [pageAlert, setPageAlert] = useState<string | null>(null);
   const [modalAlert, setModalAlert] = useState<string | null>(null);
 
-  const [ventaParaAnular, setVentaParaAnular] = useState<Venta | null>(null);
   const [ventaParaDetalle, setVentaParaDetalle] = useState<Venta | null>(null);
+  const [ventaAPagar, setVentaAPagar] = useState<Venta | null>(null);
+  const [ventaAPapelera, setVentaAPapelera] = useState<Venta | null>(null);
+  const [ventaARestaurar, setVentaARestaurar] = useState<Venta | null>(null);
+  const [ventaAAnular, setVentaAAnular] = useState<Venta | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [historialRefreshKey, setHistorialRefreshKey] = useState(0);
 
-  async function cargarDatos() {
+  const cargarDatos = useCallback(async () => {
     try {
       setCargando(true);
+      setPageAlert(null);
 
-      const [ventasData, papeleraData, inventarioData] = await Promise.all([
-        obtenerVentas(),
-        obtenerVentas({ papelera: true }),
-        obtenerInventarioDisponibleVenta(),
+      const query = {
+        papelera: vista === "PAPELERA" ? true : undefined,
+        deudores: vista === "DEUDORES" ? true : undefined,
+      };
+
+      const [ventasData, inventarioData] = await Promise.all([
+        obtenerVentasApi(query),
+        obtenerInventarioDisponibleVentaApi(),
       ]);
 
-      setVentasActivas(ventasData);
-      setVentasPapelera(papeleraData);
+      setVentas(ventasData);
       setInventarioDisponible(inventarioData);
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : "No se pudieron cargar las ventas.";
+          : "No fue posible cargar las ventas.";
 
       setPageAlert(message);
     } finally {
       setCargando(false);
     }
-  }
+  }, [vista]);
 
   useEffect(() => {
-    cargarDatos();
-  }, []);
-
-  const ventasBase = useMemo(() => {
-    if (vista === "PAPELERA") return ventasPapelera;
-
-    if (vista === "DEUDORES") {
-      return ventasActivas.filter(
-        (venta) =>
-          venta.estadoVenta === "REGISTRADA" &&
-          venta.saldoPendiente > 0 &&
-          (venta.estadoPago === "PARCIAL" || venta.estadoPago === "EN_DEUDA"),
-      );
-    }
-
-    return ventasActivas;
-  }, [ventasActivas, ventasPapelera, vista]);
+    void cargarDatos();
+  }, [cargarDatos]);
 
   const ventasFiltradas = useMemo(() => {
     const term = busqueda.trim().toLowerCase();
 
-    if (!term) return ventasBase;
+    if (!term) return ventas;
 
-    return ventasBase.filter((venta) =>
+    return ventas.filter((venta) =>
       [
         venta.numeroVenta,
         venta.fechaVenta,
@@ -135,36 +140,18 @@ function VentasPage() {
         .toLowerCase()
         .includes(term),
     );
-  }, [busqueda, ventasBase]);
+  }, [busqueda, ventas]);
 
-  const ventasRegistradas = ventasActivas.filter(
-    (venta) => venta.estadoVenta === "REGISTRADA",
-  );
+  const ventasConDeuda = ventas.filter(
+    (venta) =>
+      venta.estadoVenta === "REGISTRADA" &&
+      !venta.enPapelera &&
+      venta.saldoPendiente > 0,
+  ).length;
 
-  const totalVendido = ventasRegistradas.reduce(
-    (acc, venta) => acc + venta.totalVenta,
-    0,
-  );
-
-  const gananciaBruta = ventasRegistradas.reduce(
-    (acc, venta) => acc + venta.gananciaBruta,
-    0,
-  );
-
-  const deudaTotal = ventasRegistradas.reduce(
-    (acc, venta) => acc + venta.saldoPendiente,
-    0,
-  );
-
-  const productosVendidos = ventasRegistradas.reduce(
-    (acc, venta) =>
-      acc +
-      venta.detalles.reduce(
-        (detalleAcc, detalle) => detalleAcc + detalle.cantidad,
-        0,
-      ),
-    0,
-  );
+  const ventasAnuladas = ventas.filter(
+    (venta) => venta.estadoVenta === "ANULADA",
+  ).length;
 
   function abrirModalNuevaVenta() {
     setModalAlert(null);
@@ -197,56 +184,78 @@ function VentasPage() {
     }
   }
 
-  async function enviarAPapelera(venta: Venta) {
+  async function confirmarPapelera() {
+    if (!ventaAPapelera) return;
+
     try {
-      await enviarVentaAPapeleraApi(venta.id);
+      setActionLoading(true);
+      await enviarVentaPapeleraApi(ventaAPapelera.id);
+      setVentaAPapelera(null);
       await cargarDatos();
     } catch (error) {
-      const message =
+      setPageAlert(
         error instanceof Error
           ? error.message
-          : "No se pudo enviar la venta a papelera.";
-
-      setPageAlert(message);
+          : "No fue posible enviar la venta a papelera.",
+      );
+    } finally {
+      setActionLoading(false);
     }
   }
 
-  async function restaurarVenta(venta: Venta) {
+  async function confirmarRestauracion() {
+    if (!ventaARestaurar) return;
+
     try {
-      await restaurarVentaApi(venta.id);
+      setActionLoading(true);
+      await restaurarVentaApi(ventaARestaurar.id);
+      setVentaARestaurar(null);
       await cargarDatos();
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "No se pudo restaurar la venta.";
-
-      setPageAlert(message);
+      setPageAlert(
+        error instanceof Error
+          ? error.message
+          : "No fue posible restaurar la venta.",
+      );
+    } finally {
+      setActionLoading(false);
     }
   }
 
-  async function marcarPagada(venta: Venta) {
+  async function confirmarAnulacion() {
+    if (!ventaAAnular) return;
+
     try {
-      await actualizarPagoVentaApi(venta.id, venta.totalVenta);
+      setActionLoading(true);
+      await anularVentaApi(ventaAAnular.id);
+      setVentaAAnular(null);
       await cargarDatos();
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "No se pudo actualizar el pago.";
-
-      setPageAlert(message);
+      setPageAlert(
+        error instanceof Error
+          ? error.message
+          : "No fue posible anular la venta.",
+      );
+    } finally {
+      setActionLoading(false);
     }
   }
 
-  async function confirmarAnularVenta() {
-    if (!ventaParaAnular) return;
+  function handlePagoSuccess(ventaActualizada: Venta) {
+    setVentas((current) =>
+      current.map((v) =>
+        v.id === ventaActualizada.id ? ventaActualizada : v,
+      ),
+    );
 
-    try {
-      await anularVentaApi(ventaParaAnular.id);
-      setVentaParaAnular(null);
-      await cargarDatos();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "No se pudo anular la venta.";
+    if (ventaParaDetalle && ventaParaDetalle.id === ventaActualizada.id) {
+      setVentaParaDetalle(ventaActualizada);
+      setHistorialRefreshKey((prev) => prev + 1);
+    }
 
-      setPageAlert(message);
+    setVentaAPagar(null);
+    if (vista === "DEUDORES") {
+      void cargarDatos();
     }
   }
 
@@ -254,10 +263,14 @@ function VentasPage() {
     <div className="space-y-6">
       <PageHeader
         title="Ventas"
-        description="Registra ventas, descuenta inventario por FIFO o lote manual, calcula IVA, ganancia real y controla deudores."
+        description="Registrá ventas, gestioná cobros y consultá el historial oficial."
+        icon={ShoppingCart}
         action={
           <PrimaryButton onClick={abrirModalNuevaVenta}>
-            + Nueva venta
+            <span className="flex items-center gap-1.5">
+              <Plus size={18} />
+              <span>Nueva venta</span>
+            </span>
           </PrimaryButton>
         }
       />
@@ -271,105 +284,140 @@ function VentasPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-4">
         <StatCard
-          label="Ventas registradas"
-          value={String(ventasRegistradas.length)}
-          hint="Ventas activas no anuladas"
+          label="Total en vista"
+          value={String(ventas.length)}
+          hint={
+            vista === "PAPELERA"
+              ? "Ventas en papelera"
+              : vista === "DEUDORES"
+                ? "Ventas con deuda activa"
+                : "Ventas registradas"
+          }
+          icon={ShoppingCart}
+          variant="info"
         />
 
         <StatCard
-          label="Total vendido"
-          value={formatCurrencySinDecimales(totalVendido)}
-          hint="Incluye IVA cobrado"
+          label="Con saldo pendiente"
+          value={String(ventasConDeuda)}
+          hint="Ventas que registran deuda"
+          icon={CircleDollarSign}
+          variant="warning"
         />
 
         <StatCard
-          label="Ganancia bruta"
-          value={formatCurrencySinDecimales(gananciaBruta)}
-          hint="Sin contar IVA como ganancia"
+          label="Lotes disponibles"
+          value={String(inventarioDisponible.length)}
+          hint="Lotes en stock para venta"
+          icon={Users}
+          variant="success"
         />
 
         <StatCard
-          label="Morosos / deudas"
-          value={formatCurrencySinDecimales(deudaTotal)}
-          hint="Saldo pendiente activo"
-        />
-
-        <StatCard
-          label="Productos vendidos"
-          value={String(productosVendidos)}
-          hint="Unidades vendidas"
+          label="Anuladas"
+          value={String(ventasAnuladas)}
+          hint="Ventas anuladas formalmente"
+          icon={Ban}
+          variant="neutral"
         />
       </div>
 
       <SectionCard
         title="Listado de ventas"
-        description="Filtra ventas activas, deudores o ventas enviadas a papelera."
+        description="Gestión oficial de ventas generadas y sus cobros asociados."
       >
-        <div className="mb-4 grid gap-4 lg:grid-cols-[1fr_auto]">
-          <InputField
-            label="Buscar venta"
-            value={busqueda}
-            onChange={setBusqueda}
-            placeholder="Venta, cliente, producto, lote, estado o método de pago"
-          />
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-4">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setVista("ACTIVAS");
+                setBusqueda("");
+              }}
+              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                vista === "ACTIVAS"
+                  ? "bg-zinc-950 text-white"
+                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+              }`}
+            >
+              Ventas activas
+            </button>
 
-          <div className="flex flex-wrap items-end gap-2">
-            {[
-              { value: "ACTIVAS", label: "Activas" },
-              { value: "DEUDORES", label: "Deudores" },
-              { value: "PAPELERA", label: "Papelera" },
-            ].map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => setVista(item.value as VistaVentas)}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  vista === item.value
-                    ? "bg-slate-900 text-white"
-                    : "border border-slate-300 text-slate-700 hover:bg-slate-100"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={() => {
+                setVista("DEUDORES");
+                setBusqueda("");
+              }}
+              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                vista === "DEUDORES"
+                  ? "bg-zinc-950 text-white"
+                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+              }`}
+            >
+              Deudores
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setVista("PAPELERA");
+                setBusqueda("");
+              }}
+              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                vista === "PAPELERA"
+                  ? "bg-zinc-950 text-white"
+                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+              }`}
+            >
+              Papelera
+            </button>
+          </div>
+
+          <div className="w-full sm:w-72">
+            <InputField
+              label="Buscar venta"
+              value={busqueda}
+              onChange={setBusqueda}
+              placeholder="Número, cliente, producto o detalle"
+            />
           </div>
         </div>
 
         {cargando ? (
-          <div className="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center">
-            <p className="text-sm font-medium text-slate-500">
-              Cargando ventas...
-            </p>
+          <div className="grid min-h-[220px] place-items-center rounded-2xl border border-zinc-200 bg-white">
+            <div className="text-center">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-zinc-950" />
+              <p className="mt-4 text-sm font-semibold text-zinc-600">
+                Cargando ventas...
+              </p>
+            </div>
           </div>
         ) : (
           <TablaVentas
             ventas={ventasFiltradas}
-            vistaPapelera={vista === "PAPELERA"}
-            onVerDetalle={setVentaParaDetalle}
-            onEnviarPapelera={enviarAPapelera}
-            onRestaurar={restaurarVenta}
-            onAnular={setVentaParaAnular}
-            onMarcarPagada={marcarPagada}
+            onView={(venta) => setVentaParaDetalle(venta)}
+            onPay={(venta) => setVentaAPagar(venta)}
+            onTrash={(venta) => setVentaAPapelera(venta)}
+            onRestore={(venta) => setVentaARestaurar(venta)}
+            onVoid={(venta) => setVentaAAnular(venta)}
           />
         )}
       </SectionCard>
 
       <AppModal
         isOpen={modalAbierto}
+        title="Registrar nueva venta"
+        description="Creación de venta con descuento de inventario según modo FIFO o lote manual."
         onClose={cerrarModal}
-        title="Nueva venta"
-        description="Primero agrega los productos vendidos. Después registra cliente, método de pago y monto recibido."
         maxWidthClassName="max-w-6xl"
       >
         <FormularioVenta
           key={formKey}
           inventarioDisponible={inventarioDisponible}
-          numeroVentaSugerido={getNumeroVentaSugerido([
-            ...ventasActivas,
-            ...ventasPapelera,
-          ])}
+          numeroVentaSugerido={getNumeroVentaSugerido(ventas)}
           alertMessage={modalAlert}
           guardando={guardando}
           onSubmit={guardarVenta}
@@ -378,68 +426,199 @@ function VentasPage() {
       </AppModal>
 
       <AppModal
-        isOpen={Boolean(ventaParaDetalle)}
+        isOpen={ventaParaDetalle !== null}
+        title="Detalle de venta"
+        description={
+          ventaParaDetalle
+            ? `Venta #${ventaParaDetalle.numeroVenta} · ${ventaParaDetalle.fechaVenta}`
+            : "Información de la venta"
+        }
         onClose={() => setVentaParaDetalle(null)}
-        title={`Detalle de venta ${ventaParaDetalle?.numeroVenta ?? ""}`}
-        description="Cada línea representa el lote real descontado del inventario."
-        maxWidthClassName="max-w-6xl"
+        maxWidthClassName="max-w-5xl"
       >
         {ventaParaDetalle ? (
-          <div className="space-y-5">
-            <div className="grid gap-3 md:grid-cols-4">
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase text-slate-500">
-                  Cliente
-                </p>
-                <p className="mt-1 font-bold text-slate-950">
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 pb-4">
+              <div>
+                <p className="text-xl font-bold text-zinc-950">
                   {ventaParaDetalle.clienteNombre || "Venta mostrador"}
+                </p>
+                <p className="mt-0.5 text-sm text-zinc-500">
+                  Método de pago: {ventaParaDetalle.medioPago}
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase text-slate-500">
-                  Total
+              <div className="flex items-center gap-2">
+                <StatusBadge
+                  label={ventaParaDetalle.estadoPago}
+                  variant={
+                    ventaParaDetalle.estadoPago === "PAGADA"
+                      ? "success"
+                      : ventaParaDetalle.estadoPago === "PARCIAL" ||
+                          ventaParaDetalle.estadoPago === "EN_DEUDA"
+                        ? "warning"
+                        : "danger"
+                  }
+                />
+
+                <StatusBadge
+                  label={ventaParaDetalle.estadoVenta}
+                  variant={
+                    ventaParaDetalle.estadoVenta === "REGISTRADA"
+                      ? "success"
+                      : "danger"
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs font-semibold uppercase text-zinc-500">
+                  Subtotal
                 </p>
-                <p className="mt-1 font-bold text-slate-950">
+                <p className="mt-1 text-base font-bold text-zinc-950">
+                  {formatCurrency(ventaParaDetalle.subtotal)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs font-semibold uppercase text-zinc-500">
+                  IVA Total
+                </p>
+                <p className="mt-1 text-base font-bold text-zinc-950">
+                  {formatCurrency(ventaParaDetalle.ivaTotal)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs font-semibold uppercase text-zinc-500">
+                  Total Venta
+                </p>
+                <p className="mt-1 text-base font-bold text-zinc-950">
                   {formatCurrency(ventaParaDetalle.totalVenta)}
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase text-slate-500">
-                  Ganancia
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+                <p className="text-xs font-semibold uppercase text-zinc-500">
+                  Saldo Pendiente
                 </p>
-                <p className="mt-1 font-bold text-slate-950">
-                  {formatCurrency(ventaParaDetalle.gananciaBruta)}
-                </p>
-              </div>
-
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold uppercase text-slate-500">
-                  Saldo
-                </p>
-                <p className="mt-1 font-bold text-slate-950">
+                <p
+                  className={`mt-1 text-base font-bold ${
+                    ventaParaDetalle.saldoPendiente > 0
+                      ? "text-amber-700"
+                      : "text-zinc-950"
+                  }`}
+                >
                   {formatCurrency(ventaParaDetalle.saldoPendiente)}
                 </p>
               </div>
             </div>
 
-            <VentaDetalleTable detalles={ventaParaDetalle.detalles} />
+            {ventaParaDetalle.observaciones?.trim() ? (
+              <div className="rounded-2xl border border-zinc-200 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  Observaciones
+                </p>
+                <p className="mt-1 text-sm text-zinc-700">
+                  {ventaParaDetalle.observaciones}
+                </p>
+              </div>
+            ) : null}
+
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold uppercase tracking-wider text-zinc-500">
+                Productos y detalles
+              </h4>
+              <VentaDetalleTable detalles={ventaParaDetalle.detalles} />
+            </div>
+
+            <div className="space-y-3 border-t border-zinc-200 pt-5">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-bold uppercase tracking-wider text-zinc-500">
+                  Historial de pagos
+                </h4>
+
+                {ventaParaDetalle.saldoPendiente > 0 &&
+                ventaParaDetalle.estadoVenta === "REGISTRADA" &&
+                !ventaParaDetalle.enPapelera ? (
+                  <PrimaryButton
+                    onClick={() => setVentaAPagar(ventaParaDetalle)}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <CircleDollarSign size={16} />
+                      <span>Registrar pago</span>
+                    </span>
+                  </PrimaryButton>
+                ) : null}
+              </div>
+
+              <HistorialPagosVenta
+                ventaId={ventaParaDetalle.id}
+                refreshKey={historialRefreshKey}
+              />
+            </div>
           </div>
         ) : null}
       </AppModal>
 
+      <ModalRegistrarPago
+        isOpen={ventaAPagar !== null}
+        venta={ventaAPagar}
+        onClose={() => setVentaAPagar(null)}
+        onSuccess={handlePagoSuccess}
+      />
+
       <ConfirmDialog
-        isOpen={Boolean(ventaParaAnular)}
+        isOpen={ventaAPapelera !== null}
+        title="Enviar venta a papelera"
+        message={
+          ventaAPapelera
+            ? `¿Querés enviar la venta #${ventaAPapelera.numeroVenta} a la papelera? Esta operación no anula la venta ni restaura inventario.`
+            : ""
+        }
+        confirmLabel={actionLoading ? "Enviando..." : "Enviar a papelera"}
+        cancelLabel="Cancelar"
+        variant="warning"
+        onConfirm={confirmarPapelera}
+        onCancel={() => {
+          if (!actionLoading) setVentaAPapelera(null);
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={ventaARestaurar !== null}
+        title="Restaurar venta"
+        message={
+          ventaARestaurar
+            ? `¿Querés restaurar la venta #${ventaARestaurar.numeroVenta} desde la papelera?`
+            : ""
+        }
+        confirmLabel={actionLoading ? "Restaurando..." : "Restaurar"}
+        cancelLabel="Cancelar"
+        variant="warning"
+        onConfirm={confirmarRestauracion}
+        onCancel={() => {
+          if (!actionLoading) setVentaARestaurar(null);
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={ventaAAnular !== null}
         title="Anular venta"
-        message={`¿Seguro que desea anular la venta ${
-          ventaParaAnular?.numeroVenta ?? ""
-        }? Esta acción devuelve el stock a los lotes correspondientes.`}
-        confirmLabel="Anular"
+        message={
+          ventaAAnular
+            ? `¿Seguro que querés anular la venta #${ventaAAnular.numeroVenta}? El backend restaurará el inventario correspondiente y conservará el historial de la operación.`
+            : ""
+        }
+        confirmLabel={actionLoading ? "Anulando..." : "Anular venta"}
         cancelLabel="Cancelar"
         variant="danger"
-        onConfirm={confirmarAnularVenta}
-        onCancel={() => setVentaParaAnular(null)}
+        onConfirm={confirmarAnulacion}
+        onCancel={() => {
+          if (!actionLoading) setVentaAAnular(null);
+        }}
       />
     </div>
   );

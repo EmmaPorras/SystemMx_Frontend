@@ -1,53 +1,316 @@
+import {
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  BarChart3,
+} from "lucide-react";
+
+import AlertMessage from "../common/AlertMessage";
 import PageHeader from "../common/PageHeader";
-import StatCard from "../common/StatCard";
-import { formatCurrency } from "../common/formatters";
-import { reporteResumenMock } from "../../data/mockData";
-import ReporteInventarioActual from "./ReporteInventarioActual";
-import ReporteRentabilidad from "./ReporteRentabilidad";
-import ReporteVentasMensuales from "./ReporteVentasMensuales";
-import TablaProductosMasVendidos from "./TablaProductosMasVendidos";
+import PrimaryButton from "../common/PrimaryButton";
+import SectionCard from "../common/SectionCard";
+import SelectField from "../common/SelectField";
+
+import ReportFilters, {
+  type ReportFilterValues,
+} from "./ReportFilters";
+
+import ReportResultView from "./ReportResultView";
+
+import {
+  reportesCatalog,
+  reportFamilyLabels,
+  type ReportFamily,
+} from "./reportes.catalog";
+
+function fechaActual(): string {
+  const now = new Date();
+
+  return [
+    now.getFullYear(),
+
+    String(
+      now.getMonth() + 1,
+    ).padStart(2, "0"),
+
+    String(
+      now.getDate(),
+    ).padStart(2, "0"),
+  ].join("-");
+}
+
+const INITIAL_FILTERS:
+  ReportFilterValues = {
+  fechaDesde: "",
+  fechaHasta: "",
+  fechaCorte: fechaActual(),
+  usuarioId: "",
+  tipoMovimiento: "",
+};
 
 function ReportesPage() {
+  const [family, setFamily] =
+    useState<ReportFamily>(
+      "resumen",
+    );
+
+  const familyReports =
+    useMemo(
+      () =>
+        reportesCatalog.filter(
+          (report) =>
+            report.family === family,
+        ),
+      [family],
+    );
+
+  const [
+    selectedReportId,
+    setSelectedReportId,
+  ] = useState("resumen");
+
+  const [filters, setFilters] =
+    useState<ReportFilterValues>(
+      INITIAL_FILTERS,
+    );
+
+  const [result, setResult] =
+    useState<unknown>(null);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  const selectedReport =
+    useMemo(
+      () =>
+        reportesCatalog.find(
+          (report) =>
+            report.id ===
+            selectedReportId,
+        ) ??
+        familyReports[0] ??
+        null,
+      [
+        selectedReportId,
+        familyReports,
+      ],
+    );
+
+  function handleFamilyChange(
+    value: string,
+  ) {
+    const nextFamily =
+      value as ReportFamily;
+
+    const first =
+      reportesCatalog.find(
+        (report) =>
+          report.family ===
+          nextFamily,
+      );
+
+    setFamily(nextFamily);
+
+    if (first) {
+      setSelectedReportId(
+        first.id,
+      );
+    }
+
+    setFilters(INITIAL_FILTERS);
+    setResult(null);
+    setError(null);
+  }
+
+  async function consultar() {
+    if (!selectedReport) {
+      return;
+    }
+
+    if (
+      filters.fechaDesde &&
+      filters.fechaHasta &&
+      filters.fechaDesde >
+        filters.fechaHasta
+    ) {
+      setError(
+        "La fecha desde no puede ser posterior a la fecha hasta.",
+      );
+
+      return;
+    }
+
+    if (
+      selectedReport.filterMode ===
+        "fechaCorte" &&
+      !filters.fechaCorte
+    ) {
+      setError(
+        "Seleccione una fecha de corte.",
+      );
+
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const response =
+        await selectedReport.load(
+          filters,
+        );
+
+      setResult(response);
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "No fue posible consultar el reporte.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Reportes"
-        description="Vista inicial de indicadores clave: ventas, inventario, rotación y rentabilidad por pedido."
+        description="Centro analítico de ventas, inventario, compras, pagos y auditoría."
+        icon={BarChart3}
       />
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard
-          label="Ventas del mes"
-          value={formatCurrency(reporteResumenMock.ventasDelMes)}
-          hint="Se alimentará de ventas registradas"
-        />
-        <StatCard
-          label="Inversión pendiente"
-          value={formatCurrency(reporteResumenMock.inversionPendiente)}
-          hint="Capital aún no recuperado"
-        />
-        <StatCard
-          label="Utilidad estimada"
-          value={formatCurrency(reporteResumenMock.utilidadEstimada)}
-          hint="Resumen para seguimiento"
-        />
-        <StatCard
-          label="Baja rotación"
-          value={String(reporteResumenMock.productosBajaRotacion)}
-          hint="Productos que se mueven lento"
-        />
-      </div>
+      <SectionCard
+        title="Seleccionar reporte"
+        description="Todos los datos son calculados por el backend."
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <SelectField
+            label="Familia"
+            value={family}
+            onChange={
+              handleFamilyChange
+            }
+            options={Object.entries(
+              reportFamilyLabels,
+            ).map(
+              ([value, label]) => ({
+                value,
+                label,
+              }),
+            )}
+          />
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <ReporteVentasMensuales ventasDelMes={reporteResumenMock.ventasDelMes} />
-        <ReporteInventarioActual
-          productosBajaRotacion={reporteResumenMock.productosBajaRotacion}
+          <SelectField
+            label="Reporte"
+            value={
+              selectedReport?.id ?? ""
+            }
+            onChange={(value) => {
+              setSelectedReportId(
+                value,
+              );
+
+              setResult(null);
+              setError(null);
+            }}
+            options={familyReports.map(
+              (report) => ({
+                value: report.id,
+                label: report.label,
+              }),
+            )}
+          />
+        </div>
+
+        {selectedReport ? (
+          <div className="mt-5 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+            <p className="font-semibold text-zinc-950">
+              {selectedReport.label}
+            </p>
+
+            <p className="mt-1 text-sm text-zinc-500">
+              {
+                selectedReport.description
+              }
+            </p>
+          </div>
+        ) : null}
+
+        {selectedReport ? (
+          <div className="mt-6">
+            <ReportFilters
+              mode={
+                selectedReport.filterMode
+              }
+              value={filters}
+              onChange={setFilters}
+            />
+          </div>
+        ) : null}
+
+        <div className="mt-6">
+          <PrimaryButton
+            onClick={() => {
+              void consultar();
+            }}
+          >
+            Consultar reporte
+          </PrimaryButton>
+        </div>
+      </SectionCard>
+
+      {error ? (
+        <AlertMessage
+          variant="error"
+          title="No fue posible cargar el reporte"
+          message={error}
+          onClose={() =>
+            setError(null)
+          }
         />
-        <TablaProductosMasVendidos productos={reporteResumenMock.productosMasVendidos} />
-        <ReporteRentabilidad
-          rentabilidadPorPedido={reporteResumenMock.rentabilidadPorPedido}
-        />
-      </div>
+      ) : null}
+
+      <SectionCard
+        title={
+          selectedReport?.label ??
+          "Resultado"
+        }
+        description="Información oficial devuelta por SystemMx."
+      >
+        {loading ? (
+          <div className="grid min-h-[240px] place-items-center">
+            <div className="text-center">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-zinc-950" />
+
+              <p className="mt-4 text-sm font-semibold text-zinc-600">
+                Consultando reporte...
+              </p>
+            </div>
+          </div>
+        ) : result !== null ? (
+          <ReportResultView
+            data={result}
+          />
+        ) : (
+          <div className="py-12 text-center">
+            <BarChart3
+              className="mx-auto h-8 w-8 text-zinc-300"
+            />
+
+            <p className="mt-3 text-sm font-semibold text-zinc-500">
+              Seleccione los filtros y consulte el reporte.
+            </p>
+          </div>
+        )}
+      </SectionCard>
     </div>
   );
 }

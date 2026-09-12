@@ -1,42 +1,148 @@
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
 import { formatCurrency } from "../common/formatters";
-import type { LoteInventario } from "./lotes.types";
+
+import type {
+  EstadoLoteInventario,
+  LoteInventario,
+} from "./lotes.types";
 
 type TablaLotesProps = {
   lotes: LoteInventario[];
 };
 
-function TablaLotes({ lotes }: TablaLotesProps) {
+function getEstadoVariant(
+  estado: EstadoLoteInventario,
+): "success" | "warning" | "neutral" | "danger" {
+  switch (estado) {
+    case "EN_STOCK":
+      return "success";
+
+    case "EN_PROCESO":
+      return "warning";
+
+    case "VENDIDO_PARCIAL":
+      return "neutral";
+
+    case "AGOTADO":
+      return "neutral";
+  }
+}
+
+function getEstadoLabel(
+  estado: EstadoLoteInventario,
+): string {
+  switch (estado) {
+    case "EN_PROCESO":
+      return "EN PROCESO";
+
+    case "EN_STOCK":
+      return "EN STOCK";
+
+    case "VENDIDO_PARCIAL":
+      return "VENDIDO PARCIAL";
+
+    case "AGOTADO":
+      return "AGOTADO";
+  }
+}
+
+function TablaLotes({
+  lotes,
+}: TablaLotesProps) {
   return (
     <DataTableShell
       data={lotes}
-      emptyMessage="Todavía no hay lotes registrados."
+      emptyMessage="No hay lotes que coincidan con los filtros."
+      getRowKey={(row) => row.idLote}
       columns={[
-        { key: "id", header: "ID", render: (row) => row.id },
-        { key: "pedido", header: "Pedido", render: (row) => row.pedidoNumero },
-        { key: "producto", header: "Producto", render: (row) => row.productoNombre },
-        { key: "cantidad", header: "Cantidad inicial", render: (row) => row.cantidadInicial },
-        { key: "stock", header: "Stock restante", render: (row) => row.stockRestante },
+        {
+          key: "lote",
+          header: "Lote",
+          render: (row) => (
+            <div>
+              <p className="font-semibold text-zinc-950">
+                {row.codigoLote}
+              </p>
+
+              <p className="mt-0.5 text-xs text-zinc-500">
+                ID {row.idLote}
+              </p>
+            </div>
+          ),
+        },
+        {
+          key: "producto",
+          header: "Producto",
+          render: (row) =>
+            row.producto?.nombre ??
+            `Producto #${row.idProducto}`,
+        },
+        {
+          key: "pedido",
+          header: "Pedido",
+          render: (row) =>
+            row.pedido
+              ? `#${row.pedido.numeroPedido}`
+              : `ID ${row.idPedido}`,
+        },
+        {
+          key: "cantidades",
+          header: "Inventario",
+          render: (row) => (
+            <div className="space-y-0.5 text-sm">
+              <p>
+                Disponible:{" "}
+                <span className="font-semibold">
+                  {row.cantidadDisponible}
+                </span>
+              </p>
+
+              <p className="text-xs text-zinc-500">
+                Recibida: {row.cantidadRecibida}
+              </p>
+
+              <p className="text-xs text-zinc-500">
+                Vendida: {row.cantidadVendida}
+              </p>
+            </div>
+          ),
+        },
+        {
+          key: "pendiente",
+          header: "Pendiente recepción",
+          render: (row) =>
+            String(
+              row.cantidadPendienteRecepcion,
+            ),
+        },
         {
           key: "costo",
           header: "Costo unitario",
-          render: (row) => formatCurrency(row.costoUnitario),
+          render: (row) =>
+            formatCurrency(
+              row.costoUnitarioReal,
+            ),
         },
-        { key: "fecha", header: "Fecha ingreso", render: (row) => row.fechaIngreso },
+        {
+          key: "precio",
+          header: "Precio recomendado",
+          render: (row) =>
+            formatCurrency(
+              row.precioVentaRecomendado,
+            ),
+        },
         {
           key: "estado",
           header: "Estado",
           render: (row) => (
             <StatusBadge
-              label={row.estado}
-              variant={
-                row.estado === "ACTIVO"
-                  ? "success"
-                  : row.estado === "PENDIENTE"
-                    ? "warning"
-                    : "danger"
-              }
+              label={getEstadoLabel(
+                row.estadoLote,
+              )}
+              variant={getEstadoVariant(
+                row.estadoLote,
+              )}
             />
           ),
         },

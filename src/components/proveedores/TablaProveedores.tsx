@@ -140,16 +140,18 @@ function TablaProveedores({
             }
           />
 
-          <TableActionButton
-            label="Eliminar proveedor"
-            variant="delete"
-            icon={
-              <MdDelete className="h-5 w-5" />
-            }
-            onClick={() =>
-              onDelete(row)
-            }
-          />
+          {row.estado === "ACTIVO" ? (
+            <TableActionButton
+              label="Desactivar proveedor"
+              variant="delete"
+              icon={
+                <MdDelete className="h-5 w-5" />
+              }
+              onClick={() =>
+                onDelete(row)
+              }
+            />
+          ) : null}
         </>
       )}
     />

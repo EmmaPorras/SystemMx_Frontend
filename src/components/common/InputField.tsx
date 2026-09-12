@@ -1,6 +1,6 @@
 type InputFieldProps = {
   label: string;
-  value: string;
+  value: string | number;
   onChange: (value: string) => void;
   type?: string;
   placeholder?: string;
@@ -11,6 +11,9 @@ type InputFieldProps = {
   showCharacterCount?: boolean;
   prefix?: string;
   disabled?: boolean;
+  min?: number | string;
+  max?: number | string;
+  step?: number | string;
 };
 
 function InputField({
@@ -26,8 +29,12 @@ function InputField({
   showCharacterCount = false,
   prefix,
   disabled = false,
+  min,
+  max,
+  step,
 }: InputFieldProps) {
   const hasPrefix = Boolean(prefix);
+  const valueLength = String(value).length;
 
   return (
     <div>
@@ -50,6 +57,9 @@ function InputField({
           placeholder={placeholder}
           maxLength={maxLength}
           disabled={disabled}
+          min={min}
+          max={max}
+          step={step}
           aria-invalid={Boolean(error)}
           className={`w-full rounded-2xl border py-2.5 text-sm outline-none transition disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 ${
             hasPrefix ? "pl-10 pr-4" : "px-4"
@@ -73,10 +83,10 @@ function InputField({
         {showCharacterCount && maxLength ? (
           <p
             className={`shrink-0 text-xs ${
-              value.length >= maxLength ? "text-red-500" : "text-slate-400"
+              valueLength >= maxLength ? "text-red-500" : "text-slate-400"
             }`}
           >
-            {value.length}/{maxLength}
+            {valueLength}/{maxLength}
           </p>
         ) : null}
       </div>

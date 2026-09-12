@@ -61,12 +61,14 @@ function TablaTarifas({ tarifas, onEdit, onDelete }: TablaTarifasProps) {
             onClick={() => onEdit(row)}
           />
 
-          <TableActionButton
-            label="Eliminar tarifa"
-            variant="delete"
-            icon={<Trash2 size={17} />}
-            onClick={() => onDelete(row)}
-          />
+          {row.estado === "ACTIVA" ? (
+            <TableActionButton
+              label="Desactivar tarifa"
+              variant="delete"
+              icon={<Trash2 size={17} />}
+              onClick={() => onDelete(row)}
+            />
+          ) : null}
         </>
       )}
     />

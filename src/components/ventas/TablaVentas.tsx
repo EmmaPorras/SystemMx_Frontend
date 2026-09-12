@@ -1,17 +1,36 @@
-import { Ban, CheckCircle2, Eye, RotateCcw, Trash2 } from "lucide-react";
+import {
+  Ban,
+  CircleDollarSign,
+  Eye,
+  RotateCcw,
+  Trash2,
+} from "lucide-react";
+
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
+import TableActionButton from "../common/TableActionButton";
 import { formatCurrency } from "../common/formatters";
-import type { EstadoPagoVenta, EstadoVenta, Venta } from "./ventas.types";
+
+import {
+  puedeAnularVenta,
+  puedeEnviarPapelera,
+  puedeRegistrarPago,
+  puedeRestaurarVenta,
+} from "./ventas.utils";
+
+import type {
+  EstadoPagoVenta,
+  EstadoVenta,
+  Venta,
+} from "./ventas.types";
 
 type TablaVentasProps = {
   ventas: Venta[];
-  vistaPapelera: boolean;
-  onVerDetalle: (venta: Venta) => void;
-  onEnviarPapelera: (venta: Venta) => void;
-  onRestaurar: (venta: Venta) => void;
-  onAnular: (venta: Venta) => void;
-  onMarcarPagada: (venta: Venta) => void;
+  onView: (venta: Venta) => void;
+  onPay: (venta: Venta) => void;
+  onTrash: (venta: Venta) => void;
+  onRestore: (venta: Venta) => void;
+  onVoid: (venta: Venta) => void;
 };
 
 function getEstadoPagoLabel(estado: EstadoPagoVenta) {
@@ -25,7 +44,9 @@ function getEstadoPagoLabel(estado: EstadoPagoVenta) {
   return labels[estado];
 }
 
-function getEstadoPagoVariant(estado: EstadoPagoVenta) {
+function getEstadoPagoVariant(
+  estado: EstadoPagoVenta,
+): "success" | "warning" | "danger" | "neutral" {
   if (estado === "PAGADA") return "success";
   if (estado === "PARCIAL" || estado === "EN_DEUDA") return "warning";
   return "danger";
@@ -40,56 +61,25 @@ function getEstadoVentaLabel(estado: EstadoVenta) {
   return labels[estado];
 }
 
-function getEstadoVentaVariant(estado: EstadoVenta) {
+function getEstadoVentaVariant(
+  estado: EstadoVenta,
+): "success" | "warning" | "danger" | "neutral" {
   if (estado === "REGISTRADA") return "success";
   return "danger";
 }
 
-function IconActionButton({
-  label,
-  onClick,
-  children,
-  variant = "neutral",
-}: {
-  label: string;
-  onClick: () => void;
-  children: React.ReactNode;
-  variant?: "neutral" | "success" | "danger";
-}) {
-  const variantClassName = {
-    neutral:
-      "border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-950",
-    success:
-      "border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800",
-    danger: "border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700",
-  }[variant];
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className={`rounded-full border p-2 transition ${variantClassName}`}
-    >
-      {children}
-    </button>
-  );
-}
-
 function TablaVentas({
   ventas,
-  vistaPapelera,
-  onVerDetalle,
-  onEnviarPapelera,
-  onRestaurar,
-  onAnular,
-  onMarcarPagada,
+  onView,
+  onPay,
+  onTrash,
+  onRestore,
+  onVoid,
 }: TablaVentasProps) {
   return (
     <DataTableShell
       data={ventas}
-      emptyMessage="Todavía no hay ventas registradas."
+      emptyMessage="No hay ventas que coincidan con los filtros."
       getRowKey={(row) => String(row.id)}
       columns={[
         {
@@ -97,10 +87,10 @@ function TablaVentas({
           header: "Venta",
           render: (row) => (
             <div>
-              <p className="font-semibold text-slate-900">
-                Venta {row.numeroVenta}
+              <p className="font-semibold text-zinc-950">
+                Venta #{row.numeroVenta}
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-zinc-500">
                 {row.detalles.length} detalle(s)
               </p>
             </div>
@@ -117,19 +107,28 @@ function TablaVentas({
           render: (row) => row.clienteNombre || "Venta mostrador",
         },
         {
+          key: "medioPago",
+          header: "Método",
+          render: (row) => row.medioPago,
+        },
+        {
           key: "total",
           header: "Total",
           render: (row) => formatCurrency(row.totalVenta),
         },
         {
-          key: "ganancia",
-          header: "Ganancia",
-          render: (row) => formatCurrency(row.gananciaBruta),
+          key: "pagado",
+          header: "Pagado",
+          render: (row) => formatCurrency(row.montoPagado),
         },
         {
           key: "saldo",
           header: "Saldo",
-          render: (row) => formatCurrency(row.saldoPendiente),
+          render: (row) => (
+            <span className={row.saldoPendiente > 0 ? "font-bold text-amber-700" : ""}>
+              {formatCurrency(row.saldoPendiente)}
+            </span>
+          ),
         },
         {
           key: "estadoPago",
@@ -153,46 +152,49 @@ function TablaVentas({
         },
       ]}
       actions={(row) => (
-        <div className="flex flex-wrap justify-end gap-2">
-          <IconActionButton label="Ver detalle" onClick={() => onVerDetalle(row)}>
-            <Eye className="h-4 w-4" />
-          </IconActionButton>
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <TableActionButton
+            label="Ver detalle"
+            variant="view"
+            icon={<Eye size={17} />}
+            onClick={() => onView(row)}
+          />
 
-          {row.saldoPendiente > 0 && row.estadoVenta !== "ANULADA" ? (
-            <IconActionButton
-              label="Marcar como pagada"
-              onClick={() => onMarcarPagada(row)}
-              variant="success"
-            >
-              <CheckCircle2 className="h-4 w-4" />
-            </IconActionButton>
+          {puedeRegistrarPago(row) ? (
+            <TableActionButton
+              label="Registrar pago"
+              variant="edit"
+              icon={<CircleDollarSign size={17} />}
+              onClick={() => onPay(row)}
+            />
           ) : null}
 
-          {row.estadoVenta !== "ANULADA" ? (
-            <IconActionButton
-              label="Anular venta"
-              onClick={() => onAnular(row)}
-              variant="danger"
-            >
-              <Ban className="h-4 w-4" />
-            </IconActionButton>
-          ) : null}
-
-          {vistaPapelera ? (
-            <IconActionButton
-              label="Restaurar venta"
-              onClick={() => onRestaurar(row)}
-            >
-              <RotateCcw className="h-4 w-4" />
-            </IconActionButton>
-          ) : (
-            <IconActionButton
+          {puedeEnviarPapelera(row) ? (
+            <TableActionButton
               label="Enviar a papelera"
-              onClick={() => onEnviarPapelera(row)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </IconActionButton>
-          )}
+              variant="delete"
+              icon={<Trash2 size={17} />}
+              onClick={() => onTrash(row)}
+            />
+          ) : null}
+
+          {puedeRestaurarVenta(row) ? (
+            <TableActionButton
+              label="Restaurar venta"
+              variant="edit"
+              icon={<RotateCcw size={17} />}
+              onClick={() => onRestore(row)}
+            />
+          ) : null}
+
+          {puedeAnularVenta(row) ? (
+            <TableActionButton
+              label="Anular venta"
+              variant="delete"
+              icon={<Ban size={17} />}
+              onClick={() => onVoid(row)}
+            />
+          ) : null}
         </div>
       )}
     />

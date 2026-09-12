@@ -148,11 +148,13 @@ function calcularLineaTemporal(detalle: VentaDetalleForm) {
   };
 }
 
+
+
 function calcularInventarioAjustado(
   inventarioDisponible: InventarioDisponibleVenta[],
   detalles: VentaDetalleForm[],
   detalleEditandoId: string | null,
-) {
+): InventarioDisponibleVenta[] {
   const lotes = inventarioDisponible
     .map((lote) => ({
       ...lote,
@@ -170,6 +172,10 @@ function calcularInventarioAjustado(
     (detalle) => detalle.idTemporal !== detalleEditandoId,
   );
 
+  const stockMap = new Map<number, number>(
+    lotes.map((lote) => [lote.loteId, lote.cantidadDisponible]),
+  );
+
   detallesReservados.forEach((detalle) => {
     const productoId = Number(detalle.productoId);
     let cantidadPendiente = Number(detalle.cantidad);
@@ -179,33 +185,31 @@ function calcularInventarioAjustado(
     }
 
     if (detalle.modoDescuentoLote === "MANUAL" && detalle.loteId) {
-      const lote = lotes.find((item) => item.loteId === Number(detalle.loteId));
-
-      if (lote) {
-        lote.cantidadDisponible = Math.max(
-          lote.cantidadDisponible - cantidadPendiente,
-          0,
-        );
-      }
-
+      const loteId = Number(detalle.loteId);
+      const stockActual = stockMap.get(loteId) ?? 0;
+      stockMap.set(loteId, Math.max(stockActual - cantidadPendiente, 0));
       return;
     }
 
     for (const lote of lotes) {
       if (cantidadPendiente <= 0) break;
+      if (lote.productoId !== productoId) continue;
 
-      if (lote.productoId !== productoId || lote.cantidadDisponible <= 0) {
-        continue;
-      }
+      const stockActual = stockMap.get(lote.loteId) ?? 0;
+      if (stockActual <= 0) continue;
 
-      const cantidadUsada = Math.min(lote.cantidadDisponible, cantidadPendiente);
-
-      lote.cantidadDisponible -= cantidadUsada;
+      const cantidadUsada = Math.min(stockActual, cantidadPendiente);
+      stockMap.set(lote.loteId, stockActual - cantidadUsada);
       cantidadPendiente -= cantidadUsada;
     }
   });
 
-  return lotes.filter((lote) => lote.cantidadDisponible > 0);
+  return lotes
+    .map((lote) => ({
+      ...lote,
+      cantidadDisponible: stockMap.get(lote.loteId) ?? 0,
+    }))
+    .filter((lote) => lote.cantidadDisponible > 0);
 }
 
 function FormularioVenta({

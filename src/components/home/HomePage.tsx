@@ -1,42 +1,67 @@
-import type { ElementType } from "react";
-
-import { TbMotorbikeFilled, TbReportMoney } from "react-icons/tb";
-import { ImAddressBook } from "react-icons/im";
-import { AiOutlinePercentage } from "react-icons/ai";
-import { GrDropbox } from "react-icons/gr";
-import { PiAirplaneTiltFill } from "react-icons/pi";
-import { FaBoxesStacked } from "react-icons/fa6";
-import { GiSellCard } from "react-icons/gi";
-
-import PageHeader from "../common/PageHeader";
-import StatCard from "../common/StatCard";
-import ModuleCard from "./ModuleCard";
-import { navigationItems } from "../common/navigation";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import {
-  productosMock,
-  pedidosMock,
-  ventasMock,
-  reporteResumenMock,
-} from "../../data/mockData";
+  Boxes,
+  CircleDollarSign,
+  PackageCheck,
+  ReceiptText,
+  ShoppingCart,
+  WalletCards,
+} from "lucide-react";
 
+import { TbMotorbikeFilled } from "react-icons/tb";
+
+import AlertMessage from "../common/AlertMessage";
+import PageHeader from "../common/PageHeader";
+import PrimaryButton from "../common/PrimaryButton";
+import StatCard from "../common/StatCard";
+import ModuleCard from "./ModuleCard";
+
+import { navigationItems } from "../common/navigation";
 import { formatCurrency } from "../common/formatters";
 
-/**
- * Íconos visuales para cada módulo.
- * Las rutas y funcionalidades se mantienen sin cambios.
- */
-const moduleIcons: Record<string, ElementType> = {
-  "/proveedores": ImAddressBook,
-  "/tarifas-iva": AiOutlinePercentage,
-  "/productos": GrDropbox,
-  "/pedidos": PiAirplaneTiltFill,
-  "/lotes": FaBoxesStacked,
-  "/ventas": GiSellCard,
-  "/reportes": TbReportMoney,
-};
+import { obtenerResumenDashboard } from "../../services/dashboardApi";
+
+import type { ResumenDashboard } from "./dashboard.types";
 
 function HomePage() {
+  const [resumen, setResumen] =
+    useState<ResumenDashboard | null>(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  async function cargarResumen() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await obtenerResumenDashboard();
+
+      setResumen(data);
+    } catch (requestError) {
+      setResumen(null);
+
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "No fue posible cargar el resumen del sistema.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void cargarResumen();
+  }, []);
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -45,7 +70,24 @@ function HomePage() {
         icon={TbMotorbikeFilled}
       />
 
-      {/* Resumen general */}
+      {error ? (
+        <div className="space-y-3">
+          <AlertMessage
+            variant="error"
+            title="No fue posible cargar el Dashboard"
+            message={error}
+          />
+
+          <PrimaryButton
+            onClick={() => {
+              void cargarResumen();
+            }}
+          >
+            Reintentar
+          </PrimaryButton>
+        </div>
+      ) : null}
+
       <section className="space-y-4">
         <div className="flex items-center gap-4">
           <h2 className="shrink-0 text-xs font-bold uppercase tracking-[0.22em] text-zinc-500 sm:text-sm">
@@ -55,46 +97,109 @@ function HomePage() {
           <div className="h-px flex-1 bg-zinc-200" />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {/* Primero: Pedidos registrados */}
-          <StatCard
-            label="Pedidos registrados"
-            value={String(pedidosMock.length)}
-            hint="Compras de inventario por proveedor y origen"
-            icon={PiAirplaneTiltFill}
-            variant="info"
-          />
+        {loading ? (
+          <div className="grid min-h-[220px] place-items-center rounded-2xl border border-zinc-200 bg-white">
+            <div className="text-center">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-zinc-950" />
 
-          {/* Segundo: Productos activos */}
-          <StatCard
-            label="Productos activos"
-            value={String(productosMock.length)}
-            hint="Catálogo principal para ventas e inventario"
-            icon={GrDropbox}
-            variant="success"
-          />
+              <p className="mt-4 text-sm font-semibold text-zinc-600">
+                Cargando resumen...
+              </p>
+            </div>
+          </div>
+        ) : resumen ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label="Ventas registradas"
+              value={String(resumen.ventas.cantidad)}
+              hint={`Ventas acumuladas por ${formatCurrency(
+                resumen.ventas.total,
+              )}`}
+              icon={ShoppingCart}
+              variant="success"
+            />
 
-          {/* Tercero: Ventas registradas */}
-          <StatCard
-            label="Ventas registradas"
-            value={String(ventasMock.length)}
-            hint="Salidas listas para conectar con FIFO"
-            icon={GiSellCard}
-            variant="success"
-          />
+            <StatCard
+              label="Ganancia bruta"
+              value={formatCurrency(
+                resumen.ventas.gananciaBruta,
+              )}
+              hint={`Margen bruto: ${resumen.ventas.margenBrutoPorcentaje.toFixed(
+                2,
+              )}%`}
+              icon={CircleDollarSign}
+              variant="success"
+            />
 
-          {/* Cuarto: Utilidad estimada */}
-          <StatCard
-            label="Utilidad estimada"
-            value={formatCurrency(reporteResumenMock.utilidadEstimada)}
-            hint="Dato de ejemplo para el dashboard"
-            icon={TbReportMoney}
-            variant="success"
-          />
-        </div>
+            <StatCard
+              label="Inventario disponible"
+              value={String(
+                resumen.inventario.unidadesDisponibles,
+              )}
+              hint={`${resumen.inventario.lotesConStock} lotes con stock`}
+              icon={Boxes}
+              variant="info"
+            />
+
+            <StatCard
+              label="Cuentas por cobrar"
+              value={formatCurrency(
+                resumen.cuentasPorCobrar.saldo,
+              )}
+              hint={`${resumen.cuentasPorCobrar.ventasConSaldo} ventas con saldo pendiente`}
+              icon={WalletCards}
+              variant={
+                resumen.cuentasPorCobrar.saldo > 0
+                  ? "warning"
+                  : "neutral"
+              }
+            />
+
+            <StatCard
+              label="Pedidos registrados"
+              value={String(resumen.pedidos.total)}
+              hint={`${resumen.pedidos.pendientes} pedidos pendientes`}
+              icon={ReceiptText}
+              variant="info"
+            />
+
+            <StatCard
+              label="Pedidos recibidos"
+              value={String(resumen.pedidos.recibidos)}
+              hint={`${resumen.pedidos.enTransito} pedidos en tránsito`}
+              icon={PackageCheck}
+              variant="success"
+            />
+
+            <StatCard
+              label="Saldo pendiente ventas"
+              value={formatCurrency(
+                resumen.ventas.saldoPendiente,
+              )}
+              hint={`Pagado: ${formatCurrency(
+                resumen.ventas.montoPagado,
+              )}`}
+              icon={WalletCards}
+              variant={
+                resumen.ventas.saldoPendiente > 0
+                  ? "warning"
+                  : "neutral"
+              }
+            />
+
+            <StatCard
+              label="Valor del inventario"
+              value={formatCurrency(
+                resumen.inventario.valorCosto,
+              )}
+              hint="Valor actual del inventario disponible a costo"
+              icon={Boxes}
+              variant="neutral"
+            />
+          </div>
+        ) : null}
       </section>
 
-      {/* Módulos del sistema */}
       <section className="space-y-4">
         <div className="flex items-center gap-4">
           <div className="min-w-0">
@@ -119,7 +224,7 @@ function HomePage() {
                 title={item.label}
                 description={item.description}
                 to={item.path}
-                icon={moduleIcons[item.path]}
+                icon={item.icon}
               />
             ))}
         </div>

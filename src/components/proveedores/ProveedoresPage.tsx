@@ -518,23 +518,27 @@ function ProveedoresPage() {
       );
 
       setProveedores((prev) =>
-        prev.filter(
-          (item) =>
-            item.id !== proveedorAEliminar.id,
+        prev.map((item) =>
+          item.id === proveedorAEliminar.id
+            ? {
+                ...item,
+                estado: "INACTIVO",
+              }
+            : item,
         ),
       );
 
       mostrarAlerta({
         variant: "success",
-        title: "Proveedor eliminado",
-        message: `El proveedor "${proveedorAEliminar.nombre}" fue eliminado correctamente.`,
+        title: "Proveedor desactivado",
+        message: `El proveedor "${proveedorAEliminar.nombre}" quedó inactivo correctamente.`,
       });
 
       setProveedorAEliminar(null);
     } catch (error) {
       mostrarAlerta({
         variant: "error",
-        title: "No se pudo eliminar",
+        title: "No se pudo desactivar",
         message: getErrorMessage(error),
       });
     }
@@ -774,15 +778,15 @@ function ProveedoresPage() {
         isOpen={Boolean(
           proveedorAEliminar,
         )}
-        title="Eliminar proveedor"
+        title="Desactivar proveedor"
         message={
           proveedorAEliminar
-            ? `¿Seguro que querés eliminar por completo el proveedor "${proveedorAEliminar.nombre}"? Esta acción no se puede deshacer.`
+            ? `¿Seguro que querés desactivar el proveedor "${proveedorAEliminar.nombre}"? Ya no estará disponible para nuevos pedidos, pero conservará su historial.`
             : ""
         }
-        confirmLabel="Eliminar"
+        confirmLabel="Desactivar"
         cancelLabel="Cancelar"
-        variant="danger"
+        variant="warning"
         onConfirm={
           eliminarProveedor
         }

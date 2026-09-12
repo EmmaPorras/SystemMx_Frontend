@@ -1,127 +1,108 @@
+import { apiClient } from "../api/apiClient";
+
+import type { QueryParams } from "../api/api.types";
+
 import type {
   CrearVentaPayload,
   InventarioDisponibleVenta,
+  PagoVenta,
+  RegistrarPagoVentaPayload,
   Venta,
+  VentasQuery,
 } from "../components/ventas/ventas.types";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001/api";
-
-type ApiErrorResponse = {
-  message?: string | string[];
-  error?: string;
-  statusCode?: number;
-};
-
-type ObtenerVentasFilters = {
-  papelera?: boolean;
-  deudores?: boolean;
-};
-
-function isApiErrorResponse(data: unknown): data is ApiErrorResponse {
-  return typeof data === "object" && data !== null && "message" in data;
-}
-
-function getApiErrorMessage(data: unknown): string {
-  if (!isApiErrorResponse(data)) {
-    return "Ocurrió un error inesperado.";
-  }
-
-  if (Array.isArray(data.message)) {
-    return data.message.join(" ");
-  }
-
-  return data.message || data.error || "Ocurrió un error inesperado.";
-}
-
-async function parseResponse<T>(response: Response): Promise<T> {
-  const data: unknown = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(getApiErrorMessage(data));
-  }
-
-  return data as T;
-}
-
-function buildQueryParams(filters?: ObtenerVentasFilters) {
-  const params = new URLSearchParams();
-
-  if (filters?.papelera) {
-    params.set("papelera", "true");
-  }
-
-  if (filters?.deudores) {
-    params.set("deudores", "true");
-  }
-
-  const query = params.toString();
-
-  return query ? `?${query}` : "";
-}
-
-export async function obtenerVentas(
-  filters?: ObtenerVentasFilters,
+export function obtenerVentasApi(
+  query: VentasQuery = {},
 ): Promise<Venta[]> {
-  const response = await fetch(`${API_URL}/ventas${buildQueryParams(filters)}`);
-  return parseResponse<Venta[]>(response);
+  return apiClient.get<Venta[]>(
+    "/ventas",
+    query as unknown as QueryParams,
+  );
 }
 
-export async function obtenerInventarioDisponibleVenta(): Promise<
+export function obtenerVentaApi(
+  id: number,
+): Promise<Venta> {
+  return apiClient.get<Venta>(
+    `/ventas/${id}`,
+  );
+}
+
+export function obtenerInventarioDisponibleVentaApi(): Promise<
   InventarioDisponibleVenta[]
 > {
-  const response = await fetch(`${API_URL}/ventas/inventario-disponible`);
-  return parseResponse<InventarioDisponibleVenta[]>(response);
+  return apiClient.get<
+    InventarioDisponibleVenta[]
+  >(
+    "/ventas/inventario-disponible",
+  );
 }
 
-export async function crearVentaApi(
-  venta: CrearVentaPayload,
+export function crearVentaApi(
+  payload: CrearVentaPayload,
 ): Promise<Venta> {
-  const response = await fetch(`${API_URL}/ventas`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(venta),
-  });
-
-  return parseResponse<Venta>(response);
+  return apiClient.post<
+    Venta,
+    CrearVentaPayload
+  >(
+    "/ventas",
+    payload,
+  );
 }
 
-export async function actualizarPagoVentaApi(
+export function obtenerPagosVentaApi(
   id: number,
-  montoPagado: number,
+): Promise<PagoVenta[]> {
+  return apiClient.get<PagoVenta[]>(
+    `/ventas/${id}/pagos`,
+  );
+}
+
+export function registrarPagoVentaApi(
+  id: number,
+  payload: RegistrarPagoVentaPayload,
 ): Promise<Venta> {
-  const response = await fetch(`${API_URL}/ventas/${id}/pago`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ montoPagado }),
-  });
-
-  return parseResponse<Venta>(response);
+  return apiClient.post<
+    Venta,
+    RegistrarPagoVentaPayload
+  >(
+    `/ventas/${id}/pagos`,
+    payload,
+  );
 }
 
-export async function enviarVentaAPapeleraApi(id: number): Promise<Venta> {
-  const response = await fetch(`${API_URL}/ventas/${id}/papelera`, {
-    method: "PATCH",
-  });
-
-  return parseResponse<Venta>(response);
+export function enviarVentaPapeleraApi(
+  id: number,
+): Promise<Venta> {
+  return apiClient.patch<
+    Venta,
+    Record<string, never>
+  >(
+    `/ventas/${id}/papelera`,
+    {},
+  );
 }
 
-export async function restaurarVentaApi(id: number): Promise<Venta> {
-  const response = await fetch(`${API_URL}/ventas/${id}/restaurar`, {
-    method: "PATCH",
-  });
-
-  return parseResponse<Venta>(response);
+export function restaurarVentaApi(
+  id: number,
+): Promise<Venta> {
+  return apiClient.patch<
+    Venta,
+    Record<string, never>
+  >(
+    `/ventas/${id}/restaurar`,
+    {},
+  );
 }
 
-export async function anularVentaApi(id: number): Promise<Venta> {
-  const response = await fetch(`${API_URL}/ventas/${id}/anular`, {
-    method: "PATCH",
-  });
-
-  return parseResponse<Venta>(response);
+export function anularVentaApi(
+  id: number,
+): Promise<Venta> {
+  return apiClient.patch<
+    Venta,
+    Record<string, never>
+  >(
+    `/ventas/${id}/anular`,
+    {},
+  );
 }

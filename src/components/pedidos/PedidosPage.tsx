@@ -16,17 +16,17 @@ import { formatCurrency } from "../common/formatters";
 import { obtenerProveedores } from "../../services/proveedoresApi";
 import {
   actualizarPedidoApi,
+  cancelarPedidoApi,
   crearPedidoApi,
-  eliminarPedidoApi,
   obtenerPedidos,
 } from "../../services/pedidosApi";
 import FormularioDetallePedido from "./FormularioDetallePedido";
 import FormularioPedido from "./FormularioPedido";
+import ModalRecepcionPedido from "./ModalRecepcionPedido";
 import PedidoDetalleTable from "./PedidoDetalleTable";
 import ProductoPedidoFilter from "./ProductoPedidoFilter";
-import TablaPedidos from "./TablaPedidos";
+import TablaPedidos, { puedeEditarPedido } from "./TablaPedidos";
 import type {
-  EstadoLoteProducto,
   MonedaCompra,
   PedidoCabeceraFormErrors,
   PedidoCompra,
@@ -62,10 +62,6 @@ const detalleInicial: PedidoDetalleForm = {
   precioVentaRecomendado: "",
   estadoLote: "EN_PROCESO",
 };
-
-function contarDigitos(value: string) {
-  return value.replace(/\D/g, "").length;
-}
 
 function limpiarEntero(value: string, maxDigits: number) {
   return value.replace(/\D/g, "").slice(0, maxDigits);
@@ -107,54 +103,6 @@ function getNumber(value: unknown, fallback = 0) {
   return Number.isFinite(numberValue) ? numberValue : fallback;
 }
 
-function estadoPermiteCantidadRecibida(estado: EstadoLoteProducto) {
-  return estado === "EN_STOCK" || estado === "VENDIDO_PARCIAL";
-}
-
-function calcularResumenRecepcion(
-  estadoLote: EstadoLoteProducto,
-  cantidad: number,
-  cantidadRecibidaActual: string,
-  cantidadRecibidaPrevia: string,
-) {
-  const recibidaPrevia = getNumber(cantidadRecibidaPrevia);
-  const recibidaActual = getNumber(cantidadRecibidaActual);
-
-  if (estadoLote === "EN_PROCESO") {
-    return {
-      cantidadRecibidaTotal: 0,
-      cantidadPendiente: cantidad,
-      cantidadDisponible: 0,
-    };
-  }
-
-  if (estadoLote === "AGOTADO") {
-    const cantidadRecibidaTotal = recibidaPrevia + recibidaActual;
-
-    return {
-      cantidadRecibidaTotal,
-      cantidadPendiente: Math.max(cantidad - cantidadRecibidaTotal, 0),
-      cantidadDisponible: 0,
-    };
-  }
-
-  if (estadoPermiteCantidadRecibida(estadoLote)) {
-    const cantidadRecibidaTotal = recibidaPrevia + recibidaActual;
-
-    return {
-      cantidadRecibidaTotal,
-      cantidadPendiente: Math.max(cantidad - cantidadRecibidaTotal, 0),
-      cantidadDisponible: cantidadRecibidaTotal,
-    };
-  }
-
-  return {
-    cantidadRecibidaTotal: 0,
-    cantidadPendiente: cantidad,
-    cantidadDisponible: 0,
-  };
-}
-
 function PedidosPage() {
   const [filtroProducto, setFiltroProducto] = useState("");
   const [filtroNumeroPedido, setFiltroNumeroPedido] = useState("");
@@ -179,7 +127,8 @@ function PedidosPage() {
 
   const [pedido, setPedido] = useState<PedidoCompra>({ ...pedidoInicial });
   const [pedidoEditandoId, setPedidoEditandoId] = useState<number | null>(null);
-  const [pedidoParaEliminar, setPedidoParaEliminar] =
+  const [pedidoRecepcionId, setPedidoRecepcionId] = useState<number | null>(null);
+  const [pedidoACancelar, setPedidoACancelar] =
     useState<PedidoCompra | null>(null);
 
   const [detalleForm, setDetalleForm] =
@@ -334,6 +283,10 @@ function PedidosPage() {
   }
 
   function abrirModalEditarPedido(pedidoSeleccionado: PedidoCompra) {
+    if (!puedeEditarPedido(pedidoSeleccionado)) {
+      return;
+    }
+
     setPedido({
       ...pedidoSeleccionado,
       detalles: pedidoSeleccionado.detalles.map((detalle) => ({
@@ -440,26 +393,9 @@ function PedidosPage() {
       }
 
       if (field === "cantidad") {
-        const cantidadLimpia = limpiarEntero(value, 5);
-        const cantidad = getNumber(cantidadLimpia);
-        const recibidaPrevia = getNumber(prev.cantidadRecibidaPrevia);
-        const recibidaActual = getNumber(prev.cantidadRecibida);
-        const maxActual = Math.max(cantidad - recibidaPrevia, 0);
-
         return {
           ...prev,
-          cantidad: cantidadLimpia,
-          cantidadRecibida:
-            recibidaActual > maxActual && estadoPermiteCantidadRecibida(prev.estadoLote)
-              ? String(maxActual)
-              : prev.cantidadRecibida,
-        };
-      }
-
-      if (field === "cantidadRecibida") {
-        return {
-          ...prev,
-          cantidadRecibida: limpiarEntero(value, 5),
+          cantidad: limpiarEntero(value, 5),
         };
       }
 
@@ -470,27 +406,6 @@ function PedidosPage() {
         return {
           ...prev,
           [field]: limpiarDecimalPorDigitos(value, 8, 2),
-        };
-      }
-
-      if (field === "estadoLote") {
-        const nuevoEstado = value as EstadoLoteProducto;
-
-        if (nuevoEstado === "EN_PROCESO") {
-          return {
-            ...prev,
-            estadoLote: nuevoEstado,
-            cantidadRecibida: "",
-            cantidadRecibidaPrevia: "0",
-          };
-        }
-
-        return {
-          ...prev,
-          estadoLote: nuevoEstado,
-          cantidadRecibida: estadoPermiteCantidadRecibida(nuevoEstado)
-            ? prev.cantidadRecibida
-            : "",
         };
       }
 
@@ -523,13 +438,16 @@ function PedidosPage() {
 
   function validarCabecera() {
     const errors: PedidoCabeceraFormErrors = {};
+    const numPedido = Number(pedido.numeroPedido);
 
     if (!pedido.numeroPedido.trim()) {
       errors.numeroPedido = "El número de pedido es obligatorio.";
-    } else if (pedido.numeroPedido.trim().length > 3) {
-      errors.numeroPedido = "Máximo 3 dígitos.";
-    } else if (Number(pedido.numeroPedido) <= 0) {
-      errors.numeroPedido = "Debe ser mayor a cero.";
+    } else if (
+      !Number.isInteger(numPedido) ||
+      numPedido < 1 ||
+      numPedido > 999
+    ) {
+      errors.numeroPedido = "Debe ser un número entero entre 1 y 999.";
     } else {
       const numeroDuplicado = pedidos.some(
         (item) =>
@@ -542,15 +460,17 @@ function PedidosPage() {
       }
     }
 
-    if (!pedido.fecha) {
+    if (!pedido.fecha || !pedido.fecha.trim()) {
       errors.fecha = "La fecha es obligatoria.";
     }
 
     if (!pedido.origen.trim()) {
       errors.origen = "El origen es obligatorio.";
+    } else if (pedido.origen.trim().length > 100) {
+      errors.origen = "Máximo 100 caracteres.";
     }
 
-    if (!pedido.proveedorId) {
+    if (!pedido.proveedorId || Number(pedido.proveedorId) < 1) {
       errors.proveedorId = "Debe seleccionar un proveedor.";
     }
 
@@ -558,15 +478,14 @@ function PedidosPage() {
       errors.monedaCompra = "Debe seleccionar una moneda.";
     }
 
+    const tc = Number(pedido.tipoCambio);
     if (!pedido.tipoCambio.trim()) {
       errors.tipoCambio = "El tipo de cambio es obligatorio.";
-    } else if (contarDigitos(pedido.tipoCambio) > 5) {
-      errors.tipoCambio = "Máximo 5 dígitos. Ejemplo: 445.00.";
-    } else if (Number.isNaN(Number(pedido.tipoCambio))) {
-      errors.tipoCambio = "Debe ser un número válido.";
+    } else if (Number.isNaN(tc) || tc < 0 || tc > 999.99) {
+      errors.tipoCambio = "Debe ser un número entre 0 y 999.99.";
     }
 
-    if (pedido.observaciones.length > 150) {
+    if (pedido.observaciones && pedido.observaciones.length > 150) {
       errors.observaciones = "Máximo 150 caracteres.";
     }
 
@@ -583,70 +502,39 @@ function PedidosPage() {
   function validarDetalle() {
     const errors: PedidoDetalleFormErrors = {};
 
-    const cantidad = getNumber(detalleForm.cantidad);
-    const cantidadRecibidaPrevia = getNumber(
-      detalleForm.cantidadRecibidaPrevia,
-    );
-    const cantidadRecibidaActual = getNumber(detalleForm.cantidadRecibida);
-    const maxCantidadRecibidaActual = Math.max(
-      cantidad - cantidadRecibidaPrevia,
-      0,
-    );
-
-    if (!detalleForm.productoNombre.trim()) {
+    const nombre = detalleForm.productoNombre.trim();
+    if (!nombre) {
       errors.productoNombre = "El nombre del artículo es obligatorio.";
-    } else if (detalleForm.productoNombre.trim().length > 50) {
-      errors.productoNombre = "Máximo 50 caracteres.";
+    } else if (nombre.length > 150) {
+      errors.productoNombre = "Máximo 150 caracteres.";
     }
 
-    if (!detalleForm.loteCodigo) {
-      errors.loteCodigo = "Debe seleccionar un lote.";
+    if (
+      !detalleForm.loteCodigo ||
+      !/^L([1-9]|10)$/.test(detalleForm.loteCodigo)
+    ) {
+      errors.loteCodigo = "Debe seleccionar un lote válido (L1 a L10).";
     }
 
+    const cant = Number(detalleForm.cantidad);
     if (!detalleForm.cantidad.trim()) {
       errors.cantidad = "La cantidad es obligatoria.";
-    } else if (detalleForm.cantidad.length > 5) {
-      errors.cantidad = "Máximo 5 dígitos.";
-    } else if (cantidad <= 0) {
-      errors.cantidad = "Debe ser mayor a cero.";
+    } else if (!Number.isInteger(cant) || cant < 1 || cant > 99999) {
+      errors.cantidad = "Debe ser un número entero entre 1 y 99999.";
     }
 
-    if (estadoPermiteCantidadRecibida(detalleForm.estadoLote)) {
-      if (
-        cantidadRecibidaPrevia <= 0 &&
-        !detalleForm.cantidadRecibida.trim()
-      ) {
-        errors.cantidadRecibida =
-          "Indicá cuántas unidades llegaron.";
-      } else if (
-        detalleForm.cantidadRecibida.trim() &&
-        cantidadRecibidaActual <= 0
-      ) {
-        errors.cantidadRecibida =
-          "Debe ser mayor a cero.";
-      } else if (cantidadRecibidaActual > maxCantidadRecibidaActual) {
-        errors.cantidadRecibida = `Máximo pendiente: ${maxCantidadRecibidaActual}.`;
-      }
-    }
-
+    const costo = Number(detalleForm.costoUnitarioOrigen);
     if (!detalleForm.costoUnitarioOrigen.trim()) {
       errors.costoUnitarioOrigen = "El precio de costo es obligatorio.";
-    } else if (contarDigitos(detalleForm.costoUnitarioOrigen) > 8) {
-      errors.costoUnitarioOrigen = "Máximo 8 dígitos.";
-    } else if (Number.isNaN(Number(detalleForm.costoUnitarioOrigen))) {
-      errors.costoUnitarioOrigen = "Debe ser un número válido.";
+    } else if (Number.isNaN(costo) || costo < 0) {
+      errors.costoUnitarioOrigen = "Debe ser mayor o igual a cero.";
     }
 
+    const precio = Number(detalleForm.precioVentaRecomendado);
     if (!detalleForm.precioVentaRecomendado.trim()) {
       errors.precioVentaRecomendado = "El precio de venta es obligatorio.";
-    } else if (contarDigitos(detalleForm.precioVentaRecomendado) > 8) {
-      errors.precioVentaRecomendado = "Máximo 8 dígitos.";
-    } else if (Number.isNaN(Number(detalleForm.precioVentaRecomendado))) {
-      errors.precioVentaRecomendado = "Debe ser un número válido.";
-    }
-
-    if (!detalleForm.estadoLote) {
-      errors.estadoLote = "Debe seleccionar un estado.";
+    } else if (Number.isNaN(precio) || precio < 0) {
+      errors.precioVentaRecomendado = "Debe ser mayor o igual a cero.";
     }
 
     setDetalleErrors(errors);
@@ -686,28 +574,32 @@ function PedidosPage() {
     const precioVentaRecomendado = Number(detalleForm.precioVentaRecomendado);
     const costoUnitarioReal = calcularCostoReal(costoUnitarioOrigen);
 
-    const resumenRecepcion = calcularResumenRecepcion(
-      detalleForm.estadoLote,
-      cantidad,
-      detalleForm.cantidadRecibida,
-      detalleForm.cantidadRecibidaPrevia,
-    );
+    const cantidadRecibida = detalleBase
+      ? Number(detalleBase.cantidadRecibida ?? 0)
+      : 0;
+    const estadoLote = detalleBase ? detalleBase.estadoLote : "EN_PROCESO";
+    const cantidadPendiente = Math.max(cantidad - cantidadRecibida, 0);
+    const cantidadDisponible = detalleBase
+      ? Number(detalleBase.cantidadDisponible ?? 0)
+      : 0;
 
     return {
       ...(detalleBase ?? {
         idTemporal: crypto.randomUUID(),
       }),
-      productoId: detalleForm.productoId,
+      productoId: detalleForm.productoId
+        ? Number(detalleForm.productoId)
+        : undefined,
       productoNombre: detalleForm.productoNombre.trim(),
       loteCodigo: detalleForm.loteCodigo,
       cantidad,
-      cantidadRecibida: resumenRecepcion.cantidadRecibidaTotal,
-      cantidadPendiente: resumenRecepcion.cantidadPendiente,
-      cantidadDisponible: resumenRecepcion.cantidadDisponible,
+      cantidadRecibida,
+      cantidadPendiente,
+      cantidadDisponible,
       costoUnitarioOrigen,
       costoUnitarioReal,
       precioVentaRecomendado,
-      estadoLote: detalleForm.estadoLote,
+      estadoLote,
     };
   }
 
@@ -857,22 +749,23 @@ function PedidosPage() {
     }
   }
 
-  async function confirmarEliminarPedido() {
-    if (!pedidoParaEliminar) return;
+  async function confirmarCancelacionPedido() {
+    if (!pedidoACancelar) return;
 
     try {
-      await eliminarPedidoApi(pedidoParaEliminar.id);
+      await cancelarPedidoApi(pedidoACancelar.id);
+      await cargarDatos();
 
-      setPedidos((prev) =>
-        prev.filter((item) => item.id !== pedidoParaEliminar.id),
+      setPageAlert(
+        `El pedido #${pedidoACancelar.numeroPedido} fue cancelado correctamente.`,
       );
 
-      setPedidoParaEliminar(null);
+      setPedidoACancelar(null);
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : "No se pudo eliminar el pedido.";
+          : "No se pudo cancelar el pedido.";
 
       setPageAlert(message);
     }
@@ -978,7 +871,10 @@ function PedidosPage() {
             pedidos={pedidosFiltrados}
             onView={abrirDetallePedido}
             onEdit={abrirModalEditarPedido}
-            onDelete={setPedidoParaEliminar}
+            onCancel={setPedidoACancelar}
+            onReceive={(pedidoParaRecibir) =>
+              setPedidoRecepcionId(pedidoParaRecibir.id)
+            }
           />
         )}
       </SectionCard>
@@ -1110,18 +1006,41 @@ function PedidosPage() {
       </AppModal>
 
       <ConfirmDialog
-        isOpen={Boolean(pedidoParaEliminar)}
-        title="Eliminar pedido"
-        message={`¿Seguro que desea eliminar ${
-          pedidoParaEliminar?.numeroPedido
-            ? `Pedido ${pedidoParaEliminar.numeroPedido}`
-            : "este pedido"
-        }? Esta acción también eliminará sus artículos y lotes asociados.`}
-        confirmLabel="Eliminar"
-        cancelLabel="Cancelar"
-        variant="danger"
-        onConfirm={confirmarEliminarPedido}
-        onCancel={() => setPedidoParaEliminar(null)}
+        isOpen={Boolean(pedidoACancelar)}
+        title="Cancelar pedido"
+        message={
+          pedidoACancelar
+            ? `¿Seguro que querés cancelar el pedido #${pedidoACancelar.numeroPedido}? El pedido conservará su historial y quedará marcado como CANCELADO.`
+            : ""
+        }
+        confirmLabel="Cancelar pedido"
+        cancelLabel="Volver"
+        variant="warning"
+        onConfirm={confirmarCancelacionPedido}
+        onCancel={() => setPedidoACancelar(null)}
+      />
+
+      <ModalRecepcionPedido
+        isOpen={pedidoRecepcionId !== null}
+        pedidoId={pedidoRecepcionId}
+        onClose={() => setPedidoRecepcionId(null)}
+        onSuccess={(pedidoActualizado) => {
+          setPedidos((current) =>
+            current.map((item) =>
+              item.id === pedidoActualizado.id
+                ? pedidoActualizado
+                : item,
+            ),
+          );
+
+          setPedidoRecepcionId(null);
+
+          setPageAlert(
+            pedidoActualizado.estado === "RECIBIDO"
+              ? `El pedido #${pedidoActualizado.numeroPedido} fue recibido completamente.`
+              : `La recepción parcial del pedido #${pedidoActualizado.numeroPedido} se registró correctamente.`,
+          );
+        }}
       />
     </div>
   );
