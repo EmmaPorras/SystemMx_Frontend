@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-
 import { PiAirplaneTiltFill } from "react-icons/pi";
 import { TbClipboardList, TbPackages, TbTruckDelivery } from "react-icons/tb";
 import { LuPackageCheck } from "react-icons/lu";
+
 import AlertMessage from "../common/AlertMessage";
 import AppModal from "../common/AppModal";
 import ConfirmDialog from "../common/ConfirmDialog";
 import InputField from "../common/InputField";
+import LoadingState from "../common/LoadingState";
 import PageHeader from "../common/PageHeader";
 import PrimaryButton from "../common/PrimaryButton";
 import SectionCard from "../common/SectionCard";
@@ -124,6 +125,7 @@ function PedidosPage() {
   const [modalAlert, setModalAlert] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
 
   const [pedido, setPedido] = useState<PedidoCompra>({ ...pedidoInicial });
   const [pedidoEditandoId, setPedidoEditandoId] = useState<number | null>(null);
@@ -186,7 +188,7 @@ function PedidosPage() {
   }
 
   useEffect(() => {
-    cargarDatos();
+    void cargarDatos();
   }, []);
 
   const productosFiltroOptions = useMemo(() => {
@@ -195,7 +197,6 @@ function PedidosPage() {
     pedidos.forEach((item) => {
       item.detalles.forEach((detalle) => {
         const nombre = detalle.productoNombre.trim();
-
         if (nombre) {
           nombres.set(nombre.toLowerCase(), nombre);
         }
@@ -305,6 +306,7 @@ function PedidosPage() {
   }
 
   function cerrarModal() {
+    if (guardando) return;
     setModalAbierto(false);
     setPasoModal(1);
     setPedido({ ...pedidoInicial });
@@ -551,18 +553,15 @@ function PedidosPage() {
 
   function continuarADetalle() {
     if (!validarCabecera()) return;
-
     setModalAlert(null);
     setPasoModal(2);
   }
 
   function calcularCostoReal(costoOrigen: number) {
     const tipoCambio = Number(pedido.tipoCambio);
-
     if (Number.isNaN(tipoCambio)) {
       return costoOrigen;
     }
-
     return Number((costoOrigen * tipoCambio).toFixed(2));
   }
 
@@ -700,7 +699,6 @@ function PedidosPage() {
     }
 
     const pedidoFinal = obtenerPedidoConDetallePendiente();
-
     if (!pedidoFinal) return;
 
     if (pedidoFinal.detalles.length === 0) {
@@ -734,7 +732,6 @@ function PedidosPage() {
         );
       } else {
         const creado = await crearPedidoApi(pedidoParaGuardar);
-
         setPedidos((prev) => [creado, ...prev]);
       }
 
@@ -742,7 +739,6 @@ function PedidosPage() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "No se pudo guardar el pedido.";
-
       setModalAlert(message);
     } finally {
       setGuardando(false);
@@ -750,8 +746,9 @@ function PedidosPage() {
   }
 
   async function confirmarCancelacionPedido() {
-    if (!pedidoACancelar) return;
+    if (!pedidoACancelar || cancelando) return;
 
+    setCancelando(true);
     try {
       await cancelarPedidoApi(pedidoACancelar.id);
       await cargarDatos();
@@ -768,6 +765,8 @@ function PedidosPage() {
           : "No se pudo cancelar el pedido.";
 
       setPageAlert(message);
+    } finally {
+      setCancelando(false);
     }
   }
 
@@ -788,14 +787,14 @@ function PedidosPage() {
 
       {pageAlert ? (
         <AlertMessage
-          variant="error"
+          variant="info"
           title="Aviso"
           message={pageAlert}
           onClose={() => setPageAlert(null)}
         />
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Pedidos registrados"
           value={String(pedidos.length)}
@@ -833,7 +832,7 @@ function PedidosPage() {
         title="Listado de pedidos"
         description="Filtrá por producto, número de pedido o proveedor y abrí el detalle en una ventana independiente."
       >
-        <div className="mb-5 grid gap-4 lg:grid-cols-3">
+        <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <ProductoPedidoFilter
             label="Filtrar por producto"
             value={filtroProducto}
@@ -861,11 +860,7 @@ function PedidosPage() {
         </div>
 
         {cargando ? (
-          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-6 py-10 text-center">
-            <p className="text-sm font-medium text-zinc-500">
-              Cargando pedidos...
-            </p>
-          </div>
+          <LoadingState message="Cargando pedidos..." />
         ) : (
           <TablaPedidos
             pedidos={pedidosFiltrados}
@@ -952,6 +947,7 @@ function PedidosPage() {
       <AppModal
         isOpen={modalAbierto}
         onClose={cerrarModal}
+        isSubmitting={guardando}
         title={
           pasoModal === 1
             ? pedidoEditandoId
@@ -997,12 +993,6 @@ function PedidosPage() {
             onCancel={cerrarModal}
           />
         )}
-
-        {guardando ? (
-          <p className="mt-4 text-center text-sm font-medium text-slate-500">
-            Guardando pedido...
-          </p>
-        ) : null}
       </AppModal>
 
       <ConfirmDialog
@@ -1016,6 +1006,7 @@ function PedidosPage() {
         confirmLabel="Cancelar pedido"
         cancelLabel="Volver"
         variant="warning"
+        isLoading={cancelando}
         onConfirm={confirmarCancelacionPedido}
         onCancel={() => setPedidoACancelar(null)}
       />

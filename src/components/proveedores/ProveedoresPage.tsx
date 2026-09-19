@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-
 import { ImAddressBook } from "react-icons/im";
 import { RiResetLeftFill } from "react-icons/ri";
 import {
@@ -16,6 +15,7 @@ import SelectField from "../common/SelectField";
 import AppModal from "../common/AppModal";
 import AlertMessage from "../common/AlertMessage";
 import ConfirmDialog from "../common/ConfirmDialog";
+import LoadingState from "../common/LoadingState";
 
 import BotonAgregarProveedor from "./BotonAgregarProveedor";
 import FormularioProveedor from "./FormularioProveedor";
@@ -157,49 +157,23 @@ function getErrorMessage(error: unknown) {
 }
 
 function ProveedoresPage() {
-  const [proveedores, setProveedores] = useState<
-    Proveedor[]
-  >([]);
-
+  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [filtroPais, setFiltroPais] = useState("");
   const [filtroMoneda, setFiltroMoneda] = useState("");
-
-  const [filtroEstado, setFiltroEstado] =
-    useState<EstadoProveedor>("ACTIVO");
-
+  const [filtroEstado, setFiltroEstado] = useState<EstadoProveedor>("ACTIVO");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const [
-    modalProveedorAbierto,
-    setModalProveedorAbierto,
-  ] = useState(false);
+  const [modalProveedorAbierto, setModalProveedorAbierto] = useState(false);
+  const [modalMode, setModalMode] = useState<ModalMode>("create");
+  const [proveedor, setProveedor] = useState<Proveedor>(proveedorInicial);
+  const [errors, setErrors] = useState<ProveedorFormErrors>({});
+  const [alerta, setAlerta] = useState<AlertState | null>(null);
+  const [proveedorDetalle, setProveedorDetalle] = useState<Proveedor | null>(null);
+  const [proveedorAEliminar, setProveedorAEliminar] = useState<Proveedor | null>(null);
 
-  const [modalMode, setModalMode] =
-    useState<ModalMode>("create");
-
-  const [proveedor, setProveedor] =
-    useState<Proveedor>(proveedorInicial);
-
-  const [errors, setErrors] =
-    useState<ProveedorFormErrors>({});
-
-  const [alerta, setAlerta] =
-    useState<AlertState | null>(null);
-
-  const [proveedorDetalle, setProveedorDetalle] =
-    useState<Proveedor | null>(null);
-
-  const [
-    proveedorAEliminar,
-    setProveedorAEliminar,
-  ] = useState<Proveedor | null>(null);
-
-  /**
-   * Solo muestra países que ya están asignados
-   * a por lo menos un proveedor.
-   */
   const paisesRegistradosOptions = useMemo(() => {
     const paises = new Set(
       proveedores
@@ -219,10 +193,6 @@ function ProveedoresPage() {
       }));
   }, [proveedores]);
 
-  /**
-   * Solo muestra monedas utilizadas actualmente
-   * por uno o más proveedores.
-   */
   const monedasRegistradasOptions = useMemo(() => {
     const monedasRegistradas = new Set(
       proveedores.map(
@@ -235,10 +205,6 @@ function ProveedoresPage() {
     );
   }, [proveedores]);
 
-  /**
-   * El estado siempre se aplica.
-   * Por defecto filtroEstado es ACTIVO.
-   */
   const proveedoresFiltrados = useMemo(() => {
     const term = busqueda.trim().toLowerCase();
 
@@ -275,10 +241,6 @@ function ProveedoresPage() {
     proveedores,
   ]);
 
-  /**
-   * El estado ACTIVO es el estado predeterminado,
-   * por eso no cuenta como filtro personalizado.
-   */
   const hayFiltrosPersonalizados =
     Boolean(busqueda.trim()) ||
     Boolean(filtroPais) ||
@@ -303,45 +265,28 @@ function ProveedoresPage() {
 
   const esEdicion = modalMode === "edit";
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function cargarProveedores() {
-      setIsLoading(true);
-
-      try {
-        const data = await obtenerProveedores();
-
-        if (isMounted) {
-          setProveedores(data);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setAlerta({
-            variant: "error",
-            title: "Error al cargar proveedores",
-            message: getErrorMessage(error),
-          });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
+  async function cargarProveedores() {
+    setIsLoading(true);
+    try {
+      const data = await obtenerProveedores();
+      setProveedores(data);
+    } catch (error) {
+      setAlerta({
+        variant: "error",
+        title: "Error al cargar proveedores",
+        message: getErrorMessage(error),
+      });
+    } finally {
+      setIsLoading(false);
     }
+  }
 
-    cargarProveedores();
-
-    return () => {
-      isMounted = false;
-    };
+  useEffect(() => {
+    void cargarProveedores();
   }, []);
 
-  function mostrarAlerta(
-    alertaNueva: AlertState,
-  ) {
+  function mostrarAlerta(alertaNueva: AlertState) {
     setAlerta(alertaNueva);
-
     window.setTimeout(() => {
       setAlerta(null);
     }, 3500);
@@ -362,9 +307,7 @@ function ProveedoresPage() {
     setModalProveedorAbierto(true);
   }
 
-  function abrirModalEditarProveedor(
-    proveedorSeleccionado: Proveedor,
-  ) {
+  function abrirModalEditarProveedor(proveedorSeleccionado: Proveedor) {
     setModalMode("edit");
     setProveedor({
       ...proveedorSeleccionado,
@@ -375,10 +318,7 @@ function ProveedoresPage() {
   }
 
   function cerrarModalProveedor() {
-    if (isSaving) {
-      return;
-    }
-
+    if (isSaving) return;
     setModalProveedorAbierto(false);
     setProveedor(proveedorInicial);
     setErrors({});
@@ -406,21 +346,16 @@ function ProveedoresPage() {
   }
 
   async function guardarProveedor() {
-    const validationErrors =
-      validarProveedor(proveedor);
+    const validationErrors = validarProveedor(proveedor);
 
-    if (
-      Object.keys(validationErrors).length > 0
-    ) {
+    if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-
       mostrarAlerta({
         variant: "error",
         title: "Formulario incompleto",
         message:
           "Revisá los campos marcados antes de guardar el proveedor.",
       });
-
       return;
     }
 
@@ -428,24 +363,20 @@ function ProveedoresPage() {
       ...proveedor,
       nombre: proveedor.nombre.trim(),
       telefono: proveedor.telefono.trim(),
-      correo: proveedor.correo
-        .trim()
-        .toLowerCase(),
+      correo: proveedor.correo.trim().toLowerCase(),
       pais: proveedor.pais.trim(),
       direccion: proveedor.direccion.trim(),
-      monedaPreferida:
-        proveedor.monedaPreferida,
+      monedaPreferida: proveedor.monedaPreferida,
     };
 
     setIsSaving(true);
 
     try {
       if (esEdicion) {
-        const proveedorActualizado =
-          await actualizarProveedorApi(
-            proveedorLimpio.id,
-            proveedorLimpio,
-          );
+        const proveedorActualizado = await actualizarProveedorApi(
+          proveedorLimpio.id,
+          proveedorLimpio,
+        );
 
         setProveedores((prev) =>
           prev.map((item) =>
@@ -462,10 +393,7 @@ function ProveedoresPage() {
             "Los cambios del proveedor se guardaron correctamente.",
         });
       } else {
-        const proveedorCreado =
-          await crearProveedor(
-            proveedorLimpio,
-          );
+        const proveedorCreado = await crearProveedor(proveedorLimpio);
 
         setProveedores((prev) => [
           proveedorCreado,
@@ -495,27 +423,21 @@ function ProveedoresPage() {
     }
   }
 
-  function abrirConfirmacionEliminar(
-    proveedorSeleccionado: Proveedor,
-  ) {
-    setProveedorAEliminar(
-      proveedorSeleccionado,
-    );
+  function abrirConfirmacionEliminar(proveedorSeleccionado: Proveedor) {
+    setProveedorAEliminar(proveedorSeleccionado);
   }
 
   function cerrarConfirmacionEliminar() {
+    if (isDeleting) return;
     setProveedorAEliminar(null);
   }
 
   async function eliminarProveedor() {
-    if (!proveedorAEliminar) {
-      return;
-    }
+    if (!proveedorAEliminar || isDeleting) return;
 
+    setIsDeleting(true);
     try {
-      await eliminarProveedorApi(
-        proveedorAEliminar.id,
-      );
+      await eliminarProveedorApi(proveedorAEliminar.id);
 
       setProveedores((prev) =>
         prev.map((item) =>
@@ -541,6 +463,8 @@ function ProveedoresPage() {
         title: "No se pudo desactivar",
         message: getErrorMessage(error),
       });
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -554,9 +478,7 @@ function ProveedoresPage() {
         iconAriaLabel="Volver al inicio"
         action={
           <BotonAgregarProveedor
-            onClick={
-              abrirModalNuevoProveedor
-            }
+            onClick={abrirModalNuevoProveedor}
           />
         }
       />
@@ -570,12 +492,10 @@ function ProveedoresPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label="Total de proveedores"
-          value={String(
-            proveedores.length,
-          )}
+          value={String(proveedores.length)}
           hint="Cantidad total de proveedores registrados"
           icon={BsPersonFill}
           variant="info"
@@ -602,13 +522,13 @@ function ProveedoresPage() {
         title="Listado de proveedores"
         description="Consultá el país directamente en la tabla y abrí el detalle para ver la dirección exacta."
       >
-        <div className="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <InputField
             label="Filtrar por nombre"
             value={busqueda}
             onChange={setBusqueda}
             placeholder="Nombre del proveedor"
-            maxLength={1000}
+            maxLength={100}
           />
 
           <SelectField
@@ -616,9 +536,7 @@ function ProveedoresPage() {
             value={filtroPais}
             onChange={setFiltroPais}
             placeholder="Todos los países"
-            options={
-              paisesRegistradosOptions
-            }
+            options={paisesRegistradosOptions}
           />
 
           <SelectField
@@ -626,18 +544,14 @@ function ProveedoresPage() {
             value={filtroMoneda}
             onChange={setFiltroMoneda}
             placeholder="Todas las monedas"
-            options={
-              monedasRegistradasOptions
-            }
+            options={monedasRegistradasOptions}
           />
 
           <SelectField
             label="Estado"
             value={filtroEstado}
             onChange={(value) =>
-              setFiltroEstado(
-                value as EstadoProveedor,
-              )
+              setFiltroEstado(value as EstadoProveedor)
             }
             options={[
               {
@@ -654,130 +568,65 @@ function ProveedoresPage() {
           <div className="flex items-end">
             <button
               type="button"
-              onClick={
-                restablecerFiltros
-              }
-              disabled={
-                !hayFiltrosPersonalizados
-              }
-              className="
-                inline-flex
-                w-full
-                items-center
-                justify-center
-                gap-2
-                rounded-2xl
-                border
-                border-zinc-300
-                bg-white
-                px-4
-                py-2.5
-                text-sm
-                font-semibold
-                text-zinc-700
-                transition
-                duration-200
-                hover:-translate-y-0.5
-                hover:border-zinc-900
-                hover:bg-zinc-900
-                hover:text-white
-                hover:shadow-md
-                active:translate-y-0
-                active:scale-[0.98]
-                disabled:cursor-not-allowed
-                disabled:border-zinc-200
-                disabled:bg-zinc-100
-                disabled:text-zinc-400
-                disabled:shadow-none
-                disabled:hover:translate-y-0
-                disabled:hover:border-zinc-200
-                disabled:hover:bg-zinc-100
-                disabled:hover:text-zinc-400
-                disabled:hover:shadow-none
-              "
+              onClick={restablecerFiltros}
+              disabled={!hayFiltrosPersonalizados}
+              aria-label="Restablecer filtros"
+              title="Restablecer filtros"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-700 transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400"
             >
-              <RiResetLeftFill className="h-5 w-5" />
-
+              <RiResetLeftFill className="h-5 w-5" aria-hidden="true" />
+              <span>Limpiar filtros</span>
             </button>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-6 py-10 text-center">
-            <p className="text-sm font-medium text-zinc-500">
-              Cargando proveedores...
-            </p>
-          </div>
+          <LoadingState message="Cargando proveedores..." />
         ) : (
           <TablaProveedores
-            proveedores={
-              proveedoresFiltrados
-            }
-            onView={
-              setProveedorDetalle
-            }
-            onEdit={
-              abrirModalEditarProveedor
-            }
-            onDelete={
-              abrirConfirmacionEliminar
-            }
+            proveedores={proveedoresFiltrados}
+            onView={setProveedorDetalle}
+            onEdit={abrirModalEditarProveedor}
+            onDelete={abrirConfirmacionEliminar}
           />
         )}
       </SectionCard>
 
       <ProveedorDetalleModal
         proveedor={proveedorDetalle}
-        isOpen={Boolean(
-          proveedorDetalle,
-        )}
-        onClose={() =>
-          setProveedorDetalle(null)
-        }
+        isOpen={Boolean(proveedorDetalle)}
+        onClose={() => setProveedorDetalle(null)}
       />
 
       <AppModal
-        isOpen={
-          modalProveedorAbierto
-        }
-        title={
-          esEdicion
-            ? "Editar proveedor"
-            : "Nuevo proveedor"
-        }
+        isOpen={modalProveedorAbierto}
+        title={esEdicion ? "Editar proveedor" : "Nuevo proveedor"}
         description={
           esEdicion
             ? "Modifica los datos del proveedor seleccionado."
             : "Los campos marcados con * son obligatorios."
         }
-        onClose={
-          cerrarModalProveedor
-        }
+        onClose={cerrarModalProveedor}
+        isSubmitting={isSaving}
+        maxWidthClassName="max-w-3xl"
       >
         <FormularioProveedor
           proveedor={proveedor}
           errors={errors}
+          isSubmitting={isSaving}
           submitLabel={
-            isSaving
-              ? "Guardando..."
-              : esEdicion
-                ? "Actualizar proveedor"
-                : "Guardar proveedor"
+            esEdicion
+              ? "Actualizar proveedor"
+              : "Guardar proveedor"
           }
-          onChange={
-            actualizarProveedor
-          }
+          onChange={actualizarProveedor}
           onSubmit={guardarProveedor}
-          onCancel={
-            cerrarModalProveedor
-          }
+          onCancel={cerrarModalProveedor}
         />
       </AppModal>
 
       <ConfirmDialog
-        isOpen={Boolean(
-          proveedorAEliminar,
-        )}
+        isOpen={Boolean(proveedorAEliminar)}
         title="Desactivar proveedor"
         message={
           proveedorAEliminar
@@ -787,12 +636,9 @@ function ProveedoresPage() {
         confirmLabel="Desactivar"
         cancelLabel="Cancelar"
         variant="warning"
-        onConfirm={
-          eliminarProveedor
-        }
-        onCancel={
-          cerrarConfirmacionEliminar
-        }
+        isLoading={isDeleting}
+        onConfirm={eliminarProveedor}
+        onCancel={cerrarConfirmacionEliminar}
       />
     </div>
   );

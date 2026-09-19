@@ -34,7 +34,6 @@ function FormularioCategoria({
       className="space-y-5"
       onSubmit={(event) => {
         event.preventDefault();
-
         if (!isSubmitting) {
           onSubmit();
         }
@@ -83,19 +82,22 @@ function FormularioCategoria({
         ]}
       />
 
-      <div className="flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end">
+      <div className="flex flex-col-reverse gap-3 border-t border-zinc-200 pt-5 sm:flex-row sm:justify-end">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+          disabled={isSubmitting}
+          className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Cancelar
         </button>
 
-        <PrimaryButton type="submit">
-          {isSubmitting
-            ? "Guardando..."
-            : submitLabel}
+        <PrimaryButton
+          type="submit"
+          loading={isSubmitting}
+          loadingText="Guardando..."
+        >
+          {submitLabel}
         </PrimaryButton>
       </div>
     </form>

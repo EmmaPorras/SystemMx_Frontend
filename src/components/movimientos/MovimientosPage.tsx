@@ -3,7 +3,6 @@ import {
   useEffect,
   useState,
 } from "react";
-
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -12,6 +11,7 @@ import {
 
 import AlertMessage from "../common/AlertMessage";
 import InputField from "../common/InputField";
+import LoadingState from "../common/LoadingState";
 import PageHeader from "../common/PageHeader";
 import PaginationControls from "../common/PaginationControls";
 import PrimaryButton from "../common/PrimaryButton";
@@ -35,20 +35,11 @@ import type {
 type FiltrosMovimientos = {
   productoId: string;
   loteId: string;
-
-  tipoMovimiento:
-    | ""
-    | TipoMovimientoInventario;
-
-  referenciaTipo:
-    | ""
-    | ReferenciaMovimientoInventario;
-
+  tipoMovimiento: "" | TipoMovimientoInventario;
+  referenciaTipo: "" | ReferenciaMovimientoInventario;
   referenciaId: string;
-
   desde: string;
   hasta: string;
-
   usuarioId: string;
 };
 
@@ -66,150 +57,104 @@ const INITIAL_FILTERS: FiltrosMovimientos = {
 const LIMITE = 20;
 
 function MovimientosPage() {
-  const [movimientos, setMovimientos] =
-    useState<MovimientoInventario[]>([]);
+  const [movimientos, setMovimientos] = useState<MovimientoInventario[]>([]);
+  const [filtrosDraft, setFiltrosDraft] = useState<FiltrosMovimientos>(INITIAL_FILTERS);
+  const [filtros, setFiltros] = useState<FiltrosMovimientos>(INITIAL_FILTERS);
+  const [pagina, setPagina] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [filtrosDraft, setFiltrosDraft] =
-    useState<FiltrosMovimientos>(
-      INITIAL_FILTERS,
-    );
+  const cargarMovimientos = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-  const [filtros, setFiltros] =
-    useState<FiltrosMovimientos>(
-      INITIAL_FILTERS,
-    );
-
-  const [pagina, setPagina] =
-    useState(1);
-
-  const [total, setTotal] =
-    useState(0);
-
-  const [totalPaginas, setTotalPaginas] =
-    useState(0);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState<string | null>(null);
-
-  const cargarMovimientos =
-    useCallback(async () => {
-      setLoading(true);
-      setError(null);
-
-      const query: MovimientosQuery = {
-        pagina,
-        limite: LIMITE,
-      };
-
-      const productoId =
-        Number(filtros.productoId);
-
-      const loteId =
-        Number(filtros.loteId);
-
-      const referenciaId =
-        Number(filtros.referenciaId);
-
-      const usuarioId =
-        Number(filtros.usuarioId);
-
-      if (
-        filtros.productoId &&
-        Number.isInteger(productoId) &&
-        productoId > 0
-      ) {
-        query.productoId = productoId;
-      }
-
-      if (
-        filtros.loteId &&
-        Number.isInteger(loteId) &&
-        loteId > 0
-      ) {
-        query.loteId = loteId;
-      }
-
-      if (filtros.tipoMovimiento) {
-        query.tipoMovimiento =
-          filtros.tipoMovimiento;
-      }
-
-      if (filtros.referenciaTipo) {
-        query.referenciaTipo =
-          filtros.referenciaTipo;
-      }
-
-      if (
-        filtros.referenciaId &&
-        Number.isInteger(referenciaId) &&
-        referenciaId > 0
-      ) {
-        query.referenciaId =
-          referenciaId;
-      }
-
-      if (filtros.desde) {
-        query.desde = filtros.desde;
-      }
-
-      if (filtros.hasta) {
-        query.hasta = filtros.hasta;
-      }
-
-      if (
-        filtros.usuarioId &&
-        Number.isInteger(usuarioId) &&
-        usuarioId > 0
-      ) {
-        query.usuarioId = usuarioId;
-      }
-
-      try {
-        const response =
-          await obtenerMovimientosInventarioApi(
-            query,
-          );
-
-        setMovimientos(
-          response.items,
-        );
-
-        setTotal(
-          response.total,
-        );
-
-        setTotalPaginas(
-          response.totalPaginas,
-        );
-
-        if (
-          response.totalPaginas > 0 &&
-          pagina > response.totalPaginas
-        ) {
-          setPagina(
-            response.totalPaginas,
-          );
-        }
-      } catch (requestError) {
-        setMovimientos([]);
-        setTotal(0);
-        setTotalPaginas(0);
-
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : "No fue posible cargar los movimientos.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    }, [
+    const query: MovimientosQuery = {
       pagina,
-      filtros,
-    ]);
+      limite: LIMITE,
+    };
+
+    const productoId = Number(filtros.productoId);
+    const loteId = Number(filtros.loteId);
+    const referenciaId = Number(filtros.referenciaId);
+    const usuarioId = Number(filtros.usuarioId);
+
+    if (
+      filtros.productoId &&
+      Number.isInteger(productoId) &&
+      productoId > 0
+    ) {
+      query.productoId = productoId;
+    }
+
+    if (
+      filtros.loteId &&
+      Number.isInteger(loteId) &&
+      loteId > 0
+    ) {
+      query.loteId = loteId;
+    }
+
+    if (filtros.tipoMovimiento) {
+      query.tipoMovimiento = filtros.tipoMovimiento;
+    }
+
+    if (filtros.referenciaTipo) {
+      query.referenciaTipo = filtros.referenciaTipo;
+    }
+
+    if (
+      filtros.referenciaId &&
+      Number.isInteger(referenciaId) &&
+      referenciaId > 0
+    ) {
+      query.referenciaId = referenciaId;
+    }
+
+    if (filtros.desde) {
+      query.desde = filtros.desde;
+    }
+
+    if (filtros.hasta) {
+      query.hasta = filtros.hasta;
+    }
+
+    if (
+      filtros.usuarioId &&
+      Number.isInteger(usuarioId) &&
+      usuarioId > 0
+    ) {
+      query.usuarioId = usuarioId;
+    }
+
+    try {
+      const response = await obtenerMovimientosInventarioApi(query);
+
+      setMovimientos(response.items);
+      setTotal(response.total);
+      setTotalPaginas(response.totalPaginas);
+
+      if (
+        response.totalPaginas > 0 &&
+        pagina > response.totalPaginas
+      ) {
+        setPagina(response.totalPaginas);
+      }
+    } catch (requestError) {
+      setMovimientos([]);
+      setTotal(0);
+      setTotalPaginas(0);
+
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "No fue posible cargar los movimientos.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [pagina, filtros]);
 
   useEffect(() => {
     void cargarMovimientos();
@@ -219,13 +164,9 @@ function MovimientosPage() {
     if (
       filtrosDraft.desde &&
       filtrosDraft.hasta &&
-      filtrosDraft.desde >
-        filtrosDraft.hasta
+      filtrosDraft.desde > filtrosDraft.hasta
     ) {
-      setError(
-        "La fecha desde no puede ser posterior a la fecha hasta.",
-      );
-
+      setError("La fecha desde no puede ser posterior a la fecha hasta.");
       return;
     }
 
@@ -235,33 +176,21 @@ function MovimientosPage() {
   }
 
   function limpiarFiltros() {
-    setFiltrosDraft(
-      INITIAL_FILTERS,
-    );
-
-    setFiltros(
-      INITIAL_FILTERS,
-    );
-
+    setFiltrosDraft(INITIAL_FILTERS);
+    setFiltros(INITIAL_FILTERS);
     setPagina(1);
     setError(null);
   }
 
-  const entradasPagina =
-    movimientos.filter(
-      (movimiento) =>
-        movimiento.tipoMovimiento ===
-          "ENTRADA_COMPRA" ||
-        movimiento.tipoMovimiento ===
-          "REINGRESO_ANULACION_VENTA",
-    ).length;
+  const entradasPagina = movimientos.filter(
+    (movimiento) =>
+      movimiento.tipoMovimiento === "ENTRADA_COMPRA" ||
+      movimiento.tipoMovimiento === "REINGRESO_ANULACION_VENTA",
+  ).length;
 
-  const salidasPagina =
-    movimientos.filter(
-      (movimiento) =>
-        movimiento.tipoMovimiento ===
-        "SALIDA_VENTA",
-    ).length;
+  const salidasPagina = movimientos.filter(
+    (movimiento) => movimiento.tipoMovimiento === "SALIDA_VENTA",
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -271,7 +200,7 @@ function MovimientosPage() {
         icon={History}
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label="Resultados"
           value={String(total)}
@@ -301,20 +230,16 @@ function MovimientosPage() {
         title="Historial de movimientos"
         description="Los movimientos son registros de auditoría generados por el backend y no pueden editarse."
       >
-        <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <InputField
             label="ID producto"
             type="number"
-            value={
-              filtrosDraft.productoId
-            }
+            value={filtrosDraft.productoId}
             onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
-                  ...current,
-                  productoId: value,
-                }),
-              )
+              setFiltrosDraft((current) => ({
+                ...current,
+                productoId: value,
+              }))
             }
             min={1}
             step={1}
@@ -323,16 +248,12 @@ function MovimientosPage() {
           <InputField
             label="ID lote"
             type="number"
-            value={
-              filtrosDraft.loteId
-            }
+            value={filtrosDraft.loteId}
             onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
-                  ...current,
-                  loteId: value,
-                }),
-              )
+              setFiltrosDraft((current) => ({
+                ...current,
+                loteId: value,
+              }))
             }
             min={1}
             step={1}
@@ -340,19 +261,12 @@ function MovimientosPage() {
 
           <SelectField
             label="Tipo de movimiento"
-            value={
-              filtrosDraft.tipoMovimiento
-            }
+            value={filtrosDraft.tipoMovimiento}
             onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
-                  ...current,
-                  tipoMovimiento:
-                    value as
-                      | ""
-                      | TipoMovimientoInventario,
-                }),
-              )
+              setFiltrosDraft((current) => ({
+                ...current,
+                tipoMovimiento: value as "" | TipoMovimientoInventario,
+              }))
             }
             options={[
               {
@@ -368,29 +282,20 @@ function MovimientosPage() {
                 label: "Salida por venta",
               },
               {
-                value:
-                  "REINGRESO_ANULACION_VENTA",
-                label:
-                  "Reingreso por anulación",
+                value: "REINGRESO_ANULACION_VENTA",
+                label: "Reingreso por anulación",
               },
             ]}
           />
 
           <SelectField
             label="Tipo de referencia"
-            value={
-              filtrosDraft.referenciaTipo
-            }
+            value={filtrosDraft.referenciaTipo}
             onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
-                  ...current,
-                  referenciaTipo:
-                    value as
-                      | ""
-                      | ReferenciaMovimientoInventario,
-                }),
-              )
+              setFiltrosDraft((current) => ({
+                ...current,
+                referenciaTipo: value as "" | ReferenciaMovimientoInventario,
+              }))
             }
             options={[
               {
@@ -411,16 +316,12 @@ function MovimientosPage() {
           <InputField
             label="ID referencia"
             type="number"
-            value={
-              filtrosDraft.referenciaId
-            }
+            value={filtrosDraft.referenciaId}
             onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
-                  ...current,
-                  referenciaId: value,
-                }),
-              )
+              setFiltrosDraft((current) => ({
+                ...current,
+                referenciaId: value,
+              }))
             }
             min={1}
             step={1}
@@ -431,12 +332,10 @@ function MovimientosPage() {
             type="date"
             value={filtrosDraft.desde}
             onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
-                  ...current,
-                  desde: value,
-                }),
-              )
+              setFiltrosDraft((current) => ({
+                ...current,
+                desde: value,
+              }))
             }
           />
 
@@ -445,60 +344,44 @@ function MovimientosPage() {
             type="date"
             value={filtrosDraft.hasta}
             onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
-                  ...current,
-                  hasta: value,
-                }),
-              )
+              setFiltrosDraft((current) => ({
+                ...current,
+                hasta: value,
+              }))
             }
           />
 
           <InputField
             label="ID usuario"
             type="number"
-            value={
-              filtrosDraft.usuarioId
-            }
+            value={filtrosDraft.usuarioId}
             onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
-                  ...current,
-                  usuarioId: value,
-                }),
-              )
+              setFiltrosDraft((current) => ({
+                ...current,
+                usuarioId: value,
+              }))
             }
             min={1}
             step={1}
           />
         </div>
 
-        <div className="mb-6 flex flex-wrap gap-3">
-          <PrimaryButton
-            onClick={aplicarFiltros}
-          >
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <PrimaryButton onClick={aplicarFiltros}>
             Aplicar filtros
           </PrimaryButton>
 
           <button
             type="button"
             onClick={limpiarFiltros}
-            className="rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100"
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
           >
             Limpiar filtros
           </button>
         </div>
 
         {loading ? (
-          <div className="grid min-h-[240px] place-items-center">
-            <div className="text-center">
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-zinc-950" />
-
-              <p className="mt-4 text-sm font-semibold text-zinc-600">
-                Cargando movimientos...
-              </p>
-            </div>
-          </div>
+          <LoadingState message="Cargando movimientos..." />
         ) : error ? (
           <div className="space-y-4">
             <AlertMessage
@@ -517,20 +400,14 @@ function MovimientosPage() {
           </div>
         ) : (
           <div className="space-y-5">
-            <TablaMovimientos
-              movimientos={movimientos}
-            />
+            <TablaMovimientos movimientos={movimientos} />
 
             <PaginationControls
               pagina={pagina}
-              totalPaginas={
-                totalPaginas
-              }
+              totalPaginas={totalPaginas}
               total={total}
               limite={LIMITE}
-              onPageChange={
-                setPagina
-              }
+              onPageChange={setPagina}
             />
           </div>
         )}

@@ -17,6 +17,7 @@ import AlertMessage from "../common/AlertMessage";
 import AppModal from "../common/AppModal";
 import ConfirmDialog from "../common/ConfirmDialog";
 import InputField from "../common/InputField";
+import LoadingState from "../common/LoadingState";
 import PageHeader from "../common/PageHeader";
 import PrimaryButton from "../common/PrimaryButton";
 import SectionCard from "../common/SectionCard";
@@ -284,7 +285,7 @@ function VentasPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Total en vista"
           value={String(ventas.length)}
@@ -387,14 +388,7 @@ function VentasPage() {
         </div>
 
         {cargando ? (
-          <div className="grid min-h-[220px] place-items-center rounded-2xl border border-zinc-200 bg-white">
-            <div className="text-center">
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-zinc-950" />
-              <p className="mt-4 text-sm font-semibold text-zinc-600">
-                Cargando ventas...
-              </p>
-            </div>
-          </div>
+          <LoadingState message="Cargando ventas..." />
         ) : (
           <TablaVentas
             ventas={ventasFiltradas}
@@ -412,6 +406,7 @@ function VentasPage() {
         title="Registrar nueva venta"
         description="Creación de venta con descuento de inventario según modo FIFO o lote manual."
         onClose={cerrarModal}
+        isSubmitting={guardando}
         maxWidthClassName="max-w-6xl"
       >
         <FormularioVenta

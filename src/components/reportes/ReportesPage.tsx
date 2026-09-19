@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import AlertMessage from "../common/AlertMessage";
+import LoadingState from "../common/LoadingState";
 import PageHeader from "../common/PageHeader";
 import PrimaryButton from "../common/PrimaryButton";
 import SectionCard from "../common/SectionCard";
@@ -191,7 +192,7 @@ function ReportesPage() {
         title="Seleccionar reporte"
         description="Todos los datos son calculados por el backend."
       >
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           <SelectField
             label="Familia"
             value={family}
@@ -261,6 +262,9 @@ function ReportesPage() {
             onClick={() => {
               void consultar();
             }}
+            loading={loading}
+            loadingText="Consultando reporte..."
+            disabled={loading}
           >
             Consultar reporte
           </PrimaryButton>
@@ -286,15 +290,7 @@ function ReportesPage() {
         description="Información oficial devuelta por SystemMx."
       >
         {loading ? (
-          <div className="grid min-h-[240px] place-items-center">
-            <div className="text-center">
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-zinc-950" />
-
-              <p className="mt-4 text-sm font-semibold text-zinc-600">
-                Consultando reporte...
-              </p>
-            </div>
-          </div>
+          <LoadingState message="Consultando reporte..." />
         ) : result !== null ? (
           <ReportResultView
             data={result}

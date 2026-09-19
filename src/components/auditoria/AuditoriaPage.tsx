@@ -15,6 +15,7 @@ import {
 import AlertMessage from "../common/AlertMessage";
 import DataTableShell from "../common/DataTableShell";
 import InputField from "../common/InputField";
+import LoadingState from "../common/LoadingState";
 import PageHeader from "../common/PageHeader";
 import PrimaryButton from "../common/PrimaryButton";
 import SectionCard from "../common/SectionCard";
@@ -23,6 +24,7 @@ import StatCard from "../common/StatCard";
 import StatusBadge from "../common/StatusBadge";
 import {
   formatCurrency,
+  formatDateTime,
 } from "../common/formatters";
 
 import {
@@ -59,13 +61,7 @@ type AuditoriaVista =
 function formatearFecha(
   value: string,
 ): string {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString();
+  return formatDateTime(value);
 }
 
 function varianteMovimiento(
@@ -368,13 +364,7 @@ function AuditoriaPage() {
 
   function renderResultado() {
     if (loadingDetalle) {
-      return (
-        <div className="grid min-h-[200px] place-items-center">
-          <p className="text-sm font-semibold text-zinc-500">
-            Consultando auditoría...
-          </p>
-        </div>
-      );
+      return <LoadingState message="Consultando auditoría..." />;
     }
 
     if (vista === "USUARIOS") {
@@ -635,15 +625,7 @@ function AuditoriaPage() {
       />
 
       {loading ? (
-        <div className="grid min-h-[260px] place-items-center">
-          <div className="text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-zinc-950" />
-
-            <p className="mt-4 text-sm font-semibold text-zinc-500">
-              Cargando auditoría...
-            </p>
-          </div>
-        </div>
+        <LoadingState message="Cargando auditoría..." />
       ) : error && !resumen ? (
         <div className="space-y-4">
           <AlertMessage
@@ -663,7 +645,7 @@ function AuditoriaPage() {
       ) : (
         <>
           {resumen ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard
                 label="Movimientos"
                 value={String(

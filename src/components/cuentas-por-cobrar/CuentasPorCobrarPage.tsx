@@ -13,6 +13,7 @@ import {
 import AlertMessage from "../common/AlertMessage";
 import DataTableShell from "../common/DataTableShell";
 import InputField from "../common/InputField";
+import LoadingState from "../common/LoadingState";
 import PageHeader from "../common/PageHeader";
 import PrimaryButton from "../common/PrimaryButton";
 import SectionCard from "../common/SectionCard";
@@ -125,7 +126,7 @@ function CuentasPorCobrarPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Ventas con saldo"
           value={String(
@@ -201,19 +202,23 @@ function CuentasPorCobrarPage() {
             type="date"
             value={fechaCorte}
             onChange={setFechaCorte}
+            disabled={loading}
           />
 
           <PrimaryButton
             onClick={() => {
               void cargar();
             }}
+            loading={loading}
+            loadingText="Consultando..."
+            disabled={loading}
           >
             Consultar
           </PrimaryButton>
         </div>
 
         {vencimientos ? (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
               label="Sin vencimiento"
               value={formatCurrency(
@@ -270,9 +275,7 @@ function CuentasPorCobrarPage() {
         description="Saldos oficiales devueltos por el backend."
       >
         {loading ? (
-          <p className="py-10 text-center text-sm font-semibold text-zinc-500">
-            Cargando cuentas por cobrar...
-          </p>
+          <LoadingState message="Cargando cuentas por cobrar..." />
         ) : data ? (
           <DataTableShell
             data={data.detalle}

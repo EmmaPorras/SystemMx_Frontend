@@ -13,6 +13,7 @@ import {
 type FormularioProveedorProps = {
   proveedor: Proveedor;
   errors: ProveedorFormErrors;
+  isSubmitting?: boolean;
   submitLabel?: string;
   onChange: (field: ProveedorFormField, value: string) => void;
   onSubmit: () => void;
@@ -22,14 +23,23 @@ type FormularioProveedorProps = {
 function FormularioProveedor({
   proveedor,
   errors,
+  isSubmitting = false,
   submitLabel = "Guardar proveedor",
   onChange,
   onSubmit,
   onCancel,
 }: FormularioProveedorProps) {
   return (
-    <div>
-      <div className="grid gap-4 md:grid-cols-2">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!isSubmitting) {
+          onSubmit();
+        }
+      }}
+      className="space-y-6"
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
         <InputField
           label="Nombre"
           required
@@ -96,7 +106,7 @@ function FormularioProveedor({
           ]}
         />
 
-        <div className="md:col-span-2">
+        <div className="sm:col-span-2">
           <InputField
             label="Dirección exacta"
             value={proveedor.direccion}
@@ -110,18 +120,25 @@ function FormularioProveedor({
         </div>
       </div>
 
-      <div className="mt-6 flex justify-end gap-3 border-t border-slate-200 pt-5">
+      <div className="flex flex-col-reverse gap-3 border-t border-zinc-200 pt-5 sm:flex-row sm:justify-end">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-2xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+          disabled={isSubmitting}
+          className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Cancelar
         </button>
 
-        <PrimaryButton onClick={onSubmit}>{submitLabel}</PrimaryButton>
+        <PrimaryButton
+          type="submit"
+          loading={isSubmitting}
+          loadingText="Guardando..."
+        >
+          {submitLabel}
+        </PrimaryButton>
       </div>
-    </div>
+    </form>
   );
 }
 

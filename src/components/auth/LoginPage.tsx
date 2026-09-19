@@ -2,13 +2,11 @@ import {
   useState,
   type FormEvent,
 } from "react";
-
 import {
   Navigate,
   useLocation,
   useNavigate,
 } from "react-router";
-
 import {
   LockKeyhole,
   LogIn,
@@ -18,7 +16,6 @@ import {
 import AlertMessage from "../common/AlertMessage";
 import InputField from "../common/InputField";
 import PrimaryButton from "../common/PrimaryButton";
-
 import { ApiError } from "../../api/ApiError";
 import { useAuth } from "../../auth/useAuth";
 
@@ -63,15 +60,9 @@ function LoginPage() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
-  const [errors, setErrors] =
-    useState<LoginErrors>({});
-
-  const [apiError, setApiError] =
-    useState<string | null>(null);
-
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [errors, setErrors] = useState<LoginErrors>({});
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (status === "authenticated") {
     return (
@@ -84,42 +75,29 @@ function LoginPage() {
 
   function validateForm(): boolean {
     const nextErrors: LoginErrors = {};
-
     const normalizedUsername = username.trim();
 
     if (!normalizedUsername) {
-      nextErrors.username =
-        "Ingrese el nombre de usuario.";
+      nextErrors.username = "Ingrese el nombre de usuario.";
     } else if (normalizedUsername.length > 50) {
-      nextErrors.username =
-        "El usuario no puede superar 50 caracteres.";
+      nextErrors.username = "El usuario no puede superar 50 caracteres.";
     }
 
     if (!password) {
-      nextErrors.password =
-        "Ingrese la contraseña.";
+      nextErrors.password = "Ingrese la contraseña.";
     } else if (password.length > 128) {
-      nextErrors.password =
-        "La contraseña no puede superar 128 caracteres.";
+      nextErrors.password = "La contraseña no puede superar 128 caracteres.";
     }
 
     setErrors(nextErrors);
-
     return Object.keys(nextErrors).length === 0;
   }
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (isSubmitting) {
-      return;
-    }
-
-    if (!validateForm()) {
-      return;
-    }
+    if (isSubmitting) return;
+    if (!validateForm()) return;
 
     setApiError(null);
     setIsSubmitting(true);
@@ -136,16 +114,12 @@ function LoginPage() {
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 401) {
-          setApiError(
-            "Usuario o contraseña incorrectos.",
-          );
+          setApiError("Usuario o contraseña incorrectos.");
         } else {
           setApiError(error.message);
         }
       } else {
-        setApiError(
-          "No fue posible conectar con el servidor.",
-        );
+        setApiError("No fue posible conectar con el servidor.");
       }
     } finally {
       setIsSubmitting(false);
@@ -168,7 +142,10 @@ function LoginPage() {
         <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-xl shadow-black/5">
           <div className="border-b border-zinc-200 bg-zinc-950 px-6 py-7 text-white sm:px-8">
             <div className="flex items-center gap-4">
-              <div className="grid h-14 w-14 place-items-center rounded-2xl border border-zinc-700 bg-zinc-900">
+              <div
+                aria-hidden="true"
+                className="grid h-14 w-14 place-items-center rounded-2xl border border-zinc-700 bg-zinc-900"
+              >
                 <LockKeyhole className="h-7 w-7" />
               </div>
 
@@ -189,6 +166,7 @@ function LoginPage() {
           </div>
 
           <form
+            noValidate
             onSubmit={handleSubmit}
             className="space-y-5 px-6 py-7 sm:px-8"
           >
@@ -207,7 +185,6 @@ function LoginPage() {
                 value={username}
                 onChange={(value) => {
                   setUsername(value);
-
                   if (errors.username) {
                     setErrors((current) => ({
                       ...current,
@@ -217,6 +194,7 @@ function LoginPage() {
                 }}
                 placeholder="Ingrese su usuario"
                 required
+                autoComplete="username"
                 maxLength={50}
                 error={errors.username}
               />
@@ -226,7 +204,6 @@ function LoginPage() {
                 value={password}
                 onChange={(value) => {
                   setPassword(value);
-
                   if (errors.password) {
                     setErrors((current) => ({
                       ...current,
@@ -237,32 +214,28 @@ function LoginPage() {
                 type="password"
                 placeholder="Ingrese su contraseña"
                 required
+                autoComplete="current-password"
                 maxLength={128}
                 error={errors.password}
               />
             </div>
 
             <div className="border-t border-zinc-100 pt-5">
-              <PrimaryButton type="submit">
-                <span className="inline-flex items-center gap-2">
-                  {isSubmitting ? (
-                    <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                      Ingresando...
-                    </>
-                  ) : (
-                    <>
-                      <LogIn size={17} />
-                      Ingresar
-                    </>
-                  )}
-                </span>
+              <PrimaryButton
+                type="submit"
+                loading={isSubmitting}
+                loadingText="Ingresando..."
+                className="w-full"
+              >
+                <LogIn size={17} aria-hidden="true" />
+                <span>Ingresar</span>
               </PrimaryButton>
             </div>
 
             <div className="flex items-center gap-3 rounded-2xl bg-zinc-50 px-4 py-3 text-xs text-zinc-500">
               <UserRound
                 size={17}
+                aria-hidden="true"
                 className="shrink-0"
               />
 

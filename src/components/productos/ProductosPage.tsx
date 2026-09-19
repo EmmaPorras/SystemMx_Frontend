@@ -3,7 +3,6 @@ import {
   useMemo,
   useState,
 } from "react";
-
 import {
   Boxes,
   PackageSearch,
@@ -11,6 +10,7 @@ import {
 
 import AlertMessage from "../common/AlertMessage";
 import InputField from "../common/InputField";
+import LoadingState from "../common/LoadingState";
 import PageHeader from "../common/PageHeader";
 import PrimaryButton from "../common/PrimaryButton";
 import SectionCard from "../common/SectionCard";
@@ -26,29 +26,18 @@ import TablaProductos from "./TablaProductos";
 import type { Producto } from "./productos.types";
 
 function ProductosPage() {
-  const [productos, setProductos] =
-    useState<Producto[]>([]);
-
-  const [busqueda, setBusqueda] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState<string | null>(null);
-
-  const [productoDetalle, setProductoDetalle] =
-    useState<Producto | null>(null);
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [busqueda, setBusqueda] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [productoDetalle, setProductoDetalle] = useState<Producto | null>(null);
 
   async function cargarProductos() {
     setLoading(true);
     setError(null);
 
     try {
-      const data =
-        await obtenerProductosApi();
-
+      const data = await obtenerProductosApi();
       setProductos(data);
     } catch (requestError) {
       setError(
@@ -66,12 +55,8 @@ function ProductosPage() {
   }, []);
 
   const productosFiltrados = useMemo(() => {
-    const term =
-      busqueda.trim().toLowerCase();
-
-    if (!term) {
-      return productos;
-    }
+    const term = busqueda.trim().toLowerCase();
+    if (!term) return productos;
 
     return productos.filter((producto) =>
       [
@@ -80,30 +65,22 @@ function ProductosPage() {
         producto.marca ?? "",
         producto.variante ?? "",
         producto.categoria?.nombre ?? "",
-        producto.activo
-          ? "activo"
-          : "inactivo",
+        producto.activo ? "activo" : "inactivo",
       ]
         .join(" ")
         .toLowerCase()
         .includes(term),
     );
-  }, [
-    productos,
-    busqueda,
-  ]);
+  }, [productos, busqueda]);
 
-  const productosActivos =
-    productos.filter(
-      (producto) => producto.activo,
-    ).length;
+  const productosActivos = productos.filter(
+    (producto) => producto.activo,
+  ).length;
 
-  const unidadesDisponibles =
-    productos.reduce(
-      (total, producto) =>
-        total + producto.stockActual,
-      0,
-    );
+  const unidadesDisponibles = productos.reduce(
+    (total, producto) => total + producto.stockActual,
+    0,
+  );
 
   return (
     <div className="space-y-6">
@@ -113,7 +90,7 @@ function ProductosPage() {
         icon={PackageSearch}
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label="Productos"
           value={String(productos.length)}
@@ -153,15 +130,7 @@ function ProductosPage() {
         </div>
 
         {loading ? (
-          <div className="grid min-h-[220px] place-items-center rounded-2xl border border-zinc-200 bg-white">
-            <div className="text-center">
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-zinc-950" />
-
-              <p className="mt-4 text-sm font-semibold text-zinc-600">
-                Cargando productos...
-              </p>
-            </div>
-          </div>
+          <LoadingState message="Cargando productos..." />
         ) : error ? (
           <div className="space-y-4">
             <AlertMessage
@@ -189,9 +158,7 @@ function ProductosPage() {
       <ProductoDetalleModal
         isOpen={productoDetalle !== null}
         producto={productoDetalle}
-        onClose={() =>
-          setProductoDetalle(null)
-        }
+        onClose={() => setProductoDetalle(null)}
       />
     </div>
   );

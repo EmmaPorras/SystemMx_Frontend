@@ -1199,8 +1199,13 @@ function FormularioVenta({
                 Cancelar
               </button>
 
-              <PrimaryButton onClick={() => guardarVenta()}>
-                {guardando ? "Guardando..." : "Procesar venta"}
+              <PrimaryButton
+                onClick={() => guardarVenta()}
+                loading={guardando}
+                loadingText="Procesando venta..."
+                disabled={guardando}
+              >
+                Procesar venta
               </PrimaryButton>
             </div>
           </div>

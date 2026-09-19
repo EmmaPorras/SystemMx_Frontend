@@ -164,11 +164,8 @@ function ModalRegistrarPago({
           ? `Venta #${venta.numeroVenta}`
           : "Registrar pago de venta"
       }
-      onClose={() => {
-        if (!submitting) {
-          onClose();
-        }
-      }}
+      onClose={onClose}
+      isSubmitting={submitting}
       maxWidthClassName="max-w-xl"
     >
       {venta ? (
@@ -207,6 +204,7 @@ function ModalRegistrarPago({
             min={0.01}
             step={0.01}
             required
+            disabled={submitting}
           />
 
           <SelectField
@@ -243,6 +241,7 @@ function ModalRegistrarPago({
                 label: "Otro",
               },
             ]}
+            disabled={submitting}
           />
 
           <InputField
@@ -252,6 +251,7 @@ function ModalRegistrarPago({
             maxLength={150}
             showCharacterCount
             placeholder="Opcional"
+            disabled={submitting}
           />
 
           <InputField
@@ -261,6 +261,7 @@ function ModalRegistrarPago({
             maxLength={1000}
             showCharacterCount
             placeholder="Opcional"
+            disabled={submitting}
           />
 
           <div className="flex flex-col-reverse gap-3 border-t border-zinc-200 pt-5 sm:flex-row sm:justify-end">
@@ -273,10 +274,13 @@ function ModalRegistrarPago({
               Cancelar
             </button>
 
-            <PrimaryButton type="submit">
-              {submitting
-                ? "Registrando..."
-                : "Registrar pago"}
+            <PrimaryButton
+              type="submit"
+              loading={submitting}
+              loadingText="Registrando..."
+              disabled={submitting}
+            >
+              Registrar pago
             </PrimaryButton>
           </div>
         </form>

@@ -51,24 +51,31 @@ function FormularioPedido({
         />
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-            Número de pedido<span className="ml-1 text-red-500">*</span>
+          <label
+            htmlFor="pedido-numero"
+            className="mb-1.5 block text-sm font-semibold text-zinc-700"
+          >
+            Número de pedido<span className="ml-1 text-red-500" aria-hidden="true">*</span>
           </label>
 
           <div
-            className={`flex overflow-hidden rounded-2xl border ${
+            className={`flex overflow-hidden rounded-xl border ${
               errors.numeroPedido
-                ? "border-red-400 bg-red-50"
-                : "border-slate-300 bg-white"
+                ? "border-red-400 bg-red-50/50"
+                : "border-zinc-300 bg-white focus-within:border-zinc-950 focus-within:ring-2 focus-within:ring-zinc-200"
             }`}
           >
-            <span className="flex items-center border-r border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-600">
+            <span
+              aria-hidden="true"
+              className="flex items-center border-r border-zinc-200 bg-zinc-50 px-3.5 text-sm font-semibold text-zinc-600"
+            >
               Pedido N°
             </span>
 
             <input
+              id="pedido-numero"
               value={pedido.numeroPedido}
               onChange={(event) =>
                 onChange("numeroPedido", event.target.value)
@@ -76,18 +83,21 @@ function FormularioPedido({
               maxLength={3}
               inputMode="numeric"
               placeholder="1"
-              className="w-full bg-transparent px-4 py-2.5 text-sm outline-none"
+              required
+              aria-required="true"
+              aria-invalid={Boolean(errors.numeroPedido)}
+              className="w-full bg-transparent px-3.5 py-2.5 text-sm outline-none"
             />
           </div>
 
-          <div className="mt-1 flex justify-between gap-3">
+          <div className="mt-1.5 flex justify-between gap-3">
             {errors.numeroPedido ? (
-              <p className="text-xs font-medium text-red-600">
+              <p role="alert" className="text-xs font-medium text-red-600">
                 {errors.numeroPedido}
               </p>
             ) : null}
 
-            <p className="ml-auto text-xs text-slate-400">
+            <p className="ml-auto text-xs text-zinc-400">
               {pedido.numeroPedido.length}/3
             </p>
           </div>
@@ -116,28 +126,28 @@ function FormularioPedido({
         />
 
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-            País de origen<span className="ml-1 text-red-500">*</span>
+          <label className="mb-1.5 block text-sm font-semibold text-zinc-700">
+            País de origen<span className="ml-1 text-red-500" aria-hidden="true">*</span>
           </label>
 
           <div
-            className={`flex min-h-[42px] items-center rounded-2xl border px-4 py-2.5 text-sm ${
+            className={`flex min-h-[42px] items-center rounded-xl border px-3.5 py-2.5 text-sm ${
               errors.origen
-                ? "border-red-400 bg-red-50 text-red-700"
+                ? "border-red-400 bg-red-50/50 text-red-700"
                 : pedido.origen
-                  ? "border-slate-300 bg-slate-50 font-semibold text-slate-800"
-                  : "border-slate-300 bg-slate-50 text-slate-400"
+                  ? "border-zinc-300 bg-zinc-50 font-semibold text-zinc-800"
+                  : "border-zinc-300 bg-zinc-50 text-zinc-400"
             }`}
           >
             {pedido.origen || "Se completará al seleccionar el proveedor"}
           </div>
 
           {errors.origen ? (
-            <p className="mt-1 text-xs font-medium text-red-600">
+            <p role="alert" className="mt-1.5 text-xs font-medium text-red-600">
               {errors.origen}
             </p>
           ) : (
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1.5 text-xs text-zinc-400">
               Este dato se toma automáticamente del proveedor.
             </p>
           )}
@@ -177,7 +187,7 @@ function FormularioPedido({
           ]}
         />
 
-        <div className="md:col-span-2">
+        <div className="sm:col-span-2">
           <InputField
             label="Observaciones"
             value={pedido.observaciones}
@@ -190,11 +200,11 @@ function FormularioPedido({
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 border-t border-slate-200 pt-5">
+      <div className="flex flex-col-reverse gap-3 border-t border-zinc-200 pt-5 sm:flex-row sm:justify-end">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+          className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
         >
           Cancelar
         </button>

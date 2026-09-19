@@ -3,15 +3,13 @@ import {
   useMemo,
   useState,
 } from "react";
-
-import {
-  Tags,
-} from "lucide-react";
+import { Tags } from "lucide-react";
 
 import AlertMessage from "../common/AlertMessage";
 import AppModal from "../common/AppModal";
 import ConfirmDialog from "../common/ConfirmDialog";
 import InputField from "../common/InputField";
+import LoadingState from "../common/LoadingState";
 import PageHeader from "../common/PageHeader";
 import PrimaryButton from "../common/PrimaryButton";
 import SectionCard from "../common/SectionCard";
@@ -46,38 +44,18 @@ const INITIAL_FORM: CategoriaFormData = {
 };
 
 function CategoriasPage() {
-  const [categorias, setCategorias] =
-    useState<Categoria[]>([]);
-
-  const [busqueda, setBusqueda] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [errorCarga, setErrorCarga] =
-    useState<string | null>(null);
-
-  const [alert, setAlert] =
-    useState<PageAlert | null>(null);
-
-  const [modalOpen, setModalOpen] =
-    useState(false);
-
-  const [categoriaEditando, setCategoriaEditando] =
-    useState<Categoria | null>(null);
-
-  const [categoriaDesactivar, setCategoriaDesactivar] =
-    useState<Categoria | null>(null);
-
-  const [form, setForm] =
-    useState<CategoriaFormData>(INITIAL_FORM);
-
-  const [formErrors, setFormErrors] =
-    useState<CategoriaFormErrors>({});
-
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [busqueda, setBusqueda] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
+  const [alert, setAlert] = useState<PageAlert | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [categoriaEditando, setCategoriaEditando] = useState<Categoria | null>(null);
+  const [categoriaDesactivar, setCategoriaDesactivar] = useState<Categoria | null>(null);
+  const [isDeactivating, setIsDeactivating] = useState(false);
+  const [form, setForm] = useState<CategoriaFormData>(INITIAL_FORM);
+  const [formErrors, setFormErrors] = useState<CategoriaFormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function cargarCategorias() {
     setLoading(true);
@@ -85,7 +63,6 @@ function CategoriasPage() {
 
     try {
       const data = await obtenerCategorias();
-
       setCategorias(data);
     } catch (error) {
       setErrorCarga(
@@ -104,10 +81,7 @@ function CategoriasPage() {
 
   const categoriasFiltradas = useMemo(() => {
     const term = busqueda.trim().toLowerCase();
-
-    if (!term) {
-      return categorias;
-    }
+    if (!term) return categorias;
 
     return categorias.filter((categoria) =>
       [
@@ -128,26 +102,19 @@ function CategoriasPage() {
     setModalOpen(true);
   }
 
-  function abrirEditarCategoria(
-    categoria: Categoria,
-  ) {
+  function abrirEditarCategoria(categoria: Categoria) {
     setCategoriaEditando(categoria);
-
     setForm({
       nombre: categoria.nombre,
       descripcion: categoria.descripcion ?? "",
       activo: categoria.activo,
     });
-
     setFormErrors({});
     setModalOpen(true);
   }
 
   function cerrarModal() {
-    if (isSubmitting) {
-      return;
-    }
-
+    if (isSubmitting) return;
     setModalOpen(false);
     setCategoriaEditando(null);
     setForm(INITIAL_FORM);
@@ -163,10 +130,7 @@ function CategoriasPage() {
       [field]: value,
     }));
 
-    if (
-      field === "nombre" ||
-      field === "descripcion"
-    ) {
+    if (field === "nombre" || field === "descripcion") {
       setFormErrors((current) => ({
         ...current,
         [field]: undefined,
@@ -176,57 +140,43 @@ function CategoriasPage() {
 
   function validarFormulario(): boolean {
     const errors: CategoriaFormErrors = {};
-
     const nombre = form.nombre.trim();
     const descripcion = form.descripcion.trim();
 
     if (!nombre) {
-      errors.nombre =
-        "El nombre de la categoría es obligatorio.";
+      errors.nombre = "El nombre de la categoría es obligatorio.";
     } else if (nombre.length > 100) {
-      errors.nombre =
-        "El nombre no puede superar 100 caracteres.";
+      errors.nombre = "El nombre no puede superar 100 caracteres.";
     }
 
     if (descripcion.length > 255) {
-      errors.descripcion =
-        "La descripción no puede superar 255 caracteres.";
+      errors.descripcion = "La descripción no puede superar 255 caracteres.";
     }
 
     setFormErrors(errors);
-
     return Object.keys(errors).length === 0;
   }
 
   async function guardarCategoria() {
-    if (!validarFormulario()) {
-      return;
-    }
+    if (!validarFormulario()) return;
 
     setIsSubmitting(true);
     setAlert(null);
 
     try {
       if (categoriaEditando) {
-        await actualizarCategoriaApi(
-          categoriaEditando.idCategoria,
-          form,
-        );
-
+        await actualizarCategoriaApi(categoriaEditando.idCategoria, form);
         setAlert({
           variant: "success",
           title: "Categoría actualizada",
-          message:
-            "La categoría se actualizó correctamente.",
+          message: "La categoría se actualizó correctamente.",
         });
       } else {
         await crearCategoriaApi(form);
-
         setAlert({
           variant: "success",
           title: "Categoría creada",
-          message:
-            "La categoría se registró correctamente.",
+          message: "La categoría se registró correctamente.",
         });
       }
 
@@ -234,7 +184,6 @@ function CategoriasPage() {
       setCategoriaEditando(null);
       setForm(INITIAL_FORM);
       setFormErrors({});
-
       await cargarCategorias();
     } catch (error) {
       setAlert({
@@ -253,23 +202,17 @@ function CategoriasPage() {
   }
 
   async function confirmarDesactivacion() {
-    if (!categoriaDesactivar) {
-      return;
-    }
+    if (!categoriaDesactivar || isDeactivating) return;
 
+    setIsDeactivating(true);
     try {
-      await desactivarCategoriaApi(
-        categoriaDesactivar.idCategoria,
-      );
-
+      await desactivarCategoriaApi(categoriaDesactivar.idCategoria);
       await cargarCategorias();
-
       setAlert({
         variant: "success",
         title: "Categoría desactivada",
         message: `La categoría "${categoriaDesactivar.nombre}" quedó inactiva correctamente.`,
       });
-
       setCategoriaDesactivar(null);
     } catch (error) {
       setAlert({
@@ -280,15 +223,13 @@ function CategoriasPage() {
             ? error.message
             : "No fue posible desactivar la categoría.",
       });
+    } finally {
+      setIsDeactivating(false);
     }
   }
 
-  const activas = categorias.filter(
-    (categoria) => categoria.activo,
-  ).length;
-
-  const inactivas =
-    categorias.length - activas;
+  const activas = categorias.filter((categoria) => categoria.activo).length;
+  const inactivas = categorias.length - activas;
 
   return (
     <div className="space-y-6">
@@ -297,9 +238,7 @@ function CategoriasPage() {
         description="Administrá la clasificación utilizada por los productos del sistema."
         icon={Tags}
         action={
-          <PrimaryButton
-            onClick={abrirNuevaCategoria}
-          >
+          <PrimaryButton onClick={abrirNuevaCategoria}>
             Nueva categoría
           </PrimaryButton>
         }
@@ -314,7 +253,7 @@ function CategoriasPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label="Categorías"
           value={String(categorias.length)}
@@ -354,15 +293,7 @@ function CategoriasPage() {
         </div>
 
         {loading ? (
-          <div className="grid min-h-[190px] place-items-center rounded-2xl border border-zinc-200 bg-white">
-            <div className="text-center">
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-zinc-950" />
-
-              <p className="mt-4 text-sm font-semibold text-zinc-600">
-                Cargando categorías...
-              </p>
-            </div>
-          </div>
+          <LoadingState message="Cargando categorías..." />
         ) : errorCarga ? (
           <div className="space-y-4">
             <AlertMessage
@@ -402,6 +333,7 @@ function CategoriasPage() {
         }
         onClose={cerrarModal}
         maxWidthClassName="max-w-xl"
+        isSubmitting={isSubmitting}
       >
         <FormularioCategoria
           value={form}
@@ -429,10 +361,9 @@ function CategoriasPage() {
         confirmLabel="Desactivar"
         cancelLabel="Cancelar"
         variant="warning"
+        isLoading={isDeactivating}
         onConfirm={confirmarDesactivacion}
-        onCancel={() =>
-          setCategoriaDesactivar(null)
-        }
+        onCancel={() => setCategoriaDesactivar(null)}
       />
     </div>
   );

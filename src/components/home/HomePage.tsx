@@ -2,7 +2,6 @@ import {
   useEffect,
   useState,
 } from "react";
-
 import {
   Boxes,
   CircleDollarSign,
@@ -11,31 +10,23 @@ import {
   ShoppingCart,
   WalletCards,
 } from "lucide-react";
-
 import { TbMotorbikeFilled } from "react-icons/tb";
 
 import AlertMessage from "../common/AlertMessage";
+import LoadingState from "../common/LoadingState";
 import PageHeader from "../common/PageHeader";
 import PrimaryButton from "../common/PrimaryButton";
 import StatCard from "../common/StatCard";
 import ModuleCard from "./ModuleCard";
-
 import { navigationItems } from "../common/navigation";
 import { formatCurrency } from "../common/formatters";
-
 import { obtenerResumenDashboard } from "../../services/dashboardApi";
-
 import type { ResumenDashboard } from "./dashboard.types";
 
 function HomePage() {
-  const [resumen, setResumen] =
-    useState<ResumenDashboard | null>(null);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState<string | null>(null);
+  const [resumen, setResumen] = useState<ResumenDashboard | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   async function cargarResumen() {
     setLoading(true);
@@ -43,11 +34,9 @@ function HomePage() {
 
     try {
       const data = await obtenerResumenDashboard();
-
       setResumen(data);
     } catch (requestError) {
       setResumen(null);
-
       setError(
         requestError instanceof Error
           ? requestError.message
@@ -76,6 +65,7 @@ function HomePage() {
             variant="error"
             title="No fue posible cargar el Dashboard"
             message={error}
+            onClose={() => setError(null)}
           />
 
           <PrimaryButton
@@ -98,17 +88,11 @@ function HomePage() {
         </div>
 
         {loading ? (
-          <div className="grid min-h-[220px] place-items-center rounded-2xl border border-zinc-200 bg-white">
-            <div className="text-center">
-              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-zinc-950" />
-
-              <p className="mt-4 text-sm font-semibold text-zinc-600">
-                Cargando resumen...
-              </p>
-            </div>
+          <div className="rounded-2xl border border-zinc-200 bg-white p-8">
+            <LoadingState message="Cargando resumen del sistema..." />
           </div>
         ) : resumen ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <StatCard
               label="Ventas registradas"
               value={String(resumen.ventas.cantidad)}
@@ -215,7 +199,7 @@ function HomePage() {
           <div className="hidden h-px flex-1 bg-zinc-200 sm:block" />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {navigationItems
             .filter((item) => item.path !== "/")
             .map((item) => (

@@ -8,6 +8,7 @@ import InputField from "../common/InputField";
 import AppModal from "../common/AppModal";
 import AlertMessage from "../common/AlertMessage";
 import ConfirmDialog from "../common/ConfirmDialog";
+import LoadingState from "../common/LoadingState";
 
 import BotonAgregarTarifa from "./BotonAgregarTarifa";
 import FormularioTarifa from "./FormularioTarifa";
@@ -79,17 +80,14 @@ function validarTarifa(tarifa: TarifaIVA): TarifaIVAFormErrors {
 function TarifasIVAPage() {
   const [tarifas, setTarifas] = useState<TarifaIVA[]>([]);
   const [busqueda, setBusqueda] = useState("");
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
-
   const [tarifa, setTarifa] = useState<TarifaIVA>(tarifaInicial);
   const [errors, setErrors] = useState<TarifaIVAFormErrors>({});
-
-  const [tarifaAEliminar, setTarifaAEliminar] =
-    useState<TarifaIVA | null>(null);
-
+  const [tarifaAEliminar, setTarifaAEliminar] = useState<TarifaIVA | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [alert, setAlert] = useState<{
     variant: "success" | "error" | "warning" | "info";
@@ -98,7 +96,7 @@ function TarifasIVAPage() {
   } | null>(null);
 
   useEffect(() => {
-    cargarTarifas();
+    void cargarTarifas();
   }, []);
 
   const tarifasFiltradas = useMemo(() => {
@@ -121,10 +119,6 @@ function TarifasIVAPage() {
     );
   }, [busqueda, tarifas]);
 
-  /**
-   * Tarifa general:
-   * busca una tarifa ACTIVA cuyo código sea exactamente IVA.
-   */
   const tarifaGeneral = useMemo(() => {
     const tarifaEncontrada = tarifas.find(
       (item) =>
@@ -137,10 +131,6 @@ function TarifasIVAPage() {
       : "No definida";
   }, [tarifas]);
 
-  /**
-   * Tarifa más alta:
-   * toma solamente las tarifas activas disponibles para utilizar.
-   */
   const tarifaMasAlta = useMemo(() => {
     const porcentajesActivos = tarifas
       .filter((item) => item.estado === "ACTIVA")
@@ -152,16 +142,13 @@ function TarifasIVAPage() {
     }
 
     const porcentajeMayor = Math.max(...porcentajesActivos);
-
     return `${porcentajeMayor}%`;
   }, [tarifas]);
 
   async function cargarTarifas() {
     try {
       setIsLoading(true);
-
       const data = await obtenerTarifasIva();
-
       setTarifas(data);
     } catch (error) {
       setAlert({
@@ -192,6 +179,7 @@ function TarifasIVAPage() {
   }
 
   function cerrarModal() {
+    if (isSaving) return;
     setIsModalOpen(false);
     setTarifa(tarifaInicial);
     setErrors({});
@@ -235,12 +223,11 @@ function TarifasIVAPage() {
       descripcion: tarifa.descripcion.trim(),
     };
 
+    setIsSaving(true);
     try {
       if (modalMode === "create") {
         const nuevaTarifa = await crearTarifaIva(tarifaLimpia);
-
         setTarifas((prev) => [nuevaTarifa, ...prev]);
-
         setAlert({
           variant: "success",
           title: "Tarifa creada",
@@ -267,7 +254,10 @@ function TarifasIVAPage() {
         });
       }
 
-      cerrarModal();
+      setIsModalOpen(false);
+      setTarifa(tarifaInicial);
+      setErrors({});
+      setModalMode("create");
     } catch (error) {
       setAlert({
         variant: "error",
@@ -280,32 +270,27 @@ function TarifasIVAPage() {
             ? error.message
             : "Ocurrió un error al guardar la tarifa IVA.",
       });
+    } finally {
+      setIsSaving(false);
     }
   }
 
-  function solicitarEliminarTarifa(
-    tarifaSeleccionada: TarifaIVA,
-  ) {
+  function solicitarEliminarTarifa(tarifaSeleccionada: TarifaIVA) {
     setTarifaAEliminar(tarifaSeleccionada);
   }
 
   async function confirmarEliminarTarifa() {
-    if (!tarifaAEliminar) {
-      return;
-    }
+    if (!tarifaAEliminar || isDeleting) return;
 
+    setIsDeleting(true);
     try {
       await eliminarTarifaIvaApi(tarifaAEliminar.id);
-
       await cargarTarifas();
-
       setAlert({
         variant: "success",
         title: "Tarifa desactivada",
-        message:
-          "La tarifa IVA quedó inactiva correctamente.",
+        message: "La tarifa IVA quedó inactiva correctamente.",
       });
-
       setTarifaAEliminar(null);
     } catch (error) {
       setAlert({
@@ -316,6 +301,8 @@ function TarifasIVAPage() {
             ? error.message
             : "No se pudo desactivar la tarifa IVA.",
       });
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -343,7 +330,7 @@ function TarifasIVAPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label="Tarifas registradas"
           value={String(tarifas.length)}
@@ -383,11 +370,7 @@ function TarifasIVAPage() {
         </div>
 
         {isLoading ? (
-          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-6 py-10 text-center">
-            <p className="text-sm font-medium text-zinc-500">
-              Cargando tarifas IVA...
-            </p>
-          </div>
+          <LoadingState message="Cargando tarifas IVA..." />
         ) : (
           <TablaTarifas
             tarifas={tarifasFiltradas}
@@ -410,11 +393,13 @@ function TarifasIVAPage() {
             : "Actualizá los datos de la tarifa seleccionada."
         }
         onClose={cerrarModal}
+        isSubmitting={isSaving}
         maxWidthClassName="max-w-2xl"
       >
         <FormularioTarifa
           tarifa={tarifa}
           errors={errors}
+          isSubmitting={isSaving}
           submitLabel={
             modalMode === "create"
               ? "Guardar tarifa"
@@ -437,6 +422,7 @@ function TarifasIVAPage() {
         confirmLabel="Desactivar"
         cancelLabel="Cancelar"
         variant="warning"
+        isLoading={isDeleting}
         onConfirm={confirmarEliminarTarifa}
         onCancel={() => setTarifaAEliminar(null)}
       />

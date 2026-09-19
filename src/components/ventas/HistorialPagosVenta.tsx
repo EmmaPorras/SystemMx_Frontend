@@ -6,8 +6,9 @@ import {
 
 import AlertMessage from "../common/AlertMessage";
 import DataTableShell from "../common/DataTableShell";
+import LoadingState from "../common/LoadingState";
 import PrimaryButton from "../common/PrimaryButton";
-import { formatCurrency } from "../common/formatters";
+import { formatCurrency, formatDateTime } from "../common/formatters";
 
 import {
   obtenerPagosVentaApi,
@@ -65,11 +66,7 @@ function HistorialPagosVenta({
   ]);
 
   if (loading) {
-    return (
-      <p className="py-6 text-center text-sm font-semibold text-zinc-500">
-        Cargando pagos...
-      </p>
-    );
+    return <LoadingState message="Cargando pagos..." />;
   }
 
   if (error) {
@@ -104,9 +101,7 @@ function HistorialPagosVenta({
           key: "fecha",
           header: "Fecha",
           render: (row) =>
-            new Date(
-              row.createdAt,
-            ).toLocaleString(),
+            formatDateTime(row.createdAt),
         },
         {
           key: "metodo",

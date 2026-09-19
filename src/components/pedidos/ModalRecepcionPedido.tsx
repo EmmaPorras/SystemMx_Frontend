@@ -10,6 +10,7 @@ import AlertMessage from "../common/AlertMessage";
 import AppModal from "../common/AppModal";
 import DataTableShell from "../common/DataTableShell";
 import InputField from "../common/InputField";
+import LoadingState from "../common/LoadingState";
 import PrimaryButton from "../common/PrimaryButton";
 
 import {
@@ -39,17 +40,9 @@ type ErroresPorLote = Record<number, string>;
 
 function obtenerFechaLocalActual(): string {
   const now = new Date();
-
   const year = now.getFullYear();
-
-  const month = String(
-    now.getMonth() + 1,
-  ).padStart(2, "0");
-
-  const day = String(
-    now.getDate(),
-  ).padStart(2, "0");
-
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -59,77 +52,44 @@ function ModalRecepcionPedido({
   onClose,
   onSuccess,
 }: ModalRecepcionPedidoProps) {
-  const [pedido, setPedido] =
-    useState<PedidoCompra | null>(null);
+  const [pedido, setPedido] = useState<PedidoCompra | null>(null);
+  const [fechaRecepcion, setFechaRecepcion] = useState("");
+  const [cantidades, setCantidades] = useState<CantidadesPorLote>({});
+  const [erroresPorLote, setErroresPorLote] = useState<ErroresPorLote>({});
+  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [fechaRecepcion, setFechaRecepcion] =
-    useState("");
+  const cargarPedido = useCallback(async (id: number) => {
+    setLoading(true);
+    setError(null);
+    setPedido(null);
+    setCantidades({});
+    setErroresPorLote({});
+    setFechaRecepcion(obtenerFechaLocalActual());
 
-  const [cantidades, setCantidades] =
-    useState<CantidadesPorLote>({});
-
-  const [erroresPorLote, setErroresPorLote] =
-    useState<ErroresPorLote>({});
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
-
-  const [error, setError] =
-    useState<string | null>(null);
-
-  const cargarPedido = useCallback(
-    async (id: number) => {
-      setLoading(true);
-      setError(null);
-      setPedido(null);
-      setCantidades({});
-      setErroresPorLote({});
-      setFechaRecepcion(
-        obtenerFechaLocalActual(),
+    try {
+      const data = await obtenerPedidoApi(id);
+      setPedido(data);
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "No fue posible cargar el pedido.",
       );
-
-      try {
-        const data =
-          await obtenerPedidoApi(id);
-
-        setPedido(data);
-      } catch (requestError) {
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : "No fue posible cargar el pedido.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!isOpen || pedidoId === null) {
-      return;
-    }
-
+    if (!isOpen || pedidoId === null) return;
     void cargarPedido(pedidoId);
-  }, [
-    isOpen,
-    pedidoId,
-    cargarPedido,
-  ]);
+  }, [isOpen, pedidoId, cargarPedido]);
 
-  const detalles = useMemo(
-    () => pedido?.detalles ?? [],
-    [pedido],
-  );
+  const detalles = useMemo(() => pedido?.detalles ?? [], [pedido]);
 
-  function cambiarCantidad(
-    idLote: number,
-    value: string,
-  ) {
+  function cambiarCantidad(idLote: number, value: string) {
     setCantidades((current) => ({
       ...current,
       [idLote]: value,
@@ -146,44 +106,26 @@ function ModalRecepcionPedido({
   function construirDetallesRecepcion():
     | RecepcionPedidoDetallePayload[]
     | null {
-    const payload: RecepcionPedidoDetallePayload[] =
-      [];
-
-    const nuevosErrores: ErroresPorLote =
-      {};
+    const payload: RecepcionPedidoDetallePayload[] = [];
+    const nuevosErrores: ErroresPorLote = {};
 
     for (const detalle of detalles) {
-      if (detalle.loteId === undefined) {
-        continue;
-      }
+      if (detalle.loteId === undefined) continue;
 
-      const raw =
-        cantidades[detalle.loteId]?.trim() ??
-        "";
-
-      if (!raw || raw === "0") {
-        continue;
-      }
+      const raw = cantidades[detalle.loteId]?.trim() ?? "";
+      if (!raw || raw === "0") continue;
 
       const cantidad = Number(raw);
+      const pendiente = obtenerCantidadPendiente(detalle);
 
-      const pendiente =
-        obtenerCantidadPendiente(detalle);
-
-      if (
-        !Number.isInteger(cantidad) ||
-        cantidad <= 0
-      ) {
+      if (!Number.isInteger(cantidad) || cantidad <= 0) {
         nuevosErrores[detalle.loteId] =
           "Ingrese un número entero mayor que cero.";
-
         continue;
       }
 
       if (cantidad > pendiente) {
-        nuevosErrores[detalle.loteId] =
-          `Máximo pendiente: ${pendiente}.`;
-
+        nuevosErrores[detalle.loteId] = `Máximo pendiente: ${pendiente}.`;
         continue;
       }
 
@@ -195,56 +137,31 @@ function ModalRecepcionPedido({
 
     setErroresPorLote(nuevosErrores);
 
-    if (
-      Object.keys(nuevosErrores).length > 0
-    ) {
+    if (Object.keys(nuevosErrores).length > 0) {
       return null;
     }
 
     return payload;
   }
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (
-      isSubmitting ||
-      !pedido ||
-      pedidoId === null
-    ) {
+    if (isSubmitting || !pedido || pedidoId === null) return;
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaRecepcion)) {
+      setError("Seleccione una fecha de recepción válida.");
       return;
     }
 
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(
-        fechaRecepcion,
-      )
-    ) {
-      setError(
-        "Seleccione una fecha de recepción válida.",
-      );
-
-      return;
-    }
-
-    const detallesRecepcion =
-      construirDetallesRecepcion();
-
+    const detallesRecepcion = construirDetallesRecepcion();
     if (!detallesRecepcion) {
-      setError(
-        "Revise las cantidades indicadas.",
-      );
-
+      setError("Revise las cantidades indicadas.");
       return;
     }
 
     if (detallesRecepcion.length === 0) {
-      setError(
-        "Ingrese al menos una cantidad para recibir.",
-      );
-
+      setError("Ingrese al menos una cantidad para recibir.");
       return;
     }
 
@@ -252,14 +169,10 @@ function ModalRecepcionPedido({
     setError(null);
 
     try {
-      const actualizado =
-        await registrarRecepcionPedidoApi(
-          pedidoId,
-          {
-            fechaRecepcion,
-            detalles: detallesRecepcion,
-          },
-        );
+      const actualizado = await registrarRecepcionPedidoApi(pedidoId, {
+        fechaRecepcion,
+        detalles: detallesRecepcion,
+      });
 
       onSuccess(actualizado);
     } catch (requestError) {
@@ -287,18 +200,11 @@ function ModalRecepcionPedido({
           onClose();
         }
       }}
+      isSubmitting={isSubmitting}
       maxWidthClassName="max-w-6xl"
     >
       {loading ? (
-        <div className="grid min-h-[240px] place-items-center">
-          <div className="text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-zinc-950" />
-
-            <p className="mt-4 text-sm font-semibold text-zinc-600">
-              Cargando pedido...
-            </p>
-          </div>
-        </div>
+        <LoadingState message="Cargando pedido..." />
       ) : error && !pedido ? (
         <div className="space-y-4">
           <AlertMessage
@@ -318,10 +224,7 @@ function ModalRecepcionPedido({
           ) : null}
         </div>
       ) : pedido ? (
-        <form
-          className="space-y-6"
-          onSubmit={handleSubmit}
-        >
+        <form className="space-y-6" onSubmit={handleSubmit}>
           {error ? (
             <AlertMessage
               variant="error"
@@ -362,49 +265,35 @@ function ModalRecepcionPedido({
               {
                 key: "producto",
                 header: "Producto",
-                render: (row) =>
-                  row.productoNombre,
+                render: (row) => row.productoNombre,
               },
               {
                 key: "lote",
                 header: "Lote",
-                render: (row) =>
-                  row.loteCodigo,
+                render: (row) => row.loteCodigo,
               },
               {
                 key: "pedido",
                 header: "Pedido",
-                render: (row) =>
-                  String(row.cantidad),
+                render: (row) => String(row.cantidad),
               },
               {
                 key: "recibido",
                 header: "Recibido",
-                render: (row) =>
-                  String(row.cantidadRecibida ?? 0),
+                render: (row) => String(row.cantidadRecibida ?? 0),
               },
               {
                 key: "pendiente",
                 header: "Pendiente",
-                render: (row) =>
-                  String(
-                    obtenerCantidadPendiente(
-                      row,
-                    ),
-                  ),
+                render: (row) => String(obtenerCantidadPendiente(row)),
               },
               {
                 key: "recibir",
                 header: "Recibir ahora",
                 render: (row) => {
-                  const pendiente =
-                    obtenerCantidadPendiente(
-                      row,
-                    );
+                  const pendiente = obtenerCantidadPendiente(row);
 
-                  if (
-                    row.loteId === undefined
-                  ) {
+                  if (row.loteId === undefined) {
                     return (
                       <span className="text-sm text-zinc-500">
                         Lote sin identificar
@@ -421,32 +310,19 @@ function ModalRecepcionPedido({
                   }
 
                   return (
-                    <div className="min-w-40">
+                    <div className="min-w-36">
                       <InputField
                         label="Cantidad"
                         type="number"
-                        value={
-                          cantidades[
-                            row.loteId
-                          ] ?? ""
-                        }
+                        value={cantidades[row.loteId] ?? ""}
                         onChange={(value) =>
-                          cambiarCantidad(
-                            row.loteId!,
-                            value,
-                          )
+                          cambiarCantidad(row.loteId!, value)
                         }
                         min={0}
                         max={pendiente}
                         step={1}
-                        error={
-                          erroresPorLote[
-                            row.loteId
-                          ]
-                        }
-                        disabled={
-                          isSubmitting
-                        }
+                        error={erroresPorLote[row.loteId]}
+                        disabled={isSubmitting}
                       />
                     </div>
                   );
@@ -460,16 +336,18 @@ function ModalRecepcionPedido({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="rounded-xl border border-zinc-300 px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancelar
             </button>
 
             {puedeRecibirPedido(pedido) ? (
-              <PrimaryButton type="submit">
-                {isSubmitting
-                  ? "Registrando..."
-                  : "Registrar recepción"}
+              <PrimaryButton
+                type="submit"
+                loading={isSubmitting}
+                loadingText="Registrando..."
+              >
+                Registrar recepción
               </PrimaryButton>
             ) : null}
           </div>
