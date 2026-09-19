@@ -1,7 +1,10 @@
+import { useId } from "react";
+
 type InputFieldProps = {
   label: string;
-  value: string;
+  value: string | number;
   onChange: (value: string) => void;
+  id?: string;
   type?: string;
   placeholder?: string;
   required?: boolean;
@@ -11,12 +14,19 @@ type InputFieldProps = {
   showCharacterCount?: boolean;
   prefix?: string;
   disabled?: boolean;
+  min?: number | string;
+  max?: number | string;
+  step?: number | string;
+  autoComplete?: string;
+  name?: string;
+  className?: string;
 };
 
 function InputField({
   label,
   value,
   onChange,
+  id: customId,
   type = "text",
   placeholder,
   required = false,
@@ -26,57 +36,104 @@ function InputField({
   showCharacterCount = false,
   prefix,
   disabled = false,
+  min,
+  max,
+  step,
+  autoComplete,
+  name,
+  className = "",
 }: InputFieldProps) {
+  const generatedId = useId();
+  const inputId = customId || generatedId;
+  const errorId = `${inputId}-error`;
+  const helperId = `${inputId}-helper`;
+  const countId = `${inputId}-count`;
+
   const hasPrefix = Boolean(prefix);
+  const stringValue = String(value ?? "");
+  const valueLength = stringValue.length;
+
+  const describedBy = [
+    error ? errorId : null,
+    helperText ? helperId : null,
+    showCharacterCount && maxLength ? countId : null,
+  ]
+    .filter(Boolean)
+    .join(" ") || undefined;
 
   return (
-    <div>
-      <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+    <div className={className}>
+      <label
+        htmlFor={inputId}
+        className="mb-1.5 block text-sm font-semibold text-zinc-700"
+      >
         {label}
-        {required ? <span className="ml-1 text-red-500">*</span> : null}
+        {required ? (
+          <span className="ml-1 text-red-500" aria-hidden="true">
+            *
+          </span>
+        ) : null}
       </label>
 
       <div className="relative">
         {hasPrefix ? (
-          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-500">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-zinc-500"
+          >
             {prefix}
           </span>
         ) : null}
 
         <input
+          id={inputId}
+          name={name}
           type={type}
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
           maxLength={maxLength}
           disabled={disabled}
+          min={min}
+          max={max}
+          step={step}
+          required={required}
+          autoComplete={autoComplete}
+          aria-required={required}
           aria-invalid={Boolean(error)}
-          className={`w-full rounded-2xl border py-2.5 text-sm outline-none transition disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 ${
-            hasPrefix ? "pl-10 pr-4" : "px-4"
+          aria-describedby={describedBy}
+          className={`w-full rounded-xl border py-2.5 text-sm outline-none transition disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 ${
+            hasPrefix ? "pl-9 pr-3.5" : "px-3.5"
           } ${
             error
-              ? "border-red-400 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-              : "border-slate-300 bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-100"
+              ? "border-red-400 bg-red-50/50 text-zinc-900 focus-visible:border-red-500 focus-visible:ring-2 focus-visible:ring-red-200"
+              : "border-zinc-300 bg-white text-zinc-900 focus-visible:border-zinc-950 focus-visible:ring-2 focus-visible:ring-zinc-200"
           }`}
         />
       </div>
 
-      <div className="mt-1 flex items-start justify-between gap-3">
-        <div>
+      <div className="mt-1.5 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
           {error ? (
-            <p className="text-xs font-medium text-red-600">{error}</p>
+            <p id={errorId} role="alert" className="text-xs font-medium text-red-600">
+              {error}
+            </p>
           ) : helperText ? (
-            <p className="text-xs text-slate-500">{helperText}</p>
+            <p id={helperId} className="text-xs text-zinc-500">
+              {helperText}
+            </p>
           ) : null}
         </div>
 
         {showCharacterCount && maxLength ? (
           <p
-            className={`shrink-0 text-xs ${
-              value.length >= maxLength ? "text-red-500" : "text-slate-400"
+            id={countId}
+            aria-live="polite"
+            className={`shrink-0 text-xs font-medium ${
+              valueLength >= maxLength ? "text-red-500" : "text-zinc-400"
             }`}
           >
-            {value.length}/{maxLength}
+            {valueLength}/{maxLength}
           </p>
         ) : null}
       </div>

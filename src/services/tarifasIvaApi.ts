@@ -1,9 +1,9 @@
+import { apiClient } from "../api/apiClient";
+
 import type {
   EstadoTarifaIVA,
   TarifaIVA,
 } from "../components/tarifas-iva/tarifas-iva.types";
-
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001/api";
 
 type TarifaIVABackend = {
   idTarifaIva: number;
@@ -11,12 +11,6 @@ type TarifaIVABackend = {
   porcentaje: number | string;
   descripcion: string;
   estado?: EstadoTarifaIVA | null;
-};
-
-type ApiErrorResponse = {
-  message?: string | string[];
-  error?: string;
-  statusCode?: number;
 };
 
 function mapTarifaFromBackend(item: TarifaIVABackend): TarifaIVA {
@@ -38,49 +32,19 @@ function mapTarifaToBackend(tarifa: TarifaIVA) {
   };
 }
 
-function isApiErrorResponse(data: unknown): data is ApiErrorResponse {
-  return typeof data === "object" && data !== null && "message" in data;
-}
-
-function getApiErrorMessage(data: unknown): string {
-  if (!isApiErrorResponse(data)) {
-    return "Ocurrió un error inesperado.";
-  }
-
-  if (Array.isArray(data.message)) {
-    return data.message.join(" ");
-  }
-
-  return data.message || data.error || "Ocurrió un error inesperado.";
-}
-
-async function parseResponse<T>(response: Response): Promise<T> {
-  const data: unknown = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(getApiErrorMessage(data));
-  }
-
-  return data as T;
-}
-
 export async function obtenerTarifasIva(): Promise<TarifaIVA[]> {
-  const response = await fetch(`${API_URL}/tarifas-iva`);
-  const data = await parseResponse<TarifaIVABackend[]>(response);
+  const data = await apiClient.get<TarifaIVABackend[]>("/tarifas-iva");
 
   return data.map(mapTarifaFromBackend);
 }
 
-export async function crearTarifaIva(tarifa: TarifaIVA): Promise<TarifaIVA> {
-  const response = await fetch(`${API_URL}/tarifas-iva`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(mapTarifaToBackend(tarifa)),
-  });
-
-  const data = await parseResponse<TarifaIVABackend>(response);
+export async function crearTarifaIva(
+  tarifa: TarifaIVA,
+): Promise<TarifaIVA> {
+  const data = await apiClient.post<
+    TarifaIVABackend,
+    ReturnType<typeof mapTarifaToBackend>
+  >("/tarifas-iva", mapTarifaToBackend(tarifa));
 
   return mapTarifaFromBackend(data);
 }
@@ -89,23 +53,14 @@ export async function actualizarTarifaIvaApi(
   id: number,
   tarifa: TarifaIVA,
 ): Promise<TarifaIVA> {
-  const response = await fetch(`${API_URL}/tarifas-iva/${id}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(mapTarifaToBackend(tarifa)),
-  });
-
-  const data = await parseResponse<TarifaIVABackend>(response);
+  const data = await apiClient.patch<
+    TarifaIVABackend,
+    ReturnType<typeof mapTarifaToBackend>
+  >(`/tarifas-iva/${id}`, mapTarifaToBackend(tarifa));
 
   return mapTarifaFromBackend(data);
 }
 
 export async function eliminarTarifaIvaApi(id: number): Promise<void> {
-  const response = await fetch(`${API_URL}/tarifas-iva/${id}`, {
-    method: "DELETE",
-  });
-
-  await parseResponse<{ message: string; id: number }>(response);
+  await apiClient.delete<unknown>(`/tarifas-iva/${id}`);
 }

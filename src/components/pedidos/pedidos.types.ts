@@ -22,6 +22,7 @@ export type ProductoSugerido = {
 
 export type PedidoDetalle = {
   idTemporal: string;
+  loteId?: number;
   productoId?: number;
   productoNombre: string;
   loteCodigo: string;
@@ -93,4 +94,14 @@ export type PedidoCompra = {
   observaciones: string;
   estado: EstadoPedidoCompra;
   detalles: PedidoDetalle[];
+};
+
+export type RecepcionPedidoDetallePayload = {
+  idLote: number;
+  cantidadRecibida: number;
+};
+
+export type RecepcionPedidoPayload = {
+  fechaRecepcion: string;
+  detalles: RecepcionPedidoDetallePayload[];
 };

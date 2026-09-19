@@ -1,89 +1,125 @@
+import {
+  Eye,
+} from "lucide-react";
+
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
+import TableActionButton from "../common/TableActionButton";
 import { formatCurrency } from "../common/formatters";
-import type { EstadoProducto, Producto } from "./productos.types";
+
+import type { Producto } from "./productos.types";
 
 type TablaProductosProps = {
   productos: Producto[];
-  onSelect: (producto: Producto) => void;
+  onView: (producto: Producto) => void;
 };
 
-function getEstadoProductoLabel(estado: EstadoProducto) {
-  if (estado === "DISPONIBLE" || estado === "ACTIVO") {
-    return "Disponible";
-  }
-
-  if (estado === "EN_PROCESO") {
-    return "En proceso";
-  }
-
-  return "Agotado";
-}
-
-function getEstadoProductoVariant(estado: EstadoProducto) {
-  if (estado === "DISPONIBLE" || estado === "ACTIVO") {
-    return "success";
-  }
-
-  if (estado === "EN_PROCESO") {
-    return "warning";
-  }
-
-  return "neutral";
-}
-
-function TablaProductos({ productos, onSelect }: TablaProductosProps) {
+function TablaProductos({
+  productos,
+  onView,
+}: TablaProductosProps) {
   return (
     <DataTableShell
       data={productos}
-      emptyMessage="Todavía no hay productos registrados desde pedidos."
-      getRowKey={(row) => row.productoKey ?? `${row.id}-${row.nombre}`}
+      emptyMessage="No hay productos registrados."
+      getRowKey={(row) => row.idProducto}
       columns={[
         {
-          key: "id",
-          header: "ID",
-          render: (row) => row.displayId ?? "—",
+          key: "producto",
+          header: "Producto",
+          render: (row) => (
+            <div>
+              <p className="font-semibold text-zinc-950">
+                {row.nombre}
+              </p>
+
+              <p className="mt-0.5 text-xs text-zinc-500">
+                {row.sku?.trim() || "Sin SKU"}
+              </p>
+            </div>
+          ),
         },
         {
-          key: "nombre",
-          header: "Nombre",
+          key: "categoria",
+          header: "Categoría",
+          render: (row) =>
+            row.categoria?.nombre ?? "—",
+        },
+        {
+          key: "marca",
+          header: "Marca / variante",
           render: (row) => (
-            <button
-              type="button"
-              onClick={() => onSelect(row)}
-              className="text-left font-semibold text-slate-900 underline-offset-4 transition hover:text-slate-600 hover:underline"
-            >
-              {row.nombre}
-            </button>
+            <div>
+              <p>
+                {row.marca?.trim() || "—"}
+              </p>
+
+              {row.variante?.trim() ? (
+                <p className="text-xs text-zinc-500">
+                  {row.variante}
+                </p>
+              ) : null}
+            </div>
           ),
         },
         {
           key: "precio",
-          header: "Precio de venta",
+          header: "Precio sugerido",
           render: (row) =>
-            formatCurrency(row.precioVenta ?? row.precioReferencia ?? 0),
+            formatCurrency(
+              row.precioVentaSugeridoSinIva,
+            ),
         },
         {
           key: "stock",
-          header: "Stock disponible",
-          render: (row) => row.stockActual ?? 0,
+          header: "Stock",
+          render: (row) => (
+            <div>
+              <p className="font-semibold text-zinc-950">
+                {row.stockActual}
+              </p>
+
+              <p className="text-xs text-zinc-500">
+                Mínimo: {row.stockMinimo}
+              </p>
+            </div>
+          ),
         },
         {
-          key: "proveedor",
-          header: "Proveedor",
-          render: (row) => row.proveedorNombre || "—",
+          key: "iva",
+          header: "IVA",
+          render: (row) =>
+            row.tarifaIva
+              ? `${row.tarifaIva.codigo} · ${row.tarifaIva.porcentaje}%`
+              : "—",
         },
         {
           key: "estado",
           header: "Estado",
           render: (row) => (
             <StatusBadge
-              label={getEstadoProductoLabel(row.estado)}
-              variant={getEstadoProductoVariant(row.estado)}
+              label={
+                row.activo
+                  ? "ACTIVO"
+                  : "INACTIVO"
+              }
+              variant={
+                row.activo
+                  ? "success"
+                  : "neutral"
+              }
             />
           ),
         },
       ]}
+      actions={(row) => (
+        <TableActionButton
+          label="Ver detalle"
+          variant="view"
+          icon={<Eye size={17} />}
+          onClick={() => onView(row)}
+        />
+      )}
     />
   );
 }

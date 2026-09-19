@@ -1,43 +1,12 @@
+import { apiClient } from "../api/apiClient";
+
 import type {
   PedidoCompra,
   ProductoSugerido,
+  RecepcionPedidoPayload,
 } from "../components/pedidos/pedidos.types";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001/api";
-
-type ApiErrorResponse = {
-  message?: string | string[];
-  error?: string;
-  statusCode?: number;
-};
-
-function isApiErrorResponse(data: unknown): data is ApiErrorResponse {
-  return typeof data === "object" && data !== null && "message" in data;
-}
-
-function getApiErrorMessage(data: unknown): string {
-  if (!isApiErrorResponse(data)) {
-    return "Ocurrió un error inesperado.";
-  }
-
-  if (Array.isArray(data.message)) {
-    return data.message.join(" ");
-  }
-
-  return data.message || data.error || "Ocurrió un error inesperado.";
-}
-
-async function parseResponse<T>(response: Response): Promise<T> {
-  const data: unknown = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new Error(getApiErrorMessage(data));
-  }
-
-  return data as T;
-}
-
-function mapPedidoToBackend(pedido: PedidoCompra) {
+function mapPedidoToCreatePayload(pedido: PedidoCompra) {
   return {
     numeroPedido: Number(pedido.numeroPedido),
     fecha: pedido.fecha,
@@ -45,73 +14,96 @@ function mapPedidoToBackend(pedido: PedidoCompra) {
     proveedorId: pedido.proveedorId,
     monedaCompra: pedido.monedaCompra,
     tipoCambio: Number(pedido.tipoCambio),
-    estado: pedido.estado,
-    observaciones: pedido.observaciones,
+    estado:
+      pedido.estado === "EN_TRANSITO"
+        ? "EN_TRANSITO"
+        : "REGISTRADO",
+    observaciones:
+      pedido.observaciones?.trim() || undefined,
+
     detalles: pedido.detalles.map((detalle) => ({
       productoId: detalle.productoId,
-      productoNombre: detalle.productoNombre,
+      productoNombre: detalle.productoNombre.trim(),
       loteCodigo: detalle.loteCodigo,
-      cantidad: detalle.cantidad,
-      cantidadRecibida: detalle.cantidadRecibida ?? 0,
-      costoUnitarioOrigen: detalle.costoUnitarioOrigen,
-      precioVentaRecomendado: detalle.precioVentaRecomendado,
-      estadoLote: detalle.estadoLote,
+      cantidad: Number(detalle.cantidad),
+      cantidadRecibida: 0,
+      costoUnitarioOrigen: Number(detalle.costoUnitarioOrigen),
+      precioVentaRecomendado: Number(detalle.precioVentaRecomendado),
+      estadoLote: "EN_PROCESO" as const,
     })),
   };
 }
 
-export async function obtenerPedidos(): Promise<PedidoCompra[]> {
-  const response = await fetch(`${API_URL}/pedidos`);
-  return parseResponse<PedidoCompra[]>(response);
+function mapPedidoToUpdatePayload(pedido: PedidoCompra) {
+  return {
+    numeroPedido: Number(pedido.numeroPedido),
+    fecha: pedido.fecha,
+    origen: pedido.origen,
+    proveedorId: pedido.proveedorId,
+    monedaCompra: pedido.monedaCompra,
+    tipoCambio: Number(pedido.tipoCambio),
+    observaciones:
+      pedido.observaciones?.trim() || undefined,
+    estado: pedido.estado,
+  };
 }
 
-export async function buscarProductosSugeridosApi(
+type CrearPedidoPayload = ReturnType<typeof mapPedidoToCreatePayload>;
+type ActualizarPedidoPayload = ReturnType<typeof mapPedidoToUpdatePayload>;
+
+export function obtenerPedidos(): Promise<PedidoCompra[]> {
+  return apiClient.get<PedidoCompra[]>("/pedidos");
+}
+
+export function obtenerPedidoApi(
+  id: number,
+): Promise<PedidoCompra> {
+  return apiClient.get<PedidoCompra>(
+    `/pedidos/${id}`,
+  );
+}
+
+export function buscarProductosSugeridosApi(
   busqueda: string,
 ): Promise<ProductoSugerido[]> {
-  const params = new URLSearchParams({
-    busqueda,
-  });
-
-  const response = await fetch(
-    `${API_URL}/pedidos/productos-sugeridos?${params.toString()}`,
+  return apiClient.get<ProductoSugerido[]>(
+    "/pedidos/productos-sugeridos",
+    { busqueda },
   );
-
-  return parseResponse<ProductoSugerido[]>(response);
 }
 
-export async function crearPedidoApi(
+export function crearPedidoApi(
   pedido: PedidoCompra,
 ): Promise<PedidoCompra> {
-  const response = await fetch(`${API_URL}/pedidos`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(mapPedidoToBackend(pedido)),
-  });
-
-  return parseResponse<PedidoCompra>(response);
+  return apiClient.post<PedidoCompra, CrearPedidoPayload>(
+    "/pedidos",
+    mapPedidoToCreatePayload(pedido),
+  );
 }
 
-export async function actualizarPedidoApi(
+export function actualizarPedidoApi(
   id: number,
   pedido: PedidoCompra,
 ): Promise<PedidoCompra> {
-  const response = await fetch(`${API_URL}/pedidos/${id}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(mapPedidoToBackend(pedido)),
-  });
-
-  return parseResponse<PedidoCompra>(response);
+  return apiClient.patch<PedidoCompra, ActualizarPedidoPayload>(
+    `/pedidos/${id}`,
+    mapPedidoToUpdatePayload(pedido),
+  );
 }
 
-export async function eliminarPedidoApi(id: number): Promise<void> {
-  const response = await fetch(`${API_URL}/pedidos/${id}`, {
-    method: "DELETE",
-  });
+export function registrarRecepcionPedidoApi(
+  id: number,
+  payload: RecepcionPedidoPayload,
+): Promise<PedidoCompra> {
+  return apiClient.patch<
+    PedidoCompra,
+    RecepcionPedidoPayload
+  >(
+    `/pedidos/${id}/recepcion`,
+    payload,
+  );
+}
 
-  await parseResponse<{ message: string; id: number }>(response);
+export async function cancelarPedidoApi(id: number): Promise<void> {
+  await apiClient.delete<unknown>(`/pedidos/${id}`);
 }

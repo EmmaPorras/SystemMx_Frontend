@@ -1,68 +1,45 @@
-import type {
-  EstadoLoteProducto,
-  MonedaCompra,
-} from "../pedidos/pedidos.types";
+export type CategoriaProducto = {
+  idCategoria: number;
+  nombre: string;
+  descripcion?: string | null;
+  activo: boolean;
+};
 
-export type EstadoProducto =
-  | "DISPONIBLE"
-  | "EN_PROCESO"
-  | "AGOTADO"
-  | "ACTIVO"
-  | "INACTIVO";
-
-export type ProductoLoteDetalle = {
-  idTemporal: string;
-  pedidoId: number;
-  numeroPedido: string;
-  fecha: string;
-  origen: string;
-  proveedorId: number;
-  proveedorNombre: string;
-  monedaCompra: MonedaCompra;
-  tipoCambio: string;
-  loteCodigo: string;
-  cantidad: number;
-  cantidadDisponible: number;
-  costoUnitarioOrigen: number;
-  costoUnitarioReal: number;
-  precioVentaRecomendado: number;
-  estadoLote: EstadoLoteProducto;
+export type TarifaIvaProducto = {
+  idTarifaIva: number;
+  codigo: string;
+  porcentaje: number;
+  descripcion?: string | null;
+  activo: boolean;
 };
 
 export type Producto = {
-  productoKey?: string;
+  idProducto: number;
 
-  // ID real del producto si viene desde backend.
-  id: number;
-
-  // ID visual para tabla: 1, 2, 3...
-  displayId?: number;
+  idCategoria?: number | null;
+  idTarifaIva?: number | null;
 
   nombre: string;
+  descripcion?: string | null;
+  sku?: string | null;
 
-  // Campos legacy para no romper archivos viejos si aún existen.
-  categoria: string;
-  precioReferencia: number;
-  stockTotal: number;
-  proveedorId: number;
-  proveedorNombre: string;
-  tarifaIvaId: number;
-  tarifaIvaDescripcion: string;
+  precioVentaSugeridoSinIva: number;
+  stockMinimo: number;
+  activo: boolean;
 
-  // Nueva vista de Productos.
-  precioVenta?: number;
+  marca?: string | null;
+  variante?: string | null;
+  imagenUrl?: string | null;
 
-  // Stock disponible para venta.
-  // No incluye lotes EN_PROCESO.
-  stockActual?: number;
+  precioVentaEstandarConIva?: number | null;
+  costoReferencia?: number | null;
+  observaciones?: string | null;
 
-  // Stock comprado pero pendiente de llegada.
-  stockEnProceso?: number;
+  createdAt?: string;
+  updatedAt?: string;
 
-  proveedores?: string[];
-  estado: EstadoProducto;
-  lotes?: ProductoLoteDetalle[];
-  ultimaCompra?: string;
-  costoMinimoReal?: number;
-  costoMaximoReal?: number;
+  categoria?: CategoriaProducto | null;
+  tarifaIva?: TarifaIvaProducto | null;
+
+  stockActual: number;
 };

@@ -5,10 +5,10 @@ import DataTableShell from "../common/DataTableShell";
 import InputField from "../common/InputField";
 import PrimaryButton from "../common/PrimaryButton";
 import SelectField from "../common/SelectField";
+import TableActionButton from "../common/TableActionButton";
 import { formatCurrency } from "../common/formatters";
 import { buscarProductosSugeridosApi } from "../../services/pedidosApi";
 import type {
-  EstadoLoteProducto,
   MonedaCompra,
   PedidoCompra,
   PedidoDetalle,
@@ -36,7 +36,6 @@ type FormularioDetallePedidoProps = {
 
 const loteOptions = Array.from({ length: 10 }, (_, index) => {
   const lote = `L${index + 1}`;
-
   return {
     value: lote,
     label: lote,
@@ -57,9 +56,7 @@ function getMonedaSymbol(moneda: MonedaCompra) {
 
 function formatMoneyByMoneda(value: number, moneda: MonedaCompra) {
   const numericValue = Number(value);
-
   const safeValue = Number.isFinite(numericValue) ? numericValue : 0;
-
   const decimals = moneda === "CRC" || moneda === "COP" ? 0 : 2;
 
   const formattedValue = new Intl.NumberFormat("es-CR", {
@@ -68,21 +65,15 @@ function formatMoneyByMoneda(value: number, moneda: MonedaCompra) {
   }).format(safeValue);
 
   const symbol = getMonedaSymbol(moneda);
-
   if (moneda === "COP") {
     return `${symbol} ${formattedValue}`;
   }
-
   return `${symbol}${formattedValue}`;
 }
 
 function getNumber(value: unknown, fallback = 0) {
   const numberValue = Number(value);
   return Number.isFinite(numberValue) ? numberValue : fallback;
-}
-
-function estadoPermiteCantidadRecibida(estado: EstadoLoteProducto) {
-  return estado === "EN_STOCK" || estado === "VENDIDO_PARCIAL";
 }
 
 function getCantidadRecibidaTotal(row: PedidoDetalle) {
@@ -118,21 +109,6 @@ function FormularioDetallePedido({
   const [cargandoSugerencias, setCargandoSugerencias] = useState(false);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
 
-  const cantidad = getNumber(detalleForm.cantidad);
-  const cantidadRecibidaPrevia = getNumber(
-    detalleForm.cantidadRecibidaPrevia,
-  );
-  const cantidadRecibidaActual = getNumber(detalleForm.cantidadRecibida);
-  const cantidadRecibidaHabilitada = estadoPermiteCantidadRecibida(
-    detalleForm.estadoLote,
-  );
-  const maxCantidadRecibidaActual = Math.max(
-    cantidad - cantidadRecibidaPrevia,
-    0,
-  );
-  const totalRecibidoEstimado = cantidadRecibidaPrevia + cantidadRecibidaActual;
-  const pendienteEstimado = Math.max(cantidad - totalRecibidoEstimado, 0);
-
   useEffect(() => {
     const busqueda = detalleForm.productoNombre.trim();
 
@@ -143,13 +119,11 @@ function FormularioDetallePedido({
     }
 
     let cancelado = false;
-
     setCargandoSugerencias(true);
 
     const timeoutId = window.setTimeout(async () => {
       try {
         const data = await buscarProductosSugeridosApi(busqueda);
-
         if (!cancelado) {
           setSugerencias(data);
         }
@@ -176,22 +150,6 @@ function FormularioDetallePedido({
     setSugerencias([]);
   }
 
-  function getCantidadRecibidaHelperText() {
-    if (!cantidadRecibidaHabilitada) {
-      return "Se activa cuando el lote esté en stock.";
-    }
-
-    if (maxCantidadRecibidaActual <= 0) {
-      return `Este lote ya tiene recibidas ${cantidadRecibidaPrevia}/${cantidad}.`;
-    }
-
-    if (cantidadRecibidaPrevia > 0) {
-      return `Recibidas antes: ${cantidadRecibidaPrevia}. Máximo nuevo: ${maxCantidadRecibidaActual}. Pendiente quedaría: ${pendienteEstimado}.`;
-    }
-
-    return `Máximo permitido: ${maxCantidadRecibidaActual}. Pendiente quedaría: ${pendienteEstimado}.`;
-  }
-
   const debeMostrarListaSugerencias =
     mostrarSugerencias &&
     !detalleForm.productoId &&
@@ -208,36 +166,39 @@ function FormularioDetallePedido({
         />
       ) : null}
 
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <p className="text-sm font-semibold text-slate-900">
-          {pedido.numeroPedido || "Nuevo pedido"}
+      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
+        <p className="text-sm font-semibold text-zinc-900">
+          {pedido.numeroPedido ? `Pedido #${pedido.numeroPedido}` : "Nuevo pedido"}
         </p>
-        <p className="mt-1 text-sm text-slate-600">
-          {pedido.proveedorNombre || "Proveedor no seleccionado"} ·{" "}
-          {pedido.fecha} · {pedido.monedaCompra}
+        <p className="mt-1 text-sm text-zinc-600">
+          {pedido.proveedorNombre || "Proveedor no seleccionado"} · {pedido.fecha} · {pedido.monedaCompra}
         </p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 p-4">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-4 sm:p-5">
         <div className="mb-4">
-          <h3 className="text-base font-bold text-slate-950">
+          <h3 className="text-base font-bold text-zinc-950">
             {isEditingDetail
               ? "Editar artículo del pedido"
               : "Agregar artículo al pedido"}
           </h3>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-zinc-600">
             Cada línea representa un artículo asociado a un lote específico.
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="relative xl:col-span-2">
-            <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="relative sm:col-span-2">
+            <label
+              htmlFor="articulo-nombre-input"
+              className="mb-1.5 block text-sm font-semibold text-zinc-700"
+            >
               Nombre del artículo
-              <span className="ml-1 text-red-500">*</span>
+              <span className="ml-1 text-red-500" aria-hidden="true">*</span>
             </label>
 
             <input
+              id="articulo-nombre-input"
               type="text"
               value={detalleForm.productoNombre}
               onChange={(event) => {
@@ -251,49 +212,47 @@ function FormularioDetallePedido({
                 }, 150);
               }}
               placeholder="Careta blanca, led blanco/amarillo..."
-              maxLength={50}
+              maxLength={150}
               aria-invalid={Boolean(errors.productoNombre)}
-              className={`w-full rounded-2xl border px-4 py-2.5 text-sm outline-none transition ${
+              className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition ${
                 errors.productoNombre
-                  ? "border-red-400 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                  : "border-slate-300 bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-100"
+                  ? "border-red-400 bg-red-50/50 text-zinc-900 focus-visible:border-red-500 focus-visible:ring-2 focus-visible:ring-red-200"
+                  : "border-zinc-300 bg-white text-zinc-900 focus-visible:border-zinc-950 focus-visible:ring-2 focus-visible:ring-zinc-200"
               }`}
             />
 
-            <div className="mt-1 flex items-start justify-between gap-3">
+            <div className="mt-1.5 flex items-start justify-between gap-3">
               <div>
                 {errors.productoNombre ? (
-                  <p className="text-xs font-medium text-red-600">
+                  <p role="alert" className="text-xs font-medium text-red-600">
                     {errors.productoNombre}
                   </p>
                 ) : detalleForm.productoId ? (
                   <p className="text-xs font-medium text-emerald-700">
-                    Producto existente seleccionado · ID{" "}
-                    {detalleForm.productoId}
+                    Producto existente seleccionado · ID {detalleForm.productoId}
                   </p>
                 ) : (
-                  <p className="text-xs text-slate-500">
-                    Escribí al menos 2 letras para buscar productos ya
-                    registrados.
+                  <p className="text-xs text-zinc-500">
+                    Escribí al menos 2 letras para buscar productos ya registrados.
                   </p>
                 )}
               </div>
 
               <p
-                className={`shrink-0 text-xs ${
-                  detalleForm.productoNombre.length >= 50
+                className={`shrink-0 text-xs font-medium ${
+                  detalleForm.productoNombre.length >= 150
                     ? "text-red-500"
-                    : "text-slate-400"
+                    : "text-zinc-400"
                 }`}
               >
-                {detalleForm.productoNombre.length}/50
+                {detalleForm.productoNombre.length}/150
               </p>
             </div>
 
             {debeMostrarListaSugerencias ? (
-              <div className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+              <div className="absolute left-0 right-0 z-30 mt-1.5 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl">
                 {cargandoSugerencias ? (
-                  <p className="px-4 py-3 text-sm text-slate-500">
+                  <p className="px-3.5 py-3 text-sm text-zinc-500">
                     Buscando productos...
                   </p>
                 ) : null}
@@ -308,13 +267,12 @@ function FormularioDetallePedido({
                           event.preventDefault();
                           seleccionarSugerencia(producto);
                         }}
-                        className="block w-full border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-slate-50"
+                        className="block w-full border-b border-zinc-100 px-3.5 py-2.5 text-left transition last:border-b-0 hover:bg-zinc-50"
                       >
-                        <p className="text-sm font-semibold text-slate-900">
+                        <p className="text-sm font-semibold text-zinc-900">
                           {producto.nombre}
                         </p>
-
-                        <p className="mt-0.5 text-xs text-slate-500">
+                        <p className="mt-0.5 text-xs text-zinc-500">
                           ID {producto.id}
                           {producto.precioVentaSugerido > 0
                             ? ` · Precio sugerido ${formatCurrency(
@@ -379,78 +337,16 @@ function FormularioDetallePedido({
             prefix="₡"
           />
 
-          <SelectField
-            label="Estado del lote"
-            value={detalleForm.estadoLote}
-            onChange={(value) => onDetalleChange("estadoLote", value)}
-            required
-            error={errors.estadoLote}
-            options={[
-              { value: "EN_PROCESO", label: "En proceso" },
-              { value: "EN_STOCK", label: "En stock" },
-              { value: "VENDIDO_PARCIAL", label: "Vendido parcial" },
-              { value: "AGOTADO", label: "Agotado" },
-            ]}
-          />
-
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-              Cantidad recibida
-              {cantidadRecibidaHabilitada ? (
-                <span className="ml-1 text-red-500">*</span>
-              ) : null}
-            </label>
-
-            <input
-              type="text"
-              value={
-                cantidadRecibidaHabilitada ? detalleForm.cantidadRecibida : ""
-              }
-              onChange={(event) =>
-                onDetalleChange("cantidadRecibida", event.target.value)
-              }
-              placeholder={
-                cantidadRecibidaHabilitada
-                  ? `Máx. ${maxCantidadRecibidaActual}`
-                  : "No aplica"
-              }
-              maxLength={5}
-              inputMode="numeric"
-              disabled={!cantidadRecibidaHabilitada || maxCantidadRecibidaActual <= 0}
-              aria-invalid={Boolean(errors.cantidadRecibida)}
-              className={`w-full rounded-2xl border px-4 py-2.5 text-sm outline-none transition disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 ${
-                errors.cantidadRecibida
-                  ? "border-red-400 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                  : "border-slate-300 bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-100"
-              }`}
-            />
-
-            <div className="mt-1 flex items-start justify-between gap-3">
-              <div>
-                {errors.cantidadRecibida ? (
-                  <p className="text-xs font-medium text-red-600">
-                    {errors.cantidadRecibida}
-                  </p>
-                ) : (
-                  <p className="text-xs text-slate-500">
-                    {getCantidadRecibidaHelperText()}
-                  </p>
-                )}
-              </div>
-
-              {cantidadRecibidaHabilitada ? (
-                <p
-                  className={`shrink-0 text-xs ${
-                    detalleForm.cantidadRecibida.length >= 5
-                      ? "text-red-500"
-                      : "text-slate-400"
-                  }`}
-                >
-                  {detalleForm.cantidadRecibida.length}/5
-                </p>
-              ) : null}
+          {isEditingDetail && Number(detalleForm.cantidadRecibidaPrevia) > 0 ? (
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Cantidad recibida
+              </p>
+              <p className="mt-1 text-sm font-bold text-zinc-900">
+                {detalleForm.cantidadRecibidaPrevia}
+              </p>
             </div>
-          </div>
+          ) : null}
         </div>
 
         <div className="mt-5 flex flex-wrap gap-3">
@@ -464,7 +360,7 @@ function FormularioDetallePedido({
             <button
               type="button"
               onClick={onCancelarEdicionDetalle}
-              className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
             >
               Cancelar edición
             </button>
@@ -473,7 +369,7 @@ function FormularioDetallePedido({
       </div>
 
       <div>
-        <h3 className="mb-3 text-base font-bold text-slate-950">
+        <h3 className="mb-3 text-base font-bold text-zinc-950">
           Artículos agregados
         </h3>
 
@@ -487,12 +383,11 @@ function FormularioDetallePedido({
               header: "Artículo",
               render: (row: PedidoDetalle) => (
                 <div>
-                  <p className="font-semibold text-slate-900">
+                  <p className="font-semibold text-zinc-900">
                     {row.productoNombre}
                   </p>
-
                   {row.productoId ? (
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-zinc-500">
                       ID producto: {row.productoId}
                     </p>
                   ) : null}
@@ -542,42 +437,38 @@ function FormularioDetallePedido({
           ]}
           actions={(row) => (
             <>
-              <button
-                type="button"
+              <TableActionButton
+                label="Editar artículo"
+                variant="edit"
+                icon={<Pencil size={16} />}
                 onClick={() => onEditarDetalle(row)}
-                className="rounded-full p-2 text-slate-600 transition hover:bg-slate-100 hover:text-slate-950"
-                aria-label="Editar artículo"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              />
 
-              <button
-                type="button"
+              <TableActionButton
+                label="Eliminar artículo"
+                variant="delete"
+                icon={<Trash2 size={16} />}
                 onClick={() => onEliminarDetalle(row.idTemporal)}
-                className="rounded-full p-2 text-red-600 transition hover:bg-red-50"
-                aria-label="Eliminar artículo"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              />
             </>
           )}
         />
       </div>
 
-      <div className="flex flex-wrap justify-between gap-3 border-t border-slate-200 pt-5">
+      <div className="flex flex-col-reverse gap-3 border-t border-zinc-200 pt-5 sm:flex-row sm:justify-between">
         <button
           type="button"
           onClick={onBack}
-          className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+          className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
         >
           Atrás
         </button>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col-reverse gap-3 sm:flex-row">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
           >
             Cancelar
           </button>
