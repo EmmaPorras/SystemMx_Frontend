@@ -34,3 +34,23 @@ export type ResumenDashboard = {
     total: number;
   };
 };
+
+export type EvolucionVentasItem = {
+  fecha: string;
+  cantidadVentas: number;
+  ventas: number;
+  costo: number;
+  gananciaBruta: number;
+  margenBrutoPorcentaje: number;
+};
+
+export type VentasPorProductoItem = {
+  idProducto: number;
+  producto: string;
+  categoria: string;
+  unidadesVendidas: number;
+  ventas: number;
+  costo: number;
+  gananciaBruta: number;
+  margenBrutoPorcentaje: number;
+};

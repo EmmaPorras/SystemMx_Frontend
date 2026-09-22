@@ -33,8 +33,13 @@ type TablaVentasProps = {
   onVoid: (venta: Venta) => void;
 };
 
-function getEstadoPagoLabel(estado: EstadoPagoVenta) {
-  const labels: Record<EstadoPagoVenta, string> = {
+function getEstadoPagoLabel(
+  estado: EstadoPagoVenta,
+) {
+  const labels: Record<
+    EstadoPagoVenta,
+    string
+  > = {
     PAGADA: "Pagada",
     PARCIAL: "Parcial",
     EN_DEUDA: "En deuda",
@@ -46,14 +51,34 @@ function getEstadoPagoLabel(estado: EstadoPagoVenta) {
 
 function getEstadoPagoVariant(
   estado: EstadoPagoVenta,
-): "success" | "warning" | "danger" | "neutral" {
-  if (estado === "PAGADA") return "success";
-  if (estado === "PARCIAL" || estado === "EN_DEUDA") return "warning";
+):
+  | "success"
+  | "warning"
+  | "danger"
+  | "neutral" {
+  if (
+    estado === "PAGADA"
+  ) {
+    return "success";
+  }
+
+  if (
+    estado === "PARCIAL" ||
+    estado === "EN_DEUDA"
+  ) {
+    return "warning";
+  }
+
   return "danger";
 }
 
-function getEstadoVentaLabel(estado: EstadoVenta) {
-  const labels: Record<EstadoVenta, string> = {
+function getEstadoVentaLabel(
+  estado: EstadoVenta,
+) {
+  const labels: Record<
+    EstadoVenta,
+    string
+  > = {
     REGISTRADA: "Registrada",
     ANULADA: "Anulada",
   };
@@ -63,8 +88,17 @@ function getEstadoVentaLabel(estado: EstadoVenta) {
 
 function getEstadoVentaVariant(
   estado: EstadoVenta,
-): "success" | "warning" | "danger" | "neutral" {
-  if (estado === "REGISTRADA") return "success";
+):
+  | "success"
+  | "warning"
+  | "danger"
+  | "neutral" {
+  if (
+    estado === "REGISTRADA"
+  ) {
+    return "success";
+  }
+
   return "danger";
 }
 
@@ -80,120 +114,265 @@ function TablaVentas({
     <DataTableShell
       data={ventas}
       emptyMessage="No hay ventas que coincidan con los filtros."
-      getRowKey={(row) => String(row.id)}
+      getRowKey={(row) =>
+        String(
+          row.id,
+        )
+      }
       columns={[
         {
           key: "numero",
           header: "Venta",
-          render: (row) => (
+          render: (
+            row,
+          ) => (
             <div>
               <p className="font-semibold text-zinc-950">
-                Venta #{row.numeroVenta}
+                Venta #
+                {
+                  row.numeroVenta
+                }
               </p>
+
               <p className="text-xs text-zinc-500">
-                {row.detalles.length} detalle(s)
+                {
+                  row.detalles
+                    .length
+                }{" "}
+                detalle(s)
               </p>
             </div>
           ),
         },
+
         {
           key: "fecha",
           header: "Fecha",
-          render: (row) => row.fechaVenta,
+          render: (
+            row,
+          ) =>
+            row.fechaVenta,
         },
+
         {
           key: "cliente",
           header: "Cliente",
-          render: (row) => row.clienteNombre || "Venta mostrador",
+          render: (
+            row,
+          ) =>
+            row.clienteNombre ||
+            "Venta mostrador",
         },
+
         {
           key: "medioPago",
           header: "Método",
-          render: (row) => row.medioPago,
+          render: (
+            row,
+          ) =>
+            row.medioPago,
         },
+
         {
           key: "total",
           header: "Total",
-          render: (row) => formatCurrency(row.totalVenta),
+          render: (
+            row,
+          ) =>
+            formatCurrency(
+              row.totalVenta,
+            ),
         },
+
         {
           key: "pagado",
           header: "Pagado",
-          render: (row) => formatCurrency(row.montoPagado),
+          render: (
+            row,
+          ) =>
+            formatCurrency(
+              row.montoPagado,
+            ),
         },
+
         {
           key: "saldo",
           header: "Saldo",
-          render: (row) => (
-            <span className={row.saldoPendiente > 0 ? "font-bold text-amber-700" : ""}>
-              {formatCurrency(row.saldoPendiente)}
+          render: (
+            row,
+          ) => (
+            <span
+              className={
+                row.saldoPendiente >
+                0
+                  ? "font-bold text-amber-700"
+                  : ""
+              }
+            >
+              {formatCurrency(
+                row.saldoPendiente,
+              )}
             </span>
           ),
         },
+
         {
           key: "estadoPago",
           header: "Pago",
-          render: (row) => (
+          render: (
+            row,
+          ) => (
             <StatusBadge
-              label={getEstadoPagoLabel(row.estadoPago)}
-              variant={getEstadoPagoVariant(row.estadoPago)}
+              label={getEstadoPagoLabel(
+                row.estadoPago,
+              )}
+              variant={getEstadoPagoVariant(
+                row.estadoPago,
+              )}
             />
           ),
         },
+
         {
           key: "estadoVenta",
           header: "Estado",
-          render: (row) => (
+          render: (
+            row,
+          ) => (
             <StatusBadge
-              label={getEstadoVentaLabel(row.estadoVenta)}
-              variant={getEstadoVentaVariant(row.estadoVenta)}
+              label={getEstadoVentaLabel(
+                row.estadoVenta,
+              )}
+              variant={getEstadoVentaVariant(
+                row.estadoVenta,
+              )}
             />
           ),
         },
       ]}
-      actions={(row) => (
-        <div className="flex flex-wrap items-center justify-end gap-1.5">
-          <TableActionButton
-            label="Ver detalle"
-            variant="view"
-            icon={<Eye size={17} />}
-            onClick={() => onView(row)}
-          />
-
-          {puedeRegistrarPago(row) ? (
+      actions={(
+        row,
+      ) => (
+        <div
+          className="
+            flex
+            w-max
+            flex-nowrap
+            items-center
+            justify-end
+            gap-1.5
+            whitespace-nowrap
+          "
+        >
+          <div className="shrink-0">
             <TableActionButton
-              label="Registrar pago"
-              variant="edit"
-              icon={<CircleDollarSign size={17} />}
-              onClick={() => onPay(row)}
+              label="Ver detalle"
+              variant="view"
+              icon={
+                <Eye
+                  size={
+                    17
+                  }
+                />
+              }
+              onClick={() =>
+                onView(
+                  row,
+                )
+              }
             />
+          </div>
+
+          {puedeRegistrarPago(
+            row,
+          ) ? (
+            <div className="shrink-0">
+              <TableActionButton
+                label="Registrar pago"
+                variant="edit"
+                icon={
+                  <CircleDollarSign
+                    size={
+                      17
+                    }
+                  />
+                }
+                onClick={() =>
+                  onPay(
+                    row,
+                  )
+                }
+              />
+            </div>
           ) : null}
 
-          {puedeEnviarPapelera(row) ? (
-            <TableActionButton
-              label="Enviar a papelera"
-              variant="delete"
-              icon={<Trash2 size={17} />}
-              onClick={() => onTrash(row)}
-            />
+          {puedeEnviarPapelera(
+            row,
+          ) ? (
+            <div className="shrink-0">
+              <TableActionButton
+                label="Enviar a papelera"
+                variant="delete"
+                icon={
+                  <Trash2
+                    size={
+                      17
+                    }
+                  />
+                }
+                onClick={() =>
+                  onTrash(
+                    row,
+                  )
+                }
+              />
+            </div>
           ) : null}
 
-          {puedeRestaurarVenta(row) ? (
-            <TableActionButton
-              label="Restaurar venta"
-              variant="edit"
-              icon={<RotateCcw size={17} />}
-              onClick={() => onRestore(row)}
-            />
+          {puedeRestaurarVenta(
+            row,
+          ) ? (
+            <div className="shrink-0">
+              <TableActionButton
+                label="Restaurar venta"
+                variant="edit"
+                icon={
+                  <RotateCcw
+                    size={
+                      17
+                    }
+                  />
+                }
+                onClick={() =>
+                  onRestore(
+                    row,
+                  )
+                }
+              />
+            </div>
           ) : null}
 
-          {puedeAnularVenta(row) ? (
-            <TableActionButton
-              label="Anular venta"
-              variant="delete"
-              icon={<Ban size={17} />}
-              onClick={() => onVoid(row)}
-            />
+          {puedeAnularVenta(
+            row,
+          ) ? (
+            <div className="shrink-0">
+              <TableActionButton
+                label="Anular venta"
+                variant="delete"
+                icon={
+                  <Ban
+                    size={
+                      17
+                    }
+                  />
+                }
+                onClick={() =>
+                  onVoid(
+                    row,
+                  )
+                }
+              />
+            </div>
           ) : null}
         </div>
       )}
