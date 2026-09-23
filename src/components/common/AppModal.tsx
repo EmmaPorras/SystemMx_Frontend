@@ -27,49 +27,125 @@ function AppModal({
 }: AppModalProps) {
   const titleId = useId();
   const descId = useId();
-  const modalRef = useRef<HTMLDivElement | null>(null);
-  const previousActiveElement = useRef<HTMLElement | null>(null);
 
+  const modalRef = useRef<HTMLDivElement | null>(null);
+  const previousActiveElement =
+    useRef<HTMLElement | null>(null);
+
+  /*
+   * Guardamos siempre las versiones más recientes
+   * sin obligar al efecto principal del modal
+   * a ejecutarse nuevamente.
+   */
+  const onCloseRef = useRef(onClose);
+  const isSubmittingRef = useRef(isSubmitting);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    isSubmittingRef.current = isSubmitting;
+  }, [isSubmitting]);
+
+  /*
+   * Este efecto debe ejecutarse únicamente
+   * cuando el modal se abre o se cierra.
+   *
+   * NO debe reiniciarse cada vez que cambia
+   * un input del formulario.
+   */
   useEffect(() => {
     if (!isOpen) return;
 
-    // Save previous active element to restore focus on close
-    previousActiveElement.current = document.activeElement as HTMLElement | null;
+    previousActiveElement.current =
+      document.activeElement as HTMLElement | null;
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !isSubmitting) {
+      if (
+        event.key === "Escape" &&
+        !isSubmittingRef.current
+      ) {
         event.stopPropagation();
-        onClose();
+        onCloseRef.current();
       }
     }
 
-    document.addEventListener("keydown", handleKeyDown);
-    const originalOverflow = document.body.style.overflow;
+    document.addEventListener(
+      "keydown",
+      handleKeyDown,
+    );
+
+    const originalOverflow =
+      document.body.style.overflow;
+
     document.body.style.overflow = "hidden";
 
-    // Focus the modal container on open if no element inside is focused
-    const timer = setTimeout(() => {
-      if (modalRef.current && !modalRef.current.contains(document.activeElement)) {
-        const firstFocusable = modalRef.current.querySelector<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    /*
+     * Al abrir un formulario preferimos enfocar
+     * el primer campo editable y no la X.
+     */
+    const timer = window.setTimeout(() => {
+      if (!modalRef.current) return;
+
+      if (
+        modalRef.current.contains(
+          document.activeElement,
+        )
+      ) {
+        return;
+      }
+
+      const firstFormField =
+        modalRef.current.querySelector<HTMLElement>(
+          [
+            "[data-autofocus]",
+            "input:not([disabled])",
+            "select:not([disabled])",
+            "textarea:not([disabled])",
+          ].join(", "),
         );
-        if (firstFocusable) {
-          firstFocusable.focus();
-        } else {
-          modalRef.current.focus();
-        }
+
+      const firstFocusable =
+        firstFormField ??
+        modalRef.current.querySelector<HTMLElement>(
+          [
+            "button:not([disabled])",
+            "[href]",
+            "input:not([disabled])",
+            "select:not([disabled])",
+            "textarea:not([disabled])",
+            '[tabindex]:not([tabindex="-1"])',
+          ].join(", "),
+        );
+
+      if (firstFocusable) {
+        firstFocusable.focus();
+      } else {
+        modalRef.current.focus();
       }
     }, 50);
 
     return () => {
-      clearTimeout(timer);
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = originalOverflow;
-      if (previousActiveElement.current && typeof previousActiveElement.current.focus === "function") {
+      window.clearTimeout(timer);
+
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown,
+      );
+
+      document.body.style.overflow =
+        originalOverflow;
+
+      if (
+        previousActiveElement.current &&
+        typeof previousActiveElement.current
+          .focus === "function"
+      ) {
         previousActiveElement.current.focus();
       }
     };
-  }, [isOpen, onClose, isSubmitting]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -78,7 +154,6 @@ function AppModal({
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6"
       role="presentation"
     >
-      {/* Backdrop overlay */}
       <div
         aria-hidden="true"
         className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-200"
@@ -89,17 +164,17 @@ function AppModal({
         }}
       />
 
-      {/* Modal Dialog Box */}
       <div
         ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        aria-describedby={description ? descId : undefined}
+        aria-describedby={
+          description ? descId : undefined
+        }
         tabIndex={-1}
         className={`relative z-10 flex max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2.5rem)] w-full ${maxWidthClassName} flex-col rounded-2xl sm:rounded-3xl border border-zinc-200 bg-white shadow-2xl outline-none`}
       >
-        {/* Header */}
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-zinc-200 px-5 py-4 sm:px-6 sm:py-5">
           <div className="min-w-0 flex-1">
             <h2
@@ -131,7 +206,6 @@ function AppModal({
           </button>
         </div>
 
-        {/* Scrollable Body Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5">
           {children}
         </div>

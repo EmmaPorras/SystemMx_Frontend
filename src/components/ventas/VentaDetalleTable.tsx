@@ -59,7 +59,16 @@ function VentaDetalleTable({ detalles }: VentaDetalleTableProps) {
         {
           key: "descuento",
           header: "Desc.",
-          render: (row) => formatCurrency(row.descuento),
+          render: (row) => (
+            <div>
+              <p className="font-semibold text-slate-900">
+                {row.porcentajeDescuento}%
+              </p>
+              <p className="text-xs text-slate-500">
+                {formatCurrency(row.descuento)}
+              </p>
+            </div>
+          ),
         },
         {
           key: "tarifa",

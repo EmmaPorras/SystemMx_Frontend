@@ -12,12 +12,20 @@ export type EstadoLoteProducto =
 
 export type MonedaCompra = "CRC" | "USD" | "EUR" | "COP" | "BRL";
 
+export type CategoriaPedidoOption = {
+  id: number;
+  nombre: string;
+};
+
 export type ProductoSugerido = {
   id: number;
   nombre: string;
   nombreBusqueda: string;
   precioVentaSugerido: number;
   activo: boolean;
+  categoriaId?: number | null;
+  categoriaNombre?: string | null;
+  marca?: string | null;
 };
 
 export type PedidoDetalle = {
@@ -25,6 +33,9 @@ export type PedidoDetalle = {
   loteId?: number;
   productoId?: number;
   productoNombre: string;
+  categoriaId?: number | null;
+  categoriaNombre: string;
+  marca: string;
   loteCodigo: string;
   cantidad: number;
 
@@ -46,6 +57,8 @@ export type PedidoDetalle = {
 export type PedidoDetalleForm = {
   productoId?: number;
   productoNombre: string;
+  categoriaId: string;
+  marca: string;
   loteCodigo: string;
   cantidad: string;
 
@@ -67,7 +80,6 @@ export type PedidoDetalleFormErrors = Partial<
 >;
 
 export type PedidoCabeceraFormField =
-  | "numeroPedido"
   | "fecha"
   | "origen"
   | "proveedorId"
@@ -104,4 +116,4 @@ export type RecepcionPedidoDetallePayload = {
 export type RecepcionPedidoPayload = {
   fechaRecepcion: string;
   detalles: RecepcionPedidoDetallePayload[];
-};
+};  

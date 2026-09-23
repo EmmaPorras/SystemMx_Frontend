@@ -32,6 +32,14 @@ const monedas: Array<{ value: MonedaCompra; label: string }> = [
   { value: "BRL", label: "R$ BRL - Reales brasileños" },
 ];
 
+function esCostaRica(pais: string) {
+  return pais
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase() === "costa rica";
+}
+
 function FormularioPedido({
   pedido,
   proveedores,
@@ -41,6 +49,14 @@ function FormularioPedido({
   onSubmit,
   onCancel,
 }: FormularioPedidoProps) {
+  const proveedorSeleccionado = proveedores.find(
+    (item) => item.id === pedido.proveedorId,
+  );
+
+  const compraLocal =
+    Boolean(proveedorSeleccionado) &&
+    esCostaRica(proveedorSeleccionado?.pais ?? pedido.origen);
+
   return (
     <div className="space-y-5">
       {alertMessage ? (
@@ -53,54 +69,21 @@ function FormularioPedido({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label
-            htmlFor="pedido-numero"
-            className="mb-1.5 block text-sm font-semibold text-zinc-700"
-          >
-            Número de pedido<span className="ml-1 text-red-500" aria-hidden="true">*</span>
-          </label>
+          <p className="mb-1.5 block text-sm font-semibold text-zinc-700">
+            Número de pedido
+          </p>
 
-          <div
-            className={`flex overflow-hidden rounded-xl border ${
-              errors.numeroPedido
-                ? "border-red-400 bg-red-50/50"
-                : "border-zinc-300 bg-white focus-within:border-zinc-950 focus-within:ring-2 focus-within:ring-zinc-200"
-            }`}
-          >
-            <span
-              aria-hidden="true"
-              className="flex items-center border-r border-zinc-200 bg-zinc-50 px-3.5 text-sm font-semibold text-zinc-600"
-            >
-              Pedido N°
+          <div className="flex min-h-[42px] items-center rounded-xl border border-zinc-300 bg-zinc-50 px-3.5 py-2.5 text-sm">
+            <span className="font-semibold text-zinc-900">
+              {pedido.numeroPedido
+                ? `Pedido #${pedido.numeroPedido}`
+                : "Calculando número..."}
             </span>
-
-            <input
-              id="pedido-numero"
-              value={pedido.numeroPedido}
-              onChange={(event) =>
-                onChange("numeroPedido", event.target.value)
-              }
-              maxLength={3}
-              inputMode="numeric"
-              placeholder="1"
-              required
-              aria-required="true"
-              aria-invalid={Boolean(errors.numeroPedido)}
-              className="w-full bg-transparent px-3.5 py-2.5 text-sm outline-none"
-            />
           </div>
 
-          <div className="mt-1.5 flex justify-between gap-3">
-            {errors.numeroPedido ? (
-              <p role="alert" className="text-xs font-medium text-red-600">
-                {errors.numeroPedido}
-              </p>
-            ) : null}
-
-            <p className="ml-auto text-xs text-zinc-400">
-              {pedido.numeroPedido.length}/3
-            </p>
-          </div>
+          <p className="mt-1.5 text-xs text-zinc-500">
+            El número se asigna automáticamente y no se puede editar.
+          </p>
         </div>
 
         <InputField
@@ -158,6 +141,7 @@ function FormularioPedido({
           value={pedido.monedaCompra}
           onChange={(value) => onChange("monedaCompra", value)}
           required
+          disabled={compraLocal}
           error={errors.monedaCompra}
           options={monedas}
         />
@@ -167,12 +151,19 @@ function FormularioPedido({
           type="text"
           value={pedido.tipoCambio}
           onChange={(value) => onChange("tipoCambio", value)}
-          placeholder="506.25"
-          required
+          placeholder={compraLocal ? "1.00" : "Ejemplo: 445.00"}
+          required={!compraLocal && Boolean(pedido.proveedorId)}
+          disabled={!pedido.proveedorId || compraLocal}
           error={errors.tipoCambio}
           maxLength={6}
-          helperText="Ejemplo: 445.00"
-          showCharacterCount
+          helperText={
+            !pedido.proveedorId
+              ? "Seleccioná un proveedor para definir el tipo de cambio."
+              : compraLocal
+                ? "Compra nacional: se utiliza automáticamente 1 CRC = 1 CRC."
+                : "Obligatorio para proveedores fuera de Costa Rica."
+          }
+          showCharacterCount={!compraLocal && Boolean(pedido.proveedorId)}
         />
 
         <SelectField

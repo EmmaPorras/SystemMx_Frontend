@@ -30,6 +30,7 @@ import {
   crearVentaApi,
   enviarVentaPapeleraApi,
   obtenerInventarioDisponibleVentaApi,
+  obtenerSiguienteNumeroVentaApi,
   obtenerVentasApi,
   restaurarVentaApi,
 } from "../../services/ventasApi";
@@ -48,16 +49,6 @@ import type {
 
 type VistaVentas = "ACTIVAS" | "DEUDORES" | "PAPELERA";
 
-function getNumeroVentaSugerido(ventas: Venta[]) {
-  const numeros = ventas
-    .map((venta) => Number(venta.numeroVenta))
-    .filter((numero) => Number.isFinite(numero));
-
-  if (numeros.length === 0) return "1";
-
-  return String(Math.max(...numeros) + 1);
-}
-
 function VentasPage() {
   const [ventas, setVentas] = useState<Venta[]>([]);
   const [inventarioDisponible, setInventarioDisponible] = useState<
@@ -68,6 +59,8 @@ function VentasPage() {
   const [vista, setVista] = useState<VistaVentas>("ACTIVAS");
   const [modalAbierto, setModalAbierto] = useState(false);
   const [formKey, setFormKey] = useState(0);
+  const [numeroVentaSugerido, setNumeroVentaSugerido] = useState("");
+  const [preparandoVenta, setPreparandoVenta] = useState(false);
 
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -154,10 +147,29 @@ function VentasPage() {
     (venta) => venta.estadoVenta === "ANULADA",
   ).length;
 
-  function abrirModalNuevaVenta() {
-    setModalAlert(null);
-    setFormKey((prev) => prev + 1);
-    setModalAbierto(true);
+  async function abrirModalNuevaVenta() {
+    if (preparandoVenta) return;
+
+    try {
+      setPreparandoVenta(true);
+      setPageAlert(null);
+      setModalAlert(null);
+
+      const { numeroVenta } =
+        await obtenerSiguienteNumeroVentaApi();
+
+      setNumeroVentaSugerido(String(numeroVenta));
+      setFormKey((prev) => prev + 1);
+      setModalAbierto(true);
+    } catch (error) {
+      setPageAlert(
+        error instanceof Error
+          ? error.message
+          : "No fue posible preparar el número de la nueva venta.",
+      );
+    } finally {
+      setPreparandoVenta(false);
+    }
   }
 
   function cerrarModal() {
@@ -264,10 +276,16 @@ function VentasPage() {
     <div className="space-y-6">
       <PageHeader
         title="Ventas"
-        description="Registrá ventas, gestioná cobros y consultá el historial oficial."
+        description="Registrar ventas, gestionar cobros y consultar el historial oficial."
         icon={ShoppingCart}
         action={
-          <PrimaryButton onClick={abrirModalNuevaVenta}>
+          <PrimaryButton
+            onClick={() => {
+              void abrirModalNuevaVenta();
+            }}
+            loading={preparandoVenta}
+            loadingText="Preparando..."
+          >
             <span className="flex items-center gap-1.5">
               <Plus size={18} />
               <span>Nueva venta</span>
@@ -412,7 +430,7 @@ function VentasPage() {
         <FormularioVenta
           key={formKey}
           inventarioDisponible={inventarioDisponible}
-          numeroVentaSugerido={getNumeroVentaSugerido(ventas)}
+          numeroVentaSugerido={numeroVentaSugerido}
           alertMessage={modalAlert}
           guardando={guardando}
           onSubmit={guardarVenta}
@@ -570,7 +588,7 @@ function VentasPage() {
         title="Enviar venta a papelera"
         message={
           ventaAPapelera
-            ? `¿Querés enviar la venta #${ventaAPapelera.numeroVenta} a la papelera? Esta operación no anula la venta ni restaura inventario.`
+            ? `¿Quieres enviar la venta #${ventaAPapelera.numeroVenta} a la papelera? Esta operación no anula la venta ni restaura inventario.`
             : ""
         }
         confirmLabel={actionLoading ? "Enviando..." : "Enviar a papelera"}
@@ -587,7 +605,7 @@ function VentasPage() {
         title="Restaurar venta"
         message={
           ventaARestaurar
-            ? `¿Querés restaurar la venta #${ventaARestaurar.numeroVenta} desde la papelera?`
+            ? `¿Quieres restaurar la venta #${ventaARestaurar.numeroVenta} desde la papelera?`
             : ""
         }
         confirmLabel={actionLoading ? "Restaurando..." : "Restaurar"}
@@ -604,7 +622,7 @@ function VentasPage() {
         title="Anular venta"
         message={
           ventaAAnular
-            ? `¿Seguro que querés anular la venta #${ventaAAnular.numeroVenta}? El backend restaurará el inventario correspondiente y conservará el historial de la operación.`
+            ? `¿Seguro que quieres anular la venta #${ventaAAnular.numeroVenta}? El backend restaurará el inventario correspondiente y conservará el historial de la operación.`
             : ""
         }
         confirmLabel={actionLoading ? "Anulando..." : "Anular venta"}
