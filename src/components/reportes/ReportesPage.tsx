@@ -5,6 +5,11 @@ import {
 
 import {
   BarChart3,
+  Check,
+  FileDown,
+  FileSpreadsheet,
+  FileText,
+  Layers3,
 } from "lucide-react";
 
 import AlertMessage from "../common/AlertMessage";
@@ -12,9 +17,9 @@ import LoadingState from "../common/LoadingState";
 import PageHeader from "../common/PageHeader";
 import PrimaryButton from "../common/PrimaryButton";
 import SectionCard from "../common/SectionCard";
-import SelectField from "../common/SelectField";
 
 import ReportFilters, {
+  type ReportFilterMode,
   type ReportFilterValues,
 } from "./ReportFilters";
 
@@ -23,290 +28,1291 @@ import ReportResultView from "./ReportResultView";
 import {
   reportesCatalog,
   reportFamilyLabels,
+  type ReportDefinition,
   type ReportFamily,
 } from "./reportes.catalog";
 
+import {
+  exportarReportesExcel,
+  exportarReportesPdf,
+  type ReportExportItem,
+} from "./reportExport";
+
 function fechaActual(): string {
-  const now = new Date();
+  const now =
+    new Date();
 
   return [
     now.getFullYear(),
 
     String(
-      now.getMonth() + 1,
-    ).padStart(2, "0"),
+      now.getMonth() +
+        1,
+    ).padStart(
+      2,
+      "0",
+    ),
 
     String(
       now.getDate(),
-    ).padStart(2, "0"),
+    ).padStart(
+      2,
+      "0",
+    ),
   ].join("-");
 }
 
 const INITIAL_FILTERS:
   ReportFilterValues = {
-  fechaDesde: "",
-  fechaHasta: "",
-  fechaCorte: fechaActual(),
-  usuarioId: "",
-  tipoMovimiento: "",
+  fechaDesde:
+    "",
+
+  fechaHasta:
+    "",
+
+  fechaCorte:
+    fechaActual(),
+
+  usuarioId:
+    "",
+
+  tipoMovimiento:
+    "",
 };
 
-function ReportesPage() {
-  const [family, setFamily] =
-    useState<ReportFamily>(
-      "resumen",
-    );
+type ReportExecution = {
+  report:
+    ReportDefinition;
 
-  const familyReports =
-    useMemo(
-      () =>
-        reportesCatalog.filter(
-          (report) =>
-            report.family === family,
-        ),
-      [family],
-    );
+  data:
+    unknown | null;
+
+  error:
+    string | null;
+};
+
+const TODAS_FAMILIAS =
+  Object.keys(
+    reportFamilyLabels,
+  ) as
+    ReportFamily[];
+
+function ReportesPage() {
+  /*
+   * ==========================================
+   * SELECCIÓN
+   * ==========================================
+   */
 
   const [
-    selectedReportId,
-    setSelectedReportId,
-  ] = useState("resumen");
+    selectedFamilies,
+    setSelectedFamilies,
+  ] =
+    useState<
+      ReportFamily[]
+    >([
+      "resumen",
+    ]);
 
-  const [filters, setFilters] =
+  const [
+    selectedReportIds,
+    setSelectedReportIds,
+  ] =
+    useState<
+      string[]
+    >([
+      "resumen",
+    ]);
+
+  /*
+   * ==========================================
+   * FILTROS
+   * ==========================================
+   */
+
+  const [
+    filters,
+    setFilters,
+  ] =
     useState<ReportFilterValues>(
       INITIAL_FILTERS,
     );
 
-  const [result, setResult] =
-    useState<unknown>(null);
+  /*
+   * ==========================================
+   * RESULTADOS
+   * ==========================================
+   */
 
-  const [loading, setLoading] =
-    useState(false);
+  const [
+    executions,
+    setExecutions,
+  ] =
+    useState<
+      ReportExecution[]
+    >([]);
 
-  const [error, setError] =
-    useState<string | null>(null);
+  const [
+    loading,
+    setLoading,
+  ] =
+    useState(
+      false,
+    );
 
-  const selectedReport =
+  const [
+    error,
+    setError,
+  ] =
+    useState<
+      string | null
+    >(
+      null,
+    );
+
+  /*
+   * ==========================================
+   * REPORTES VISIBLES
+   * ==========================================
+   */
+
+  const visibleReports =
     useMemo(
       () =>
-        reportesCatalog.find(
-          (report) =>
-            report.id ===
-            selectedReportId,
-        ) ??
-        familyReports[0] ??
-        null,
+        reportesCatalog.filter(
+          (
+            report,
+          ) =>
+            selectedFamilies.includes(
+              report.family,
+            ),
+        ),
       [
-        selectedReportId,
-        familyReports,
+        selectedFamilies,
       ],
     );
 
-  function handleFamilyChange(
-    value: string,
+  /*
+   * Reportes realmente seleccionados.
+   * Se conserva el orden del catálogo.
+   */
+  const selectedReports =
+    useMemo(
+      () =>
+        reportesCatalog.filter(
+          (
+            report,
+          ) =>
+            selectedReportIds.includes(
+              report.id,
+            ),
+        ),
+      [
+        selectedReportIds,
+      ],
+    );
+
+  /*
+   * Modos de filtro requeridos
+   * por todos los reportes elegidos.
+   */
+  const filterModes =
+    useMemo(
+      () =>
+        Array.from(
+          new Set(
+            selectedReports.map(
+              (
+                report,
+              ) =>
+                report.filterMode,
+            ),
+          ),
+        ) as
+          ReportFilterMode[],
+      [
+        selectedReports,
+      ],
+    );
+
+  /*
+   * ==========================================
+   * RESULTADOS EXITOSOS
+   * ==========================================
+   */
+
+  const successfulExecutions =
+    useMemo(
+      () =>
+        executions.filter(
+          (
+            execution,
+          ) =>
+            execution.error ===
+              null &&
+            execution.data !==
+              null,
+        ),
+      [
+        executions,
+      ],
+    );
+
+  /*
+   * ==========================================
+   * FAMILIAS
+   * ==========================================
+   */
+
+  function toggleFamily(
+    family:
+      ReportFamily,
   ) {
-    const nextFamily =
-      value as ReportFamily;
-
-    const first =
-      reportesCatalog.find(
-        (report) =>
-          report.family ===
-          nextFamily,
+    const alreadySelected =
+      selectedFamilies.includes(
+        family,
       );
-
-    setFamily(nextFamily);
-
-    if (first) {
-      setSelectedReportId(
-        first.id,
-      );
-    }
-
-    setFilters(INITIAL_FILTERS);
-    setResult(null);
-    setError(null);
-  }
-
-  async function consultar() {
-    if (!selectedReport) {
-      return;
-    }
 
     if (
+      alreadySelected
+    ) {
+      setSelectedFamilies(
+        (
+          current,
+        ) =>
+          current.filter(
+            (
+              item,
+            ) =>
+              item !==
+              family,
+          ),
+      );
+
+      const idsFamily =
+        new Set(
+          reportesCatalog
+            .filter(
+              (
+                report,
+              ) =>
+                report.family ===
+                family,
+            )
+            .map(
+              (
+                report,
+              ) =>
+                report.id,
+            ),
+        );
+
+      setSelectedReportIds(
+        (
+          current,
+        ) =>
+          current.filter(
+            (
+              id,
+            ) =>
+              !idsFamily.has(
+                id,
+              ),
+          ),
+      );
+    } else {
+      setSelectedFamilies(
+        (
+          current,
+        ) => [
+          ...current,
+          family,
+        ],
+      );
+
+      /*
+       * Seleccionamos automáticamente
+       * el primer reporte de la familia.
+       */
+      const first =
+        reportesCatalog.find(
+          (
+            report,
+          ) =>
+            report.family ===
+            family,
+        );
+
+      if (first) {
+        setSelectedReportIds(
+          (
+            current,
+          ) =>
+            current.includes(
+              first.id,
+            )
+              ? current
+              : [
+                  ...current,
+                  first.id,
+                ],
+        );
+      }
+    }
+
+    setExecutions(
+      [],
+    );
+
+    setError(
+      null,
+    );
+  }
+
+  function seleccionarTodasFamilias() {
+    if (
+      selectedFamilies.length ===
+      TODAS_FAMILIAS.length
+    ) {
+      setSelectedFamilies(
+        [],
+      );
+
+      setSelectedReportIds(
+        [],
+      );
+    } else {
+      setSelectedFamilies(
+        TODAS_FAMILIAS,
+      );
+    }
+
+    setExecutions(
+      [],
+    );
+
+    setError(
+      null,
+    );
+  }
+
+  /*
+   * ==========================================
+   * REPORTES
+   * ==========================================
+   */
+
+  function toggleReport(
+    id:
+      string,
+  ) {
+    setSelectedReportIds(
+      (
+        current,
+      ) =>
+        current.includes(
+          id,
+        )
+          ? current.filter(
+              (
+                item,
+              ) =>
+                item !==
+                id,
+            )
+          : [
+              ...current,
+              id,
+            ],
+    );
+
+    setExecutions(
+      [],
+    );
+
+    setError(
+      null,
+    );
+  }
+
+  function seleccionarTodosReportesVisibles() {
+    const visibleIds =
+      visibleReports.map(
+        (
+          report,
+        ) =>
+          report.id,
+      );
+
+    const allSelected =
+      visibleIds.length >
+        0 &&
+      visibleIds.every(
+        (
+          id,
+        ) =>
+          selectedReportIds.includes(
+            id,
+          ),
+      );
+
+    if (
+      allSelected
+    ) {
+      const visibleSet =
+        new Set(
+          visibleIds,
+        );
+
+      setSelectedReportIds(
+        (
+          current,
+        ) =>
+          current.filter(
+            (
+              id,
+            ) =>
+              !visibleSet.has(
+                id,
+              ),
+          ),
+      );
+    } else {
+      setSelectedReportIds(
+        (
+          current,
+        ) =>
+          Array.from(
+            new Set([
+              ...current,
+              ...visibleIds,
+            ]),
+          ),
+      );
+    }
+
+    setExecutions(
+      [],
+    );
+
+    setError(
+      null,
+    );
+  }
+
+  /*
+   * ==========================================
+   * VALIDACIÓN
+   * ==========================================
+   */
+
+  function validarFiltros() {
+    const requierePeriodo =
+      filterModes.some(
+        (
+          mode,
+        ) =>
+          mode ===
+            "periodo" ||
+          mode ===
+            "auditoria" ||
+          mode ===
+            "auditoriaMovimiento",
+      );
+
+    const requiereFechaCorte =
+      filterModes.includes(
+        "fechaCorte",
+      );
+
+    if (
+      requierePeriodo &&
       filters.fechaDesde &&
       filters.fechaHasta &&
       filters.fechaDesde >
         filters.fechaHasta
     ) {
-      setError(
-        "La fecha desde no puede ser posterior a la fecha hasta.",
-      );
-
-      return;
+      return "La fecha desde no puede ser posterior a la fecha hasta.";
     }
 
     if (
-      selectedReport.filterMode ===
-        "fechaCorte" &&
+      requiereFechaCorte &&
       !filters.fechaCorte
     ) {
+      return "Seleccione una fecha de corte.";
+    }
+
+    return null;
+  }
+
+  /*
+   * ==========================================
+   * CONSULTAR REPORTES
+   * ==========================================
+   */
+
+  async function consultar() {
+    if (
+      selectedReports.length ===
+      0
+    ) {
       setError(
-        "Seleccione una fecha de corte.",
+        "Seleccione al menos un reporte.",
       );
 
       return;
     }
 
-    setLoading(true);
-    setError(null);
-    setResult(null);
+    const validationError =
+      validarFiltros();
+
+    if (
+      validationError
+    ) {
+      setError(
+        validationError,
+      );
+
+      return;
+    }
+
+    setLoading(
+      true,
+    );
+
+    setError(
+      null,
+    );
+
+    setExecutions(
+      [],
+    );
 
     try {
-      const response =
-        await selectedReport.load(
-          filters,
+      const results =
+        await Promise.all(
+          selectedReports.map(
+            async (
+              report,
+            ): Promise<ReportExecution> => {
+              try {
+                const data =
+                  await report.load(
+                    filters,
+                  );
+
+                return {
+                  report,
+                  data,
+                  error:
+                    null,
+                };
+              } catch (
+                requestError
+              ) {
+                return {
+                  report,
+
+                  data:
+                    null,
+
+                  error:
+                    requestError instanceof
+                      Error
+                      ? requestError.message
+                      : "No fue posible consultar este reporte.",
+                };
+              }
+            },
+          ),
         );
 
-      setResult(response);
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "No fue posible consultar el reporte.",
+      setExecutions(
+        results,
       );
+
+      const failed =
+        results.filter(
+          (
+            result,
+          ) =>
+            result.error !==
+            null,
+        );
+
+      if (
+        failed.length ===
+        results.length
+      ) {
+        setError(
+          "No fue posible consultar ninguno de los reportes seleccionados.",
+        );
+      }
     } finally {
-      setLoading(false);
+      setLoading(
+        false,
+      );
     }
   }
+
+  /*
+   * ==========================================
+   * PREPARAR EXPORTACIÓN
+   * ==========================================
+   */
+
+  function obtenerDatosExportacion():
+    ReportExportItem[] {
+    return successfulExecutions.map(
+      (
+        execution,
+      ) => ({
+        id:
+          execution.report.id,
+
+        family:
+          execution.report.family,
+
+        familyLabel:
+          reportFamilyLabels[
+            execution.report.family
+          ],
+
+        label:
+          execution.report.label,
+
+        description:
+          execution.report.description,
+
+        data:
+          execution.data,
+      }),
+    );
+  }
+
+  function exportarPdf() {
+    const reports =
+      obtenerDatosExportacion();
+
+    if (
+      reports.length ===
+      0
+    ) {
+      setError(
+        "Primero consulte al menos un reporte correctamente.",
+      );
+
+      return;
+    }
+
+    exportarReportesPdf({
+      filters,
+      reports,
+    });
+  }
+
+  function exportarExcel() {
+    const reports =
+      obtenerDatosExportacion();
+
+    if (
+      reports.length ===
+      0
+    ) {
+      setError(
+        "Primero consulte al menos un reporte correctamente.",
+      );
+
+      return;
+    }
+
+    exportarReportesExcel({
+      filters,
+      reports,
+    });
+  }
+
+  /*
+   * ==========================================
+   * RENDER
+   * ==========================================
+   */
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Reportes"
         description="Centro analítico de ventas, inventario, compras, pagos y auditoría."
-        icon={BarChart3}
+        icon={
+          BarChart3
+        }
       />
 
+      {/* ====================================== */}
+      {/* SELECCIÓN */}
+      {/* ====================================== */}
+
       <SectionCard
-        title="Seleccionar reporte"
-        description="Todos los datos son calculados por el backend."
+        title="Construir reporte"
+        description="Combiná varias familias y reportes en una misma consulta."
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <SelectField
-            label="Familia"
-            value={family}
-            onChange={
-              handleFamilyChange
-            }
-            options={Object.entries(
-              reportFamilyLabels,
-            ).map(
-              ([value, label]) => ({
-                value,
-                label,
-              }),
-            )}
-          />
+        {/* FAMILIAS */}
 
-          <SelectField
-            label="Reporte"
-            value={
-              selectedReport?.id ?? ""
-            }
-            onChange={(value) => {
-              setSelectedReportId(
-                value,
-              );
+        <div>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-zinc-950">
+                Familias
+              </p>
 
-              setResult(null);
-              setError(null);
-            }}
-            options={familyReports.map(
-              (report) => ({
-                value: report.id,
-                label: report.label,
-              }),
+              <p className="mt-0.5 text-xs text-zinc-500">
+                Podés seleccionar más de una familia.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={
+                seleccionarTodasFamilias
+              }
+              className="text-xs font-bold text-zinc-500 transition hover:text-zinc-950"
+            >
+              {selectedFamilies.length ===
+              TODAS_FAMILIAS.length
+                ? "Quitar todas"
+                : "Seleccionar todas"}
+            </button>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {TODAS_FAMILIAS.map(
+              (
+                family,
+              ) => {
+                const selected =
+                  selectedFamilies.includes(
+                    family,
+                  );
+
+                const count =
+                  reportesCatalog.filter(
+                    (
+                      report,
+                    ) =>
+                      report.family ===
+                      family,
+                  ).length;
+
+                return (
+                  <button
+                    key={
+                      family
+                    }
+                    type="button"
+                    onClick={() =>
+                      toggleFamily(
+                        family,
+                      )
+                    }
+                    className={`
+                      flex
+                      items-center
+                      gap-3
+                      rounded-2xl
+                      border
+                      p-4
+                      text-left
+                      transition
+
+                      ${
+                        selected
+                          ? "border-zinc-950 bg-zinc-950 text-white shadow-sm"
+                          : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400"
+                      }
+                    `}
+                  >
+                    <div
+                      className={`
+                        grid
+                        h-9
+                        w-9
+                        shrink-0
+                        place-items-center
+                        rounded-xl
+
+                        ${
+                          selected
+                            ? "bg-white/10"
+                            : "bg-zinc-100"
+                        }
+                      `}
+                    >
+                      {selected ? (
+                        <Check
+                          size={
+                            17
+                          }
+                        />
+                      ) : (
+                        <Layers3
+                          size={
+                            17
+                          }
+                        />
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold">
+                        {
+                          reportFamilyLabels[
+                            family
+                          ]
+                        }
+                      </p>
+
+                      <p
+                        className={`
+                          mt-0.5
+                          text-xs
+
+                          ${
+                            selected
+                              ? "text-zinc-300"
+                              : "text-zinc-400"
+                          }
+                        `}
+                      >
+                        {count} reporte
+                        {count ===
+                        1
+                          ? ""
+                          : "s"}
+                      </p>
+                    </div>
+                  </button>
+                );
+              },
             )}
-          />
+          </div>
         </div>
 
-        {selectedReport ? (
-          <div className="mt-5 rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-            <p className="font-semibold text-zinc-950">
-              {selectedReport.label}
-            </p>
+        {/* REPORTES */}
 
-            <p className="mt-1 text-sm text-zinc-500">
-              {
-                selectedReport.description
-              }
-            </p>
+        <div className="mt-7 border-t border-zinc-200 pt-6">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-zinc-950">
+                Reportes
+              </p>
+
+              <p className="mt-0.5 text-xs text-zinc-500">
+                Seleccioná uno o varios reportes de las familias activas.
+              </p>
+            </div>
+
+            {visibleReports.length >
+            0 ? (
+              <button
+                type="button"
+                onClick={
+                  seleccionarTodosReportesVisibles
+                }
+                className="text-xs font-bold text-zinc-500 transition hover:text-zinc-950"
+              >
+                {visibleReports.every(
+                  (
+                    report,
+                  ) =>
+                    selectedReportIds.includes(
+                      report.id,
+                    ),
+                )
+                  ? "Quitar visibles"
+                  : "Seleccionar visibles"}
+              </button>
+            ) : null}
           </div>
-        ) : null}
 
-        {selectedReport ? (
-          <div className="mt-6">
+          {visibleReports.length ===
+          0 ? (
+            <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 px-5 py-8 text-center">
+              <p className="text-sm font-semibold text-zinc-500">
+                Seleccioná al menos una familia.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {visibleReports.map(
+                (
+                  report,
+                ) => {
+                  const selected =
+                    selectedReportIds.includes(
+                      report.id,
+                    );
+
+                  return (
+                    <button
+                      key={
+                        report.id
+                      }
+                      type="button"
+                      onClick={() =>
+                        toggleReport(
+                          report.id,
+                        )
+                      }
+                      className={`
+                        flex
+                        min-h-[105px]
+                        items-start
+                        gap-3
+                        rounded-2xl
+                        border
+                        p-4
+                        text-left
+                        transition
+
+                        ${
+                          selected
+                            ? "border-blue-300 bg-blue-50"
+                            : "border-zinc-200 bg-white hover:border-zinc-400"
+                        }
+                      `}
+                    >
+                      <div
+                        className={`
+                          mt-0.5
+                          grid
+                          h-8
+                          w-8
+                          shrink-0
+                          place-items-center
+                          rounded-lg
+
+                          ${
+                            selected
+                              ? "bg-blue-600 text-white"
+                              : "bg-zinc-100 text-zinc-500"
+                          }
+                        `}
+                      >
+                        {selected ? (
+                          <Check
+                            size={
+                              16
+                            }
+                          />
+                        ) : (
+                          <BarChart3
+                            size={
+                              16
+                            }
+                          />
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-zinc-950">
+                          {
+                            report.label
+                          }
+                        </p>
+
+                        <p className="mt-1 text-xs leading-5 text-zinc-500">
+                          {
+                            report.description
+                          }
+                        </p>
+                      </div>
+                    </button>
+                  );
+                },
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* RESUMEN DE SELECCIÓN */}
+
+        <div className="mt-6 flex flex-wrap gap-2">
+          <span className="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-600">
+            {
+              selectedFamilies.length
+            }{" "}
+            familia
+            {selectedFamilies.length ===
+            1
+              ? ""
+              : "s"}
+          </span>
+
+          <span className="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-600">
+            {
+              selectedReports.length
+            }{" "}
+            reporte
+            {selectedReports.length ===
+            1
+              ? ""
+              : "s"}
+          </span>
+        </div>
+
+        {/* FILTROS */}
+
+        {selectedReports.length >
+        0 ? (
+          <div className="mt-7 border-t border-zinc-200 pt-6">
+            <div className="mb-4">
+              <p className="text-sm font-bold text-zinc-950">
+                Filtros combinados
+              </p>
+
+              <p className="mt-1 text-xs text-zinc-500">
+                Se muestran únicamente los filtros requeridos por los reportes seleccionados.
+              </p>
+            </div>
+
             <ReportFilters
-              mode={
-                selectedReport.filterMode
+              modes={
+                filterModes
               }
-              value={filters}
-              onChange={setFilters}
+              value={
+                filters
+              }
+              onChange={
+                setFilters
+              }
             />
           </div>
         ) : null}
 
-        <div className="mt-6">
+        {/* CONSULTAR */}
+
+        <div className="mt-7 flex flex-wrap items-center gap-3 border-t border-zinc-200 pt-6">
           <PrimaryButton
             onClick={() => {
               void consultar();
             }}
-            loading={loading}
-            loadingText="Consultando reporte..."
-            disabled={loading}
+            loading={
+              loading
+            }
+            loadingText="Consultando reportes..."
+            disabled={
+              loading ||
+              selectedReports.length ===
+                0
+            }
           >
-            Consultar reporte
+            Consultar{" "}
+            {
+              selectedReports.length
+            }{" "}
+            reporte
+            {selectedReports.length ===
+            1
+              ? ""
+              : "s"}
           </PrimaryButton>
         </div>
       </SectionCard>
 
+      {/* ====================================== */}
+      {/* ERROR */}
+      {/* ====================================== */}
+
       {error ? (
         <AlertMessage
           variant="error"
-          title="No fue posible cargar el reporte"
-          message={error}
+          title="No fue posible completar la operación"
+          message={
+            error
+          }
           onClose={() =>
-            setError(null)
+            setError(
+              null,
+            )
           }
         />
       ) : null}
 
-      <SectionCard
-        title={
-          selectedReport?.label ??
-          "Resultado"
-        }
-        description="Información oficial devuelta por SystemMx."
-      >
-        {loading ? (
-          <LoadingState message="Consultando reporte..." />
-        ) : result !== null ? (
-          <ReportResultView
-            data={result}
-          />
-        ) : (
+      {/* ====================================== */}
+      {/* EXPORTACIÓN */}
+      {/* ====================================== */}
+
+      {successfulExecutions.length >
+      0 ? (
+        <SectionCard
+          title="Guardar reporte"
+          description="Exportá todos los resultados consultados en un único archivo."
+        >
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={
+                exportarPdf
+              }
+              className="
+                inline-flex
+                h-11
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                bg-red-600
+                px-5
+                text-sm
+                font-bold
+                text-white
+                transition
+                hover:bg-red-700
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-red-600
+                focus-visible:ring-offset-2
+              "
+            >
+              <FileText
+                size={
+                  18
+                }
+              />
+
+              Descargar PDF
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                exportarExcel
+              }
+              className="
+                inline-flex
+                h-11
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                bg-emerald-600
+                px-5
+                text-sm
+                font-bold
+                text-white
+                transition
+                hover:bg-emerald-700
+                focus-visible:outline-none
+                focus-visible:ring-2
+                focus-visible:ring-emerald-600
+                focus-visible:ring-offset-2
+              "
+            >
+              <FileSpreadsheet
+                size={
+                  18
+                }
+              />
+
+              Descargar Excel
+            </button>
+
+            <div className="flex items-center gap-2 px-2 text-xs text-zinc-500">
+              <FileDown
+                size={
+                  15
+                }
+              />
+
+              {
+                successfulExecutions.length
+              }{" "}
+              reporte
+              {successfulExecutions.length ===
+              1
+                ? ""
+                : "s"}{" "}
+              listo
+              {successfulExecutions.length ===
+              1
+                ? ""
+                : "s"}{" "}
+              para exportar
+            </div>
+          </div>
+        </SectionCard>
+      ) : null}
+
+      {/* ====================================== */}
+      {/* RESULTADOS */}
+      {/* ====================================== */}
+
+      {loading ? (
+        <SectionCard
+          title="Resultados"
+          description="Consultando información oficial de SystemMx."
+        >
+          <LoadingState message="Consultando reportes seleccionados..." />
+        </SectionCard>
+      ) : executions.length >
+        0 ? (
+        <div className="space-y-6">
+          {executions.map(
+            (
+              execution,
+            ) => (
+              <SectionCard
+                key={
+                  execution.report.id
+                }
+                title={
+                  execution.report.label
+                }
+                description={`${
+                  reportFamilyLabels[
+                    execution.report
+                      .family
+                  ]
+                } · ${
+                  execution.report
+                    .description
+                }`}
+              >
+                {execution.error ? (
+                  <AlertMessage
+                    variant="error"
+                    title="No fue posible cargar este reporte"
+                    message={
+                      execution.error
+                    }
+                  />
+                ) : (
+                  <ReportResultView
+                    data={
+                      execution.data
+                    }
+                  />
+                )}
+              </SectionCard>
+            ),
+          )}
+        </div>
+      ) : (
+        <SectionCard
+          title="Resultados"
+          description="Información oficial devuelta por SystemMx."
+        >
           <div className="py-12 text-center">
             <BarChart3
               className="mx-auto h-8 w-8 text-zinc-300"
             />
 
             <p className="mt-3 text-sm font-semibold text-zinc-500">
-              Seleccione los filtros y consulte el reporte.
+              Seleccioná las familias, los reportes y los filtros que querés consultar.
             </p>
           </div>
-        )}
-      </SectionCard>
+        </SectionCard>
+      )}
     </div>
   );
 }

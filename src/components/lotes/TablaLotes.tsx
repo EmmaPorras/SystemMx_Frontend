@@ -1,5 +1,10 @@
+import {
+  Eye,
+} from "lucide-react";
+
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
+import TableActionButton from "../common/TableActionButton";
 import { formatCurrency } from "../common/formatters";
 
 import type {
@@ -9,11 +14,18 @@ import type {
 
 type TablaLotesProps = {
   lotes: LoteInventario[];
+  onView: (
+    lote: LoteInventario,
+  ) => void;
 };
 
 function getEstadoVariant(
   estado: EstadoLoteInventario,
-): "success" | "warning" | "neutral" | "danger" {
+):
+  | "success"
+  | "warning"
+  | "neutral"
+  | "danger" {
   switch (estado) {
     case "EN_STOCK":
       return "success";
@@ -25,7 +37,7 @@ function getEstadoVariant(
       return "neutral";
 
     case "AGOTADO":
-      return "neutral";
+      return "danger";
   }
 }
 
@@ -49,93 +61,138 @@ function getEstadoLabel(
 
 function TablaLotes({
   lotes,
+  onView,
 }: TablaLotesProps) {
   return (
     <DataTableShell
       data={lotes}
       emptyMessage="No hay lotes que coincidan con los filtros."
-      getRowKey={(row) => row.idLote}
+      getRowKey={(
+        row,
+      ) =>
+        row.idLote
+      }
       columns={[
         {
           key: "lote",
           header: "Lote",
-          render: (row) => (
+          render: (
+            row,
+          ) => (
             <div>
               <p className="font-semibold text-zinc-950">
-                {row.codigoLote}
+                {
+                  row.codigoLote
+                }
               </p>
 
               <p className="mt-0.5 text-xs text-zinc-500">
-                ID {row.idLote}
+                ID{" "}
+                {
+                  row.idLote
+                }
               </p>
             </div>
           ),
         },
+
         {
           key: "producto",
           header: "Producto",
-          render: (row) =>
-            row.producto?.nombre ??
+          render: (
+            row,
+          ) =>
+            row.producto
+              ?.nombre ??
             `Producto #${row.idProducto}`,
         },
+
         {
           key: "pedido",
           header: "Pedido",
-          render: (row) =>
+          render: (
+            row,
+          ) =>
             row.pedido
               ? `#${row.pedido.numeroPedido}`
               : `ID ${row.idPedido}`,
         },
+
         {
           key: "cantidades",
           header: "Inventario",
-          render: (row) => (
+          render: (
+            row,
+          ) => (
             <div className="space-y-0.5 text-sm">
               <p>
                 Disponible:{" "}
                 <span className="font-semibold">
-                  {row.cantidadDisponible}
+                  {
+                    row.cantidadDisponible
+                  }
                 </span>
               </p>
 
               <p className="text-xs text-zinc-500">
-                Recibida: {row.cantidadRecibida}
+                Recibida:{" "}
+                {
+                  row.cantidadRecibida
+                }
               </p>
 
               <p className="text-xs text-zinc-500">
-                Vendida: {row.cantidadVendida}
+                Vendida:{" "}
+                {
+                  row.cantidadVendida
+                }
               </p>
             </div>
           ),
         },
+
         {
           key: "pendiente",
-          header: "Pendiente recepción",
-          render: (row) =>
+          header:
+            "Pendiente recepción",
+          render: (
+            row,
+          ) =>
             String(
               row.cantidadPendienteRecepcion,
             ),
         },
+
         {
           key: "costo",
-          header: "Costo unitario",
-          render: (row) =>
+          header:
+            "Costo unitario",
+          render: (
+            row,
+          ) =>
             formatCurrency(
               row.costoUnitarioReal,
             ),
         },
+
         {
           key: "precio",
-          header: "Precio recomendado",
-          render: (row) =>
+          header:
+            "Precio recomendado",
+          render: (
+            row,
+          ) =>
             formatCurrency(
               row.precioVentaRecomendado,
             ),
         },
+
         {
           key: "estado",
           header: "Estado",
-          render: (row) => (
+          render: (
+            row,
+          ) => (
             <StatusBadge
               label={getEstadoLabel(
                 row.estadoLote,
@@ -147,6 +204,26 @@ function TablaLotes({
           ),
         },
       ]}
+      actions={(
+        row,
+      ) => (
+        <TableActionButton
+          label="Ver detalle"
+          variant="view"
+          icon={
+            <Eye
+              size={
+                17
+              }
+            />
+          }
+          onClick={() =>
+            onView(
+              row,
+            )
+          }
+        />
+      )}
     />
   );
 }
