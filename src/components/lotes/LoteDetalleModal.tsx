@@ -1,4 +1,8 @@
 import {
+  useEffect,
+} from "react";
+
+import {
   Boxes,
   CalendarDays,
   Hash,
@@ -157,6 +161,43 @@ function LoteDetalleModal({
   lote,
   onClose,
 }: LoteDetalleModalProps) {
+  /*
+   * ==========================================
+   * CERRAR CON ESC
+   * ==========================================
+   */
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handleKeyDown(
+      event: KeyboardEvent,
+    ) {
+      if (
+        event.key ===
+        "Escape"
+      ) {
+        onClose();
+      }
+    }
+
+    document.addEventListener(
+      "keydown",
+      handleKeyDown,
+    );
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown,
+      );
+    };
+  }, [
+    isOpen,
+    onClose,
+  ]);
+
   if (
     !isOpen ||
     !lote
@@ -180,7 +221,12 @@ function LoteDetalleModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="lote-detalle-title"
-      onMouseDown={(
+
+      /*
+       * Cierra únicamente si se toca
+       * directamente el fondo.
+       */
+      onPointerDown={(
         event,
       ) => {
         if (
@@ -210,9 +256,7 @@ function LoteDetalleModal({
           <div className="flex min-w-0 items-start gap-4">
             <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-zinc-950 text-white shadow-sm">
               <Boxes
-                size={
-                  21
-                }
+                size={21}
               />
             </div>
 
@@ -262,9 +306,7 @@ function LoteDetalleModal({
             "
           >
             <X
-              size={
-                18
-              }
+              size={18}
             />
           </button>
         </div>
@@ -300,9 +342,7 @@ function LoteDetalleModal({
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <Hash
-                size={
-                  17
-                }
+                size={17}
                 className="text-zinc-500"
               />
 
@@ -340,9 +380,7 @@ function LoteDetalleModal({
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <Tag
-                size={
-                  17
-                }
+                size={17}
                 className="text-zinc-500"
               />
 
@@ -375,9 +413,7 @@ function LoteDetalleModal({
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <ReceiptText
-                size={
-                  17
-                }
+                size={17}
                 className="text-zinc-500"
               />
 
@@ -418,9 +454,7 @@ function LoteDetalleModal({
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <PackageCheck
-                size={
-                  17
-                }
+                size={17}
                 className="text-zinc-500"
               />
 
@@ -472,9 +506,7 @@ function LoteDetalleModal({
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <WalletCards
-                size={
-                  17
-                }
+                size={17}
                 className="text-zinc-500"
               />
 
@@ -505,9 +537,7 @@ function LoteDetalleModal({
           <section className="space-y-3">
             <div className="flex items-center gap-2">
               <CalendarDays
-                size={
-                  17
-                }
+                size={17}
                 className="text-zinc-500"
               />
 

@@ -15,7 +15,7 @@ export type ReportFamily =
   | "auditoria";
 
 export type ReportDefinition = {
-  id: string;
+  id: string; 
   family: ReportFamily;
   label: string;
   description: string;
