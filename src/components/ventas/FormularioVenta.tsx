@@ -50,7 +50,7 @@ const tipoTarifaOptions = [
 ];
 
 const modoDescuentoOptions = [
-  { value: "FIFO", label: "Automa¡tico FIFO" },
+  { value: "FIFO", label: "Automático FIFO" },
   { value: "MANUAL", label: "Seleccionar lote manualmente" },
 ];
 
@@ -545,7 +545,7 @@ function FormularioVenta({
       }
 
       if (parsePorcentaje(detalleForm.porcentajeIva) < 0) {
-        return "La tarifa especial debe ser va¡lida.";
+        return "La tarifa especial debe ser válida.";
       }
     }
 
@@ -736,7 +736,7 @@ function FormularioVenta({
       {formError ? (
         <AlertMessage
           variant="error"
-          title="Revisa¡ la informacia³n"
+          title="Revisa la información"
           message={formError}
           onClose={() => setFormError(null)}
         />
@@ -773,7 +773,7 @@ function FormularioVenta({
               </h3>
               <p className="text-sm text-slate-600">
                 Por defecto se descuenta usando FIFO. Lo agregado en esta venta
-                se reserva temporalmente para no vender ma¡s stock del disponible.
+                se reserva temporalmente para no vender más stock del disponible.
               </p>
             </div>
 
@@ -838,7 +838,7 @@ function FormularioVenta({
                 onChange={(value) => actualizarDetalle("precioUnitario", value)}
                 placeholder="0"
                 required
-                prefix="{MonedaSymbol}"
+                prefix="₡"
               />
 
               <InputField
@@ -875,14 +875,14 @@ function FormularioVenta({
                 label="Detalle"
                 value={detalleForm.detalle}
                 onChange={(value) => actualizarDetalle("detalle", value)}
-                placeholder="Combo careta + LED, promocia³n..."
+                placeholder="Combo careta + LED, promoción..."
                 maxLength={150}
               />
             </div>
 
             <div className="mt-5 flex flex-wrap gap-3">
               <PrimaryButton onClick={agregarOActualizarDetalle}>
-                {detalleEditandoId ? "Actualizar la­nea" : "+ Agregar a venta"}
+                {detalleEditandoId ? "Actualizar línea" : "+ Agregar a venta"}
               </PrimaryButton>
 
               {detalleEditandoId ? (
@@ -894,7 +894,7 @@ function FormularioVenta({
                   }}
                   className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                 >
-                  Cancelar edicia³n
+                  Cancelar edición
                 </button>
               ) : null}
             </div>
@@ -907,7 +907,7 @@ function FormularioVenta({
 
             <DataTableShell
               data={detalles}
-              emptyMessage="Todava­a no has agregado productos a esta venta."
+              emptyMessage="Todavía no has agregado productos a esta venta."
               getRowKey={(row) => row.idTemporal}
               columns={[
                 {
@@ -920,7 +920,7 @@ function FormularioVenta({
                       </p>
                       <p className="text-xs text-slate-500">
                         {row.modoDescuentoLote === "FIFO"
-                          ? "FIFO automa¡tico"
+                          ? "FIFO automático"
                           : row.loteDescripcion}
                       </p>
                     </div>
@@ -1074,7 +1074,7 @@ function FormularioVenta({
                       actualizarCabecera("montoEfectivo", value)
                     }
                     placeholder="0"
-                    prefix="{MonedaSymbol}"
+                    prefix="₡"
                   />
 
                   <InputField
@@ -1084,7 +1084,7 @@ function FormularioVenta({
                       actualizarCabecera("montoSinpeTransferencia", value)
                     }
                     placeholder="0"
-                    prefix="{MonedaSymbol}"
+                    prefix="₡"
                   />
                 </>
               ) : (
@@ -1094,7 +1094,7 @@ function FormularioVenta({
                   onChange={(value) => actualizarCabecera("montoPagado", value)}
                   placeholder="0"
                   helperText="Si queda en 0, se registra como deuda completa."
-                  prefix="{MonedaSymbol}"
+                  prefix="₡"
                 />
               )}
 
@@ -1107,7 +1107,7 @@ function FormularioVenta({
 
               {hayDeuda ? (
                 <InputField
-                  label="Fecha la­mite de pago"
+                  label="Fecha límite de pago"
                   type="date"
                   value={cabecera.fechaVencimientoPago}
                   onChange={(value) =>
@@ -1180,7 +1180,7 @@ function FormularioVenta({
 
                 <div className="mt-4 flex flex-wrap gap-3">
                   <PrimaryButton onClick={() => guardarVenta(true)}>
-                    Sa­, guardar con deuda
+                    Sí, guardar con deuda
                   </PrimaryButton>
 
                   <button
@@ -1214,7 +1214,7 @@ function FormularioVenta({
               disabled={guardando}
               className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Atra¡s
+              Atrás
             </button>
 
             <div className="flex flex-wrap gap-3">

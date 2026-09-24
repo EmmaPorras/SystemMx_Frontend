@@ -51,7 +51,7 @@ const monedaSimbolos: Record<MonedaCompra, string> = {
   USD: "$",
   EUR: "€",
   COP: "COP ",
-  BRL: "R$",
+  BRL: "R$",  
 };
 
 function getMonedaSymbol(moneda: MonedaCompra) {
