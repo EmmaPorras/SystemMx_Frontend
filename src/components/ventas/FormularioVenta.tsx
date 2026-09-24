@@ -50,7 +50,7 @@ const tipoTarifaOptions = [
 ];
 
 const modoDescuentoOptions = [
-  { value: "FIFO", label: "AutomÃ¡tico FIFO" },
+  { value: "FIFO", label: "Automa¡tico FIFO" },
   { value: "MANUAL", label: "Seleccionar lote manualmente" },
 ];
 
@@ -419,7 +419,7 @@ function FormularioVenta({
           ...prev,
           loteId: value,
           loteDescripcion: lote
-            ? `Pedido ${lote.numeroPedido} Â· ${lote.loteCodigo}`
+            ? `Pedido ${lote.numeroPedido}  ${lote.loteCodigo}`
             : "",
           precioUnitario: lote?.precioVentaRecomendado
             ? limpiarMonto(String(lote.precioVentaRecomendado), 8)
@@ -545,7 +545,7 @@ function FormularioVenta({
       }
 
       if (parsePorcentaje(detalleForm.porcentajeIva) < 0) {
-        return "La tarifa especial debe ser vÃ¡lida.";
+        return "La tarifa especial debe ser va¡lida.";
       }
     }
 
@@ -615,7 +615,7 @@ function FormularioVenta({
     }
 
     if (!cabecera.metodoPago) {
-      return "Debe seleccionar un mÃ©todo de pago.";
+      return "Debe seleccionar un método de pago.";
     }
 
     if (cabecera.observaciones.length > 150) {
@@ -736,7 +736,7 @@ function FormularioVenta({
       {formError ? (
         <AlertMessage
           variant="error"
-          title="RevisÃ¡ la informaciÃ³n"
+          title="Revisa¡ la informacia³n"
           message={formError}
           onClose={() => setFormError(null)}
         />
@@ -773,7 +773,7 @@ function FormularioVenta({
               </h3>
               <p className="text-sm text-slate-600">
                 Por defecto se descuenta usando FIFO. Lo agregado en esta venta
-                se reserva temporalmente para no vender mÃ¡s stock del disponible.
+                se reserva temporalmente para no vender ma¡s stock del disponible.
               </p>
             </div>
 
@@ -786,7 +786,7 @@ function FormularioVenta({
                 required
                 options={productosDisponibles.map((producto) => ({
                   value: String(producto.id),
-                  label: `${producto.nombre} Â· Stock ${producto.stockTotal}`,
+                  label: `${producto.nombre}  Stock ${producto.stockTotal}`,
                 }))}
               />
 
@@ -809,7 +809,7 @@ function FormularioVenta({
                   required
                   options={lotesDelProducto.map((lote) => ({
                     value: String(lote.loteId),
-                    label: `Pedido ${lote.numeroPedido} Â· ${lote.loteCodigo} Â· Stock ${lote.cantidadDisponible}`,
+                    label: `Pedido ${lote.numeroPedido}  ${lote.loteCodigo}  Stock ${lote.cantidadDisponible}`,
                   }))}
                 />
               ) : (
@@ -838,7 +838,7 @@ function FormularioVenta({
                 onChange={(value) => actualizarDetalle("precioUnitario", value)}
                 placeholder="0"
                 required
-                prefix="â‚¡"
+                prefix="{MonedaSymbol}"
               />
 
               <InputField
@@ -875,14 +875,14 @@ function FormularioVenta({
                 label="Detalle"
                 value={detalleForm.detalle}
                 onChange={(value) => actualizarDetalle("detalle", value)}
-                placeholder="Combo careta + LED, promociÃ³n..."
+                placeholder="Combo careta + LED, promocia³n..."
                 maxLength={150}
               />
             </div>
 
             <div className="mt-5 flex flex-wrap gap-3">
               <PrimaryButton onClick={agregarOActualizarDetalle}>
-                {detalleEditandoId ? "Actualizar lÃ­nea" : "+ Agregar a venta"}
+                {detalleEditandoId ? "Actualizar la­nea" : "+ Agregar a venta"}
               </PrimaryButton>
 
               {detalleEditandoId ? (
@@ -894,7 +894,7 @@ function FormularioVenta({
                   }}
                   className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                 >
-                  Cancelar ediciÃ³n
+                  Cancelar edicia³n
                 </button>
               ) : null}
             </div>
@@ -907,7 +907,7 @@ function FormularioVenta({
 
             <DataTableShell
               data={detalles}
-              emptyMessage="TodavÃ­a no has agregado productos a esta venta."
+              emptyMessage="Todava­a no has agregado productos a esta venta."
               getRowKey={(row) => row.idTemporal}
               columns={[
                 {
@@ -920,7 +920,7 @@ function FormularioVenta({
                       </p>
                       <p className="text-xs text-slate-500">
                         {row.modoDescuentoLote === "FIFO"
-                          ? "FIFO automÃ¡tico"
+                          ? "FIFO automa¡tico"
                           : row.loteDescripcion}
                       </p>
                     </div>
@@ -1015,8 +1015,8 @@ function FormularioVenta({
                 Datos generales
               </h3>
               <p className="text-sm text-slate-600">
-                RegistrÃ¡ quiÃ©n comprÃ³ y cuÃ¡nto pagÃ³. Si falta dinero, la venta
-                queda automÃ¡ticamente en deudores.
+                Registra quién compra y cuánto paga. Si falta dinero, la venta
+                queda automáticamente en deudores.
               </p>
             </div>
 
@@ -1058,7 +1058,7 @@ function FormularioVenta({
               />
 
               <SelectField
-                label="MÃ©todo de pago"
+                label="Método de pago"
                 value={cabecera.metodoPago}
                 onChange={(value) => actualizarCabecera("metodoPago", value)}
                 options={metodosPagoOptions}
@@ -1068,23 +1068,23 @@ function FormularioVenta({
               {cabecera.metodoPago === "MIXTO" ? (
                 <>
                   <InputField
-                    label="PagÃ³ en efectivo"
+                    label="Paga en efectivo"
                     value={cabecera.montoEfectivo}
                     onChange={(value) =>
                       actualizarCabecera("montoEfectivo", value)
                     }
                     placeholder="0"
-                    prefix="â‚¡"
+                    prefix="{MonedaSymbol}"
                   />
 
                   <InputField
-                    label="PagÃ³ por SINPE / transferencia"
+                    label="Paga por SINPE / transferencia"
                     value={cabecera.montoSinpeTransferencia}
                     onChange={(value) =>
                       actualizarCabecera("montoSinpeTransferencia", value)
                     }
                     placeholder="0"
-                    prefix="â‚¡"
+                    prefix="{MonedaSymbol}"
                   />
                 </>
               ) : (
@@ -1094,7 +1094,7 @@ function FormularioVenta({
                   onChange={(value) => actualizarCabecera("montoPagado", value)}
                   placeholder="0"
                   helperText="Si queda en 0, se registra como deuda completa."
-                  prefix="â‚¡"
+                  prefix="{MonedaSymbol}"
                 />
               )}
 
@@ -1107,7 +1107,7 @@ function FormularioVenta({
 
               {hayDeuda ? (
                 <InputField
-                  label="Fecha lÃ­mite de pago"
+                  label="Fecha la­mite de pago"
                   type="date"
                   value={cabecera.fechaVencimientoPago}
                   onChange={(value) =>
@@ -1173,14 +1173,14 @@ function FormularioVenta({
                   Esta venta queda con deuda pendiente.
                 </p>
                 <p className="mt-1 text-sm text-amber-800">
-                  Total: {formatCurrency(resumenVenta.totalVenta)} Â· Recibido:{" "}
-                  {formatCurrency(montoRecibido)} Â· Pendiente:{" "}
-                  {formatCurrency(saldoPendiente)}.
+                  Total: {formatCurrency(resumenVenta.totalVenta)}  Recibido:{" "}
+                  {formatCurrency(montoRecibido)} Pendiente:{" "}
+                  {formatCurrency(saldoPendiente)}
                 </p>
 
                 <div className="mt-4 flex flex-wrap gap-3">
                   <PrimaryButton onClick={() => guardarVenta(true)}>
-                    SÃ­, guardar con deuda
+                    Sa­, guardar con deuda
                   </PrimaryButton>
 
                   <button
@@ -1214,7 +1214,7 @@ function FormularioVenta({
               disabled={guardando}
               className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              AtrÃ¡s
+              Atra¡s
             </button>
 
             <div className="flex flex-wrap gap-3">
