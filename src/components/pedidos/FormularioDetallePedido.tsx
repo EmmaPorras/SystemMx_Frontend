@@ -47,10 +47,10 @@ const loteOptions = Array.from({ length: 10 }, (_, index) => {
 });
 
 const monedaSimbolos: Record<MonedaCompra, string> = {
-  CRC: "â‚¡",
+  CRC: "₡",
   USD: "$",
-  EUR: "â‚¬",
-  COP: "COP",
+  EUR: "€",
+  COP: "COP ",
   BRL: "R$",
 };
 
@@ -183,7 +183,7 @@ function FormularioDetallePedido({
       {alertMessage ? (
         <AlertMessage
           variant="error"
-          title="RevisÃ¡ la informaciÃ³n"
+          title="Revisar la información"
           message={alertMessage}
         />
       ) : null}
@@ -193,7 +193,7 @@ function FormularioDetallePedido({
           {pedido.numeroPedido ? `Pedido #${pedido.numeroPedido}` : "Nuevo pedido"}
         </p>
         <p className="mt-1 text-sm text-zinc-600">
-          {pedido.proveedorNombre || "Proveedor no seleccionado"} Â· {pedido.fecha} Â· {pedido.monedaCompra}
+          {pedido.proveedorNombre || "Proveedor no seleccionado"} · {pedido.fecha} · {pedido.monedaCompra}
         </p>
       </div>
 
@@ -201,11 +201,11 @@ function FormularioDetallePedido({
         <div className="mb-4">
           <h3 className="text-base font-bold text-zinc-950">
             {isEditingDetail
-              ? "Editar artÃ­culo del pedido"
-              : "Agregar artÃ­culo al pedido"}
+              ? "Editar artículo del pedido"
+              : "Agregar artículo al pedido"}
           </h3>
           <p className="text-sm text-zinc-600">
-            Cada lÃ­nea representa un artÃ­culo asociado a un lote especÃ­fico.
+            Cada línea representa un artículo asociado a un lote específico.
           </p>
         </div>
 
@@ -215,7 +215,7 @@ function FormularioDetallePedido({
               htmlFor="articulo-nombre-input"
               className="mb-1.5 block text-sm font-semibold text-zinc-700"
             >
-              Nombre del artÃ­culo
+              Nombre del artículo
               <span className="ml-1 text-red-500" aria-hidden="true">*</span>
             </label>
 
@@ -251,11 +251,11 @@ function FormularioDetallePedido({
                   </p>
                 ) : detalleForm.productoId ? (
                   <p className="text-xs font-medium text-emerald-700">
-                    Producto existente seleccionado Â· ID {detalleForm.productoId}
+                    Producto existente seleccionado · ID {detalleForm.productoId}
                   </p>
                 ) : (
                   <p className="text-xs text-zinc-500">
-                    EscribÃ­ al menos 2 letras para buscar productos ya registrados.
+                    Escribí al menos 2 letras para buscar productos ya registrados.
                   </p>
                 )}
               </div>
@@ -303,7 +303,7 @@ function FormularioDetallePedido({
                             ? ` · ${producto.marca}`
                             : ""}
                           {producto.precioVentaSugerido > 0
-                            ? ` Â· Precio sugerido ${formatCurrency(
+                            ? `  Precio sugerido ${formatCurrency(
                                 producto.precioVentaSugerido,
                               )}`
                             : ""}
@@ -371,7 +371,7 @@ function FormularioDetallePedido({
             type="text"
             value={detalleForm.costoUnitarioOrigen}
             onChange={(value) => onDetalleChange("costoUnitarioOrigen", value)}
-            placeholder="0.00"
+            placeholder="  0.00"
             required
             error={errors.costoUnitarioOrigen}
             maxLength={8}
@@ -386,12 +386,12 @@ function FormularioDetallePedido({
             onChange={(value) =>
               onDetalleChange("precioVentaRecomendado", value)
             }
-            placeholder="0"
+            placeholder="  0"
             required
             error={errors.precioVentaRecomendado}
             maxLength={8}
             showCharacterCount
-            prefix="â‚¡"
+            prefix={simboloMoneda}
           />
 
           {isEditingDetail && Number(detalleForm.cantidadRecibidaPrevia) > 0 ? (
@@ -409,8 +409,8 @@ function FormularioDetallePedido({
         <div className="mt-5 flex flex-wrap gap-3">
           <PrimaryButton onClick={onAgregarDetalle}>
             {isEditingDetail
-              ? "Actualizar artÃ­culo/lote"
-              : "+ Agregar artÃ­culo/lote"}
+              ? "Actualizar artículo/lote"
+              : "+ Agregar artículo/lote"}
           </PrimaryButton>
 
           {isEditingDetail ? (
@@ -419,7 +419,7 @@ function FormularioDetallePedido({
               onClick={onCancelarEdicionDetalle}
               className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
             >
-              Cancelar ediciÃ³n
+              Cancelar edición
             </button>
           ) : null}
         </div>
@@ -427,17 +427,17 @@ function FormularioDetallePedido({
 
       <div>
         <h3 className="mb-3 text-base font-bold text-zinc-950">
-          ArtÃ­culos agregados
+          Artículos agregados
         </h3>
 
         <DataTableShell
           data={pedido.detalles}
-          emptyMessage="TodavÃ­a no has agregado artÃ­culos a este pedido."
+          emptyMessage="Todavía no has agregado artículos a este pedido."
           getRowKey={(row) => row.idTemporal}
           columns={[
             {
               key: "producto",
-              header: "ArtÃ­culo",
+              header: "Artículo",
               render: (row: PedidoDetalle) => (
                 <div>
                   <p className="font-semibold text-zinc-900">
@@ -506,14 +506,14 @@ function FormularioDetallePedido({
           actions={(row) => (
             <>
               <TableActionButton
-                label="Editar artÃ­culo"
+                label="Editar artículo"
                 variant="edit"
                 icon={<Pencil size={16} />}
                 onClick={() => onEditarDetalle(row)}
               />
 
               <TableActionButton
-                label="Eliminar artÃ­culo"
+                label="Eliminar artículo"
                 variant="delete"
                 icon={<Trash2 size={16} />}
                 onClick={() => onEliminarDetalle(row.idTemporal)}
@@ -529,7 +529,7 @@ function FormularioDetallePedido({
           onClick={onBack}
           className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
         >
-          AtrÃ¡s
+          Atrás
         </button>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row">

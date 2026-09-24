@@ -13,10 +13,10 @@ type PedidoDetalleTableProps = {
 };
 
 const monedaSimbolos: Record<MonedaCompra, string> = {
-  CRC: "â‚¡",
+  CRC: "₡",
   USD: "$",
-  EUR: "â‚¬",
-  COP: "COP",
+  EUR: "€",
+  COP: "COP ",
   BRL: "R$",
 };
 
