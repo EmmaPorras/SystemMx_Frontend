@@ -13,9 +13,9 @@ type PedidoDetalleTableProps = {
 };
 
 const monedaSimbolos: Record<MonedaCompra, string> = {
-  CRC: "₡",
+  CRC: "â‚¡",
   USD: "$",
-  EUR: "€",
+  EUR: "â‚¬",
   COP: "COP",
   BRL: "R$",
 };
@@ -85,7 +85,7 @@ function PedidoDetalleTable({
   return (
     <DataTableShell
       data={detalles}
-      emptyMessage="Este pedido todavía no tiene artículos o lotes registrados."
+      emptyMessage="Este pedido todavia no tiene artículos o lotes registrados."
       getRowKey={(row) => row.idTemporal}
       columns={[
         {
@@ -103,6 +103,16 @@ function PedidoDetalleTable({
               ) : null}
             </div>
           ),
+        },
+        {
+          key: "categoria",
+          header: "Categoría",
+          render: (row) => row.categoriaNombre || "Sin categoría",
+        },
+        {
+          key: "marca",
+          header: "Marca",
+          render: (row) => row.marca || "—",
         },
         {
           key: "lote",

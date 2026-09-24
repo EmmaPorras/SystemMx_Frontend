@@ -9,6 +9,7 @@ import TableActionButton from "../common/TableActionButton";
 import { formatCurrency } from "../common/formatters";
 import { buscarProductosSugeridosApi } from "../../services/pedidosApi";
 import type {
+  CategoriaPedidoOption,
   MonedaCompra,
   PedidoCompra,
   PedidoDetalle,
@@ -20,11 +21,14 @@ import type {
 type FormularioDetallePedidoProps = {
   pedido: PedidoCompra;
   detalleForm: PedidoDetalleForm;
+  categorias: CategoriaPedidoOption[];
+  canCreateCategory: boolean;
   errors: PedidoDetalleFormErrors;
   alertMessage?: string | null;
   isEditingDetail: boolean;
   onDetalleChange: (field: keyof PedidoDetalleForm, value: string) => void;
   onSeleccionarProducto: (producto: ProductoSugerido) => void;
+  onCreateCategory: () => void;
   onAgregarDetalle: () => void;
   onEditarDetalle: (detalle: PedidoDetalle) => void;
   onCancelarEdicionDetalle: () => void;
@@ -43,9 +47,9 @@ const loteOptions = Array.from({ length: 10 }, (_, index) => {
 });
 
 const monedaSimbolos: Record<MonedaCompra, string> = {
-  CRC: "₡",
+  CRC: "â‚¡",
   USD: "$",
-  EUR: "€",
+  EUR: "â‚¬",
   COP: "COP",
   BRL: "R$",
 };
@@ -90,11 +94,14 @@ function getCantidadPendiente(row: PedidoDetalle) {
 function FormularioDetallePedido({
   pedido,
   detalleForm,
+  categorias,
+  canCreateCategory,
   errors,
   alertMessage,
   isEditingDetail,
   onDetalleChange,
   onSeleccionarProducto,
+  onCreateCategory,
   onAgregarDetalle,
   onEditarDetalle,
   onCancelarEdicionDetalle,
@@ -108,6 +115,21 @@ function FormularioDetallePedido({
   const [sugerencias, setSugerencias] = useState<ProductoSugerido[]>([]);
   const [cargandoSugerencias, setCargandoSugerencias] = useState(false);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
+
+  const categoriaOptions = [
+    ...categorias.map((categoria) => ({
+      value: String(categoria.id),
+      label: categoria.nombre,
+    })),
+    ...(canCreateCategory
+      ? [
+          {
+            value: "__CREAR_CATEGORIA__",
+            label: "+ Crear nueva categoría",
+          },
+        ]
+      : []),
+  ];
 
   useEffect(() => {
     const busqueda = detalleForm.productoNombre.trim();
@@ -161,7 +183,7 @@ function FormularioDetallePedido({
       {alertMessage ? (
         <AlertMessage
           variant="error"
-          title="Revisá la información"
+          title="RevisÃ¡ la informaciÃ³n"
           message={alertMessage}
         />
       ) : null}
@@ -171,7 +193,7 @@ function FormularioDetallePedido({
           {pedido.numeroPedido ? `Pedido #${pedido.numeroPedido}` : "Nuevo pedido"}
         </p>
         <p className="mt-1 text-sm text-zinc-600">
-          {pedido.proveedorNombre || "Proveedor no seleccionado"} · {pedido.fecha} · {pedido.monedaCompra}
+          {pedido.proveedorNombre || "Proveedor no seleccionado"} Â· {pedido.fecha} Â· {pedido.monedaCompra}
         </p>
       </div>
 
@@ -179,11 +201,11 @@ function FormularioDetallePedido({
         <div className="mb-4">
           <h3 className="text-base font-bold text-zinc-950">
             {isEditingDetail
-              ? "Editar artículo del pedido"
-              : "Agregar artículo al pedido"}
+              ? "Editar artÃ­culo del pedido"
+              : "Agregar artÃ­culo al pedido"}
           </h3>
           <p className="text-sm text-zinc-600">
-            Cada línea representa un artículo asociado a un lote específico.
+            Cada lÃ­nea representa un artÃ­culo asociado a un lote especÃ­fico.
           </p>
         </div>
 
@@ -193,7 +215,7 @@ function FormularioDetallePedido({
               htmlFor="articulo-nombre-input"
               className="mb-1.5 block text-sm font-semibold text-zinc-700"
             >
-              Nombre del artículo
+              Nombre del artÃ­culo
               <span className="ml-1 text-red-500" aria-hidden="true">*</span>
             </label>
 
@@ -229,11 +251,11 @@ function FormularioDetallePedido({
                   </p>
                 ) : detalleForm.productoId ? (
                   <p className="text-xs font-medium text-emerald-700">
-                    Producto existente seleccionado · ID {detalleForm.productoId}
+                    Producto existente seleccionado Â· ID {detalleForm.productoId}
                   </p>
                 ) : (
                   <p className="text-xs text-zinc-500">
-                    Escribí al menos 2 letras para buscar productos ya registrados.
+                    EscribÃ­ al menos 2 letras para buscar productos ya registrados.
                   </p>
                 )}
               </div>
@@ -274,8 +296,14 @@ function FormularioDetallePedido({
                         </p>
                         <p className="mt-0.5 text-xs text-zinc-500">
                           ID {producto.id}
+                          {producto.categoriaNombre
+                            ? ` · ${producto.categoriaNombre}`
+                            : ""}
+                          {producto.marca
+                            ? ` · ${producto.marca}`
+                            : ""}
                           {producto.precioVentaSugerido > 0
-                            ? ` · Precio sugerido ${formatCurrency(
+                            ? ` Â· Precio sugerido ${formatCurrency(
                                 producto.precioVentaSugerido,
                               )}`
                             : ""}
@@ -287,6 +315,35 @@ function FormularioDetallePedido({
               </div>
             ) : null}
           </div>
+
+          <SelectField
+            label="Categoría"
+            value={detalleForm.categoriaId}
+            onChange={(value) => {
+              if (value === "__CREAR_CATEGORIA__") {
+                onCreateCategory();
+                return;
+              }
+
+              onDetalleChange("categoriaId", value);
+            }}
+            placeholder="Seleccione categoría"
+            required
+            error={errors.categoriaId}
+            options={categoriaOptions}
+          />
+
+          <InputField
+            label="Marca"
+            type="text"
+            value={detalleForm.marca}
+            onChange={(value) => onDetalleChange("marca", value)}
+            placeholder="Ej. Acerbis, Renthal, Genérica..."
+            error={errors.marca}
+            maxLength={100}
+            showCharacterCount
+            helperText="Opcional si el artículo no tiene una marca definida."
+          />
 
           <SelectField
             label="Lote"
@@ -334,7 +391,7 @@ function FormularioDetallePedido({
             error={errors.precioVentaRecomendado}
             maxLength={8}
             showCharacterCount
-            prefix="₡"
+            prefix="â‚¡"
           />
 
           {isEditingDetail && Number(detalleForm.cantidadRecibidaPrevia) > 0 ? (
@@ -352,8 +409,8 @@ function FormularioDetallePedido({
         <div className="mt-5 flex flex-wrap gap-3">
           <PrimaryButton onClick={onAgregarDetalle}>
             {isEditingDetail
-              ? "Actualizar artículo/lote"
-              : "+ Agregar artículo/lote"}
+              ? "Actualizar artÃ­culo/lote"
+              : "+ Agregar artÃ­culo/lote"}
           </PrimaryButton>
 
           {isEditingDetail ? (
@@ -362,7 +419,7 @@ function FormularioDetallePedido({
               onClick={onCancelarEdicionDetalle}
               className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
             >
-              Cancelar edición
+              Cancelar ediciÃ³n
             </button>
           ) : null}
         </div>
@@ -370,17 +427,17 @@ function FormularioDetallePedido({
 
       <div>
         <h3 className="mb-3 text-base font-bold text-zinc-950">
-          Artículos agregados
+          ArtÃ­culos agregados
         </h3>
 
         <DataTableShell
           data={pedido.detalles}
-          emptyMessage="Todavía no has agregado artículos a este pedido."
+          emptyMessage="TodavÃ­a no has agregado artÃ­culos a este pedido."
           getRowKey={(row) => row.idTemporal}
           columns={[
             {
               key: "producto",
-              header: "Artículo",
+              header: "ArtÃ­culo",
               render: (row: PedidoDetalle) => (
                 <div>
                   <p className="font-semibold text-zinc-900">
@@ -393,6 +450,17 @@ function FormularioDetallePedido({
                   ) : null}
                 </div>
               ),
+            },
+            {
+              key: "categoria",
+              header: "Categoría",
+              render: (row: PedidoDetalle) =>
+                row.categoriaNombre || "Sin categoría",
+            },
+            {
+              key: "marca",
+              header: "Marca",
+              render: (row: PedidoDetalle) => row.marca || "—",
             },
             {
               key: "lote",
@@ -438,14 +506,14 @@ function FormularioDetallePedido({
           actions={(row) => (
             <>
               <TableActionButton
-                label="Editar artículo"
+                label="Editar artÃ­culo"
                 variant="edit"
                 icon={<Pencil size={16} />}
                 onClick={() => onEditarDetalle(row)}
               />
 
               <TableActionButton
-                label="Eliminar artículo"
+                label="Eliminar artÃ­culo"
                 variant="delete"
                 icon={<Trash2 size={16} />}
                 onClick={() => onEliminarDetalle(row.idTemporal)}
@@ -461,7 +529,7 @@ function FormularioDetallePedido({
           onClick={onBack}
           className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
         >
-          Atrás
+          AtrÃ¡s
         </button>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row">

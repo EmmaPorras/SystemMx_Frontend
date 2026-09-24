@@ -8,7 +8,6 @@ import type {
 
 function mapPedidoToCreatePayload(pedido: PedidoCompra) {
   return {
-    numeroPedido: Number(pedido.numeroPedido),
     fecha: pedido.fecha,
     origen: pedido.origen,
     proveedorId: pedido.proveedorId,
@@ -24,6 +23,8 @@ function mapPedidoToCreatePayload(pedido: PedidoCompra) {
     detalles: pedido.detalles.map((detalle) => ({
       productoId: detalle.productoId,
       productoNombre: detalle.productoNombre.trim(),
+      categoriaId: Number(detalle.categoriaId),
+      marca: detalle.marca.trim() || undefined,
       loteCodigo: detalle.loteCodigo,
       cantidad: Number(detalle.cantidad),
       cantidadRecibida: 0,
@@ -36,7 +37,6 @@ function mapPedidoToCreatePayload(pedido: PedidoCompra) {
 
 function mapPedidoToUpdatePayload(pedido: PedidoCompra) {
   return {
-    numeroPedido: Number(pedido.numeroPedido),
     fecha: pedido.fecha,
     origen: pedido.origen,
     proveedorId: pedido.proveedorId,
@@ -53,6 +53,14 @@ type ActualizarPedidoPayload = ReturnType<typeof mapPedidoToUpdatePayload>;
 
 export function obtenerPedidos(): Promise<PedidoCompra[]> {
   return apiClient.get<PedidoCompra[]>("/pedidos");
+}
+
+export function obtenerSiguienteNumeroPedidoApi(): Promise<{
+  numeroPedido: number;
+}> {
+  return apiClient.get<{ numeroPedido: number }>(
+    "/pedidos/siguiente-numero",
+  );
 }
 
 export function obtenerPedidoApi(

@@ -120,9 +120,9 @@ function ProductoDetalleModal({
               label="Precio estándar con IVA"
               value={
                 producto.precioVentaEstandarConIva !==
-                null &&
+                  null &&
                 producto.precioVentaEstandarConIva !==
-                undefined
+                  undefined
                   ? formatCurrency(
                       producto.precioVentaEstandarConIva,
                     )
@@ -139,15 +139,6 @@ function ProductoDetalleModal({
                       producto.costoReferencia,
                     )
                   : "—"
-              }
-            />
-
-            <DetailItem
-              label="Tarifa IVA"
-              value={
-                producto.tarifaIva
-                  ? `${producto.tarifaIva.codigo} · ${producto.tarifaIva.porcentaje}%`
-                  : "Sin tarifa"
               }
             />
           </div>

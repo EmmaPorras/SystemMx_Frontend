@@ -40,7 +40,13 @@ export type VentaDetalle = {
   precioUnitario: number;
 
   subtotal: number;
+
+  // Monto monetario finalmente descontado.
   descuento: number;
+
+  // Porcentaje aplicado sobre el subtotal de la línea.
+  porcentajeDescuento: number;
+
   baseImponible: number;
 
   tipoTarifa: TipoTarifaVenta;
@@ -144,7 +150,7 @@ export type CrearVentaDetallePayload = {
   cantidad: number;
   precioUnitario: number;
 
-  descuento?: number;
+  porcentajeDescuento?: number;
 
   tipoTarifa: TipoTarifaVenta;
 
@@ -157,7 +163,8 @@ export type CrearVentaDetallePayload = {
 };
 
 export type CrearVentaPayload = {
-  numeroVenta: number;
+  // El backend asigna el número oficial automáticamente.
+  numeroVenta?: number;
   fechaVenta: string;
 
   clienteNombre?: string;
@@ -198,10 +205,11 @@ export type VentaDetalleForm = {
   loteDescripcion: string;
   cantidad: string;
   precioUnitario: string;
-  descuento: string;
+  porcentajeDescuento: string;
   tipoTarifa: TipoTarifaVenta;
   idTarifaIva?: number;
   porcentajeIva: string;
   modoDescuentoLote: ModoDescuentoLote;
   detalle: string;
 };
+  

@@ -20,6 +20,14 @@ export function obtenerVentasApi(
   );
 }
 
+export function obtenerSiguienteNumeroVentaApi(): Promise<{
+  numeroVenta: number;
+}> {
+  return apiClient.get<{ numeroVenta: number }>(
+    "/ventas/siguiente-numero",
+  );
+}
+
 export function obtenerVentaApi(
   id: number,
 ): Promise<Venta> {

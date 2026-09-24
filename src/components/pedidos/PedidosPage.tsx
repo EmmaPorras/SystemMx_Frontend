@@ -14,12 +14,23 @@ import SectionCard from "../common/SectionCard";
 import SelectField from "../common/SelectField";
 import StatCard from "../common/StatCard";
 import { formatCurrency } from "../common/formatters";
+import FormularioCategoria from "../categorias/FormularioCategoria";
+import { useAuth } from "../../auth/useAuth";
+import {
+  crearCategoriaApi,
+  obtenerCategorias,
+} from "../../services/categoriasApi";
+import type {
+  CategoriaFormData,
+  CategoriaFormErrors,
+} from "../categorias/categorias.types";
 import { obtenerProveedores } from "../../services/proveedoresApi";
 import {
   actualizarPedidoApi,
   cancelarPedidoApi,
   crearPedidoApi,
   obtenerPedidos,
+  obtenerSiguienteNumeroPedidoApi,
 } from "../../services/pedidosApi";
 import FormularioDetallePedido from "./FormularioDetallePedido";
 import FormularioPedido from "./FormularioPedido";
@@ -28,6 +39,7 @@ import PedidoDetalleTable from "./PedidoDetalleTable";
 import ProductoPedidoFilter from "./ProductoPedidoFilter";
 import TablaPedidos, { puedeEditarPedido } from "./TablaPedidos";
 import type {
+  CategoriaPedidoOption,
   MonedaCompra,
   PedidoCabeceraFormErrors,
   PedidoCompra,
@@ -55,6 +67,8 @@ const pedidoInicial: PedidoCompra = {
 const detalleInicial: PedidoDetalleForm = {
   productoId: undefined,
   productoNombre: "",
+  categoriaId: "",
+  marca: "",
   loteCodigo: "",
   cantidad: "1",
   cantidadRecibida: "",
@@ -62,6 +76,12 @@ const detalleInicial: PedidoDetalleForm = {
   costoUnitarioOrigen: "",
   precioVentaRecomendado: "",
   estadoLote: "EN_PROCESO",
+};
+
+const categoriaRapidaInicial: CategoriaFormData = {
+  nombre: "",
+  descripcion: "",
+  activo: true,
 };
 
 function limpiarEntero(value: string, maxDigits: number) {
@@ -104,7 +124,17 @@ function getNumber(value: unknown, fallback = 0) {
   return Number.isFinite(numberValue) ? numberValue : fallback;
 }
 
+function esCostaRica(pais: string) {
+  return pais
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase() === "costa rica";
+}
+
 function PedidosPage() {
+  const { user } = useAuth();
+
   const [filtroProducto, setFiltroProducto] = useState("");
   const [filtroNumeroPedido, setFiltroNumeroPedido] = useState("");
   const [filtroProveedorId, setFiltroProveedorId] = useState("");
@@ -114,10 +144,18 @@ function PedidosPage() {
 
   const [pedidos, setPedidos] = useState<PedidoCompra[]>([]);
   const [proveedoresActivos, setProveedoresActivos] = useState<
-    Array<{ id: number; nombre: string; pais: string }>
+    Array<{
+      id: number;
+      nombre: string;
+      pais: string;
+      monedaPreferida: MonedaCompra;
+    }>
   >([]);
   const [proveedoresFiltro, setProveedoresFiltro] = useState<
     Array<{ id: number; nombre: string }>
+  >([]);
+  const [categoriasActivas, setCategoriasActivas] = useState<
+    CategoriaPedidoOption[]
   >([]);
   const [pedidoDetalle, setPedidoDetalle] = useState<PedidoCompra | null>(null);
 
@@ -126,6 +164,16 @@ function PedidosPage() {
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [cancelando, setCancelando] = useState(false);
+
+  const [categoriaRapidaAbierta, setCategoriaRapidaAbierta] = useState(false);
+  const [categoriaRapida, setCategoriaRapida] = useState<CategoriaFormData>(
+    categoriaRapidaInicial,
+  );
+  const [categoriaRapidaErrors, setCategoriaRapidaErrors] =
+    useState<CategoriaFormErrors>({});
+  const [categoriaRapidaAlert, setCategoriaRapidaAlert] =
+    useState<string | null>(null);
+  const [guardandoCategoria, setGuardandoCategoria] = useState(false);
 
   const [pedido, setPedido] = useState<PedidoCompra>({ ...pedidoInicial });
   const [pedidoEditandoId, setPedidoEditandoId] = useState<number | null>(null);
@@ -150,9 +198,10 @@ function PedidosPage() {
     try {
       setCargando(true);
 
-      const [pedidosData, proveedoresData] = await Promise.all([
+      const [pedidosData, proveedoresData, categoriasData] = await Promise.all([
         obtenerPedidos(),
         obtenerProveedores(),
+        obtenerCategorias(),
       ]);
 
       setPedidos(pedidosData);
@@ -162,6 +211,7 @@ function PedidosPage() {
           id: item.id,
           nombre: item.nombre,
           pais: item.pais,
+          monedaPreferida: item.monedaPreferida as MonedaCompra,
           estado: item.estado,
         }))
         .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
@@ -173,7 +223,22 @@ function PedidosPage() {
       setProveedoresActivos(
         proveedoresMapeados
           .filter((item) => item.estado === "ACTIVO")
-          .map(({ id, nombre, pais }) => ({ id, nombre, pais })),
+          .map(({ id, nombre, pais, monedaPreferida }) => ({
+            id,
+            nombre,
+            pais,
+            monedaPreferida,
+          })),
+      );
+
+      setCategoriasActivas(
+        categoriasData
+          .filter((categoria) => categoria.activo)
+          .map((categoria) => ({
+            id: categoria.idCategoria,
+            nombre: categoria.nombre,
+          }))
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
       );
     } catch (error) {
       const message =
@@ -271,16 +336,34 @@ function PedidosPage() {
     setPedidoDetalle(null);
   }
 
-  function abrirModalNuevoPedido() {
-    setPedido({ ...pedidoInicial });
-    setDetalleForm({ ...detalleInicial });
-    setPedidoEditandoId(null);
-    setDetalleEditandoId(null);
-    setCabeceraErrors({});
-    setDetalleErrors({});
-    setModalAlert(null);
-    setPasoModal(1);
-    setModalAbierto(true);
+  async function abrirModalNuevoPedido() {
+    try {
+      const { numeroPedido } = await obtenerSiguienteNumeroPedidoApi();
+
+      setPedido({
+        ...pedidoInicial,
+        numeroPedido: String(numeroPedido),
+      });
+      setDetalleForm({ ...detalleInicial });
+      setCategoriaRapidaAbierta(false);
+      setCategoriaRapida({ ...categoriaRapidaInicial });
+      setCategoriaRapidaErrors({});
+      setCategoriaRapidaAlert(null);
+      setPedidoEditandoId(null);
+      setDetalleEditandoId(null);
+      setCabeceraErrors({});
+      setDetalleErrors({});
+      setModalAlert(null);
+      setPasoModal(1);
+      setModalAbierto(true);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No se pudo calcular el siguiente número de pedido.";
+
+      setPageAlert(message);
+    }
   }
 
   function abrirModalEditarPedido(pedidoSeleccionado: PedidoCompra) {
@@ -288,14 +371,26 @@ function PedidosPage() {
       return;
     }
 
+    const compraLocal = esCostaRica(pedidoSeleccionado.origen);
+
     setPedido({
       ...pedidoSeleccionado,
+      monedaCompra: compraLocal
+        ? "CRC"
+        : pedidoSeleccionado.monedaCompra,
+      tipoCambio: compraLocal
+        ? "1"
+        : pedidoSeleccionado.tipoCambio,
       detalles: pedidoSeleccionado.detalles.map((detalle) => ({
         ...detalle,
       })),
     });
 
     setDetalleForm({ ...detalleInicial });
+    setCategoriaRapidaAbierta(false);
+    setCategoriaRapida({ ...categoriaRapidaInicial });
+    setCategoriaRapidaErrors({});
+    setCategoriaRapidaAlert(null);
     setPedidoEditandoId(pedidoSeleccionado.id);
     setDetalleEditandoId(null);
     setCabeceraErrors({});
@@ -311,6 +406,10 @@ function PedidosPage() {
     setPasoModal(1);
     setPedido({ ...pedidoInicial });
     setDetalleForm({ ...detalleInicial });
+    setCategoriaRapidaAbierta(false);
+    setCategoriaRapida({ ...categoriaRapidaInicial });
+    setCategoriaRapidaErrors({});
+    setCategoriaRapidaAlert(null);
     setPedidoEditandoId(null);
     setDetalleEditandoId(null);
     setCabeceraErrors({});
@@ -328,24 +427,24 @@ function PedidosPage() {
     }));
 
     setPedido((prev) => {
-      if (field === "numeroPedido") {
-        return {
-          ...prev,
-          numeroPedido: limpiarEntero(value, 3),
-        };
-      }
-
       if (field === "proveedorId") {
         const proveedorId = Number(value);
         const proveedor = proveedoresActivos.find(
           (item) => item.id === proveedorId,
         );
 
+        const pais = proveedor?.pais ?? "";
+        const compraLocal = esCostaRica(pais);
+
         return {
           ...prev,
           proveedorId,
           proveedorNombre: proveedor?.nombre ?? "",
-          origen: proveedor?.pais ?? "",
+          origen: pais,
+          monedaCompra: compraLocal
+            ? "CRC"
+            : (proveedor?.monedaPreferida ?? prev.monedaCompra),
+          tipoCambio: compraLocal ? "1" : "",
         };
       }
 
@@ -424,12 +523,18 @@ function PedidosPage() {
     setDetalleErrors((prev) => ({
       ...prev,
       productoNombre: undefined,
+      categoriaId: undefined,
+      marca: undefined,
     }));
 
     setDetalleForm((prev) => ({
       ...prev,
       productoId: productoSugerido.id,
       productoNombre: productoSugerido.nombre,
+      categoriaId: productoSugerido.categoriaId
+        ? String(productoSugerido.categoriaId)
+        : "",
+      marca: productoSugerido.marca ?? "",
       precioVentaRecomendado:
         !prev.precioVentaRecomendado.trim() &&
         productoSugerido.precioVentaSugerido > 0
@@ -438,30 +543,130 @@ function PedidosPage() {
     }));
   }
 
-  function validarCabecera() {
-    const errors: PedidoCabeceraFormErrors = {};
-    const numPedido = Number(pedido.numeroPedido);
-
-    if (!pedido.numeroPedido.trim()) {
-      errors.numeroPedido = "El número de pedido es obligatorio.";
-    } else if (
-      !Number.isInteger(numPedido) ||
-      numPedido < 1 ||
-      numPedido > 999
-    ) {
-      errors.numeroPedido = "Debe ser un número entero entre 1 y 999.";
-    } else {
-      const numeroDuplicado = pedidos.some(
-        (item) =>
-          item.numeroPedido === pedido.numeroPedido &&
-          item.id !== pedidoEditandoId,
-      );
-
-      if (numeroDuplicado) {
-        errors.numeroPedido = `Ya existe el Pedido ${pedido.numeroPedido}.`;
-      }
+  function abrirCategoriaRapida() {
+    if (user?.rol !== "ADMIN") {
+      return;
     }
 
+    setCategoriaRapida({ ...categoriaRapidaInicial });
+    setCategoriaRapidaErrors({});
+    setCategoriaRapidaAlert(null);
+    setCategoriaRapidaAbierta(true);
+  }
+
+  function cerrarCategoriaRapida() {
+    if (guardandoCategoria) return;
+
+    setCategoriaRapidaAbierta(false);
+    setCategoriaRapida({ ...categoriaRapidaInicial });
+    setCategoriaRapidaErrors({});
+    setCategoriaRapidaAlert(null);
+  }
+
+  function actualizarCategoriaRapida(
+    field: keyof CategoriaFormData,
+    value: string | boolean,
+  ) {
+    setCategoriaRapida((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    setCategoriaRapidaAlert(null);
+
+    if (field === "nombre" || field === "descripcion") {
+      setCategoriaRapidaErrors((prev) => ({
+        ...prev,
+        [field]: undefined,
+      }));
+    }
+  }
+
+  function validarCategoriaRapida() {
+    const errors: CategoriaFormErrors = {};
+    const nombre = categoriaRapida.nombre.trim();
+    const descripcion = categoriaRapida.descripcion.trim();
+
+    if (!nombre) {
+      errors.nombre = "El nombre de la categoría es obligatorio.";
+    } else if (nombre.length > 100) {
+      errors.nombre = "El nombre no puede superar 100 caracteres.";
+    }
+
+    if (descripcion.length > 255) {
+      errors.descripcion = "La descripción no puede superar 255 caracteres.";
+    }
+
+    setCategoriaRapidaErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      return false;
+    }
+
+    if (!categoriaRapida.activo) {
+      setCategoriaRapidaAlert(
+        "La categoría debe quedar activa para poder utilizarla en el pedido.",
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  async function guardarCategoriaRapida() {
+    if (!validarCategoriaRapida()) return;
+
+    setGuardandoCategoria(true);
+    setCategoriaRapidaAlert(null);
+
+    try {
+      const creada = await crearCategoriaApi(categoriaRapida);
+
+      setCategoriasActivas((prev) =>
+        [
+          ...prev.filter((categoria) => categoria.id !== creada.idCategoria),
+          {
+            id: creada.idCategoria,
+            nombre: creada.nombre,
+          },
+        ].sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
+      );
+
+      setDetalleForm((prev) => ({
+        ...prev,
+        categoriaId: String(creada.idCategoria),
+      }));
+
+      setDetalleErrors((prev) => ({
+        ...prev,
+        categoriaId: undefined,
+      }));
+
+      setCategoriaRapidaAbierta(false);
+      setCategoriaRapida({ ...categoriaRapidaInicial });
+      setCategoriaRapidaErrors({});
+    } catch (error) {
+      setCategoriaRapidaAlert(
+        error instanceof Error
+          ? error.message
+          : "No fue posible crear la categoría.",
+      );
+    } finally {
+      setGuardandoCategoria(false);
+    }
+  }
+
+  function cerrarModalActual() {
+    if (categoriaRapidaAbierta) {
+      cerrarCategoriaRapida();
+      return;
+    }
+
+    cerrarModal();
+  }
+
+  function validarCabecera() {
+    const errors: PedidoCabeceraFormErrors = {};
     if (!pedido.fecha || !pedido.fecha.trim()) {
       errors.fecha = "La fecha es obligatoria.";
     }
@@ -480,11 +685,21 @@ function PedidosPage() {
       errors.monedaCompra = "Debe seleccionar una moneda.";
     }
 
+    const compraLocal = esCostaRica(pedido.origen);
     const tc = Number(pedido.tipoCambio);
-    if (!pedido.tipoCambio.trim()) {
-      errors.tipoCambio = "El tipo de cambio es obligatorio.";
-    } else if (Number.isNaN(tc) || tc < 0 || tc > 999.99) {
-      errors.tipoCambio = "Debe ser un número entre 0 y 999.99.";
+
+    if (!compraLocal) {
+      if (!pedido.tipoCambio.trim()) {
+        errors.tipoCambio =
+          "El tipo de cambio es obligatorio para compras internacionales.";
+      } else if (
+        Number.isNaN(tc) ||
+        tc <= 0 ||
+        tc > 999.99
+      ) {
+        errors.tipoCambio =
+          "Debe ser un número mayor a 0 y menor o igual a 999.99.";
+      }
     }
 
     if (pedido.observaciones && pedido.observaciones.length > 150) {
@@ -509,6 +724,19 @@ function PedidosPage() {
       errors.productoNombre = "El nombre del artículo es obligatorio.";
     } else if (nombre.length > 150) {
       errors.productoNombre = "Máximo 150 caracteres.";
+    }
+
+    const categoriaId = Number(detalleForm.categoriaId);
+    const categoriaValida = categoriasActivas.some(
+      (categoria) => categoria.id === categoriaId,
+    );
+
+    if (!detalleForm.categoriaId || !categoriaValida) {
+      errors.categoriaId = "Debe seleccionar una categoría activa.";
+    }
+
+    if (detalleForm.marca.trim().length > 100) {
+      errors.marca = "Máximo 100 caracteres.";
     }
 
     if (
@@ -582,6 +810,13 @@ function PedidosPage() {
       ? Number(detalleBase.cantidadDisponible ?? 0)
       : 0;
 
+    const categoriaId = Number(detalleForm.categoriaId);
+    const categoriaNombre =
+      categoriasActivas.find((categoria) => categoria.id === categoriaId)
+        ?.nombre ??
+      detalleBase?.categoriaNombre ??
+      "";
+
     return {
       ...(detalleBase ?? {
         idTemporal: crypto.randomUUID(),
@@ -590,6 +825,9 @@ function PedidosPage() {
         ? Number(detalleForm.productoId)
         : undefined,
       productoNombre: detalleForm.productoNombre.trim(),
+      categoriaId,
+      categoriaNombre,
+      marca: detalleForm.marca.trim(),
       loteCodigo: detalleForm.loteCodigo,
       cantidad,
       cantidadRecibida,
@@ -640,6 +878,8 @@ function PedidosPage() {
     setDetalleForm({
       productoId: detalle.productoId,
       productoNombre: detalle.productoNombre,
+      categoriaId: detalle.categoriaId ? String(detalle.categoriaId) : "",
+      marca: detalle.marca ?? "",
       loteCodigo: detalle.loteCodigo,
       cantidad: String(detalle.cantidad),
       cantidadRecibida: "",
@@ -946,23 +1186,53 @@ function PedidosPage() {
 
       <AppModal
         isOpen={modalAbierto}
-        onClose={cerrarModal}
-        isSubmitting={guardando}
+        onClose={cerrarModalActual}
+        isSubmitting={guardando || guardandoCategoria}
         title={
-          pasoModal === 1
-            ? pedidoEditandoId
-              ? "Editar pedido"
-              : "Nuevo pedido"
-            : "Artículos del pedido"
+          categoriaRapidaAbierta
+            ? "Nueva categoría"
+            : pasoModal === 1
+              ? pedidoEditandoId
+                ? "Editar pedido"
+                : "Nuevo pedido"
+              : "Artículos del pedido"
         }
         description={
-          pasoModal === 1
-            ? "Primero registra la información general del pedido."
-            : "Ahora agrega los artículos, lotes, costos y precios de venta."
+          categoriaRapidaAbierta
+            ? "Creá una categoría sin perder la información del pedido. Al guardarla quedará seleccionada automáticamente."
+            : pasoModal === 1
+              ? "Primero registra la información general del pedido."
+              : "Ahora agrega los artículos, lotes, costos y precios de venta."
         }
-        maxWidthClassName={pasoModal === 1 ? "max-w-4xl" : "max-w-6xl"}
+        maxWidthClassName={
+          categoriaRapidaAbierta
+            ? "max-w-xl"
+            : pasoModal === 1
+              ? "max-w-4xl"
+              : "max-w-6xl"
+        }
       >
-        {pasoModal === 1 ? (
+        {categoriaRapidaAbierta ? (
+          <div className="space-y-4">
+            {categoriaRapidaAlert ? (
+              <AlertMessage
+                variant="error"
+                title="No se pudo crear la categoría"
+                message={categoriaRapidaAlert}
+              />
+            ) : null}
+
+            <FormularioCategoria
+              value={categoriaRapida}
+              errors={categoriaRapidaErrors}
+              isSubmitting={guardandoCategoria}
+              submitLabel="Crear categoría"
+              onChange={actualizarCategoriaRapida}
+              onSubmit={guardarCategoriaRapida}
+              onCancel={cerrarCategoriaRapida}
+            />
+          </div>
+        ) : pasoModal === 1 ? (
           <FormularioPedido
             pedido={pedido}
             proveedores={proveedoresActivos}
@@ -976,11 +1246,14 @@ function PedidosPage() {
           <FormularioDetallePedido
             pedido={pedido}
             detalleForm={detalleForm}
+            categorias={categoriasActivas}
+            canCreateCategory={user?.rol === "ADMIN"}
             errors={detalleErrors}
             alertMessage={modalAlert}
             isEditingDetail={Boolean(detalleEditandoId)}
             onDetalleChange={actualizarDetalle}
             onSeleccionarProducto={seleccionarProductoSugerido}
+            onCreateCategory={abrirCategoriaRapida}
             onAgregarDetalle={agregarOActualizarDetalle}
             onEditarDetalle={iniciarEdicionDetalle}
             onCancelarEdicionDetalle={cancelarEdicionDetalle}
