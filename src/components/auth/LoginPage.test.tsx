@@ -54,6 +54,8 @@ describe("LoginPage", () => {
       '[data-testid="systemmx-animated-logo"]',
     );
     expect(logo).not.toBeNull();
+    expect(logo).toHaveClass("object-cover");
+    expect(logo?.parentElement).toHaveClass("aspect-video", "bg-white");
     expect(logo).toHaveAttribute("autoplay");
     expect(logo).toHaveAttribute("loop");
     expect(logo).toHaveAttribute("muted");
