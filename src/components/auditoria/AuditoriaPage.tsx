@@ -256,111 +256,98 @@ function AuditoriaPage() {
         title={t("audit.filtersTitle")}
         description={t("audit.filtersDesc")}
       >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <InputField
-            label={t("reports.dateFrom")}
-            type="date"
-            value={
-              filtrosDraft.fechaDesde
-            }
-            onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
+        <div className="flex flex-wrap items-end gap-3.5">
+          <div className="w-full sm:w-44">
+            <InputField
+              label={t("reports.dateFrom")}
+              type="date"
+              value={filtrosDraft.fechaDesde}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
                   ...current,
                   fechaDesde: value,
-                }),
-              )
-            }
-          />
+                }))
+              }
+            />
+          </div>
 
-          <InputField
-            label={t("reports.dateTo")}
-            type="date"
-            value={
-              filtrosDraft.fechaHasta
-            }
-            onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
+          <div className="w-full sm:w-44">
+            <InputField
+              label={t("reports.dateTo")}
+              type="date"
+              value={filtrosDraft.fechaHasta}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
                   ...current,
                   fechaHasta: value,
-                }),
-              )
-            }
-          />
+                }))
+              }
+            />
+          </div>
 
-          <InputField
-            label={t("reports.userId")}
-            type="number"
-            min={1}
-            step={1}
-            value={
-              filtrosDraft.usuarioId
-            }
-            onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
+          <div className="w-full sm:w-36">
+            <InputField
+              label={t("reports.userId")}
+              type="number"
+              min={1}
+              step={1}
+              value={filtrosDraft.usuarioId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
                   ...current,
                   usuarioId: value,
-                }),
-              )
-            }
-            placeholder={t("reports.all")}
-          />
+                }))
+              }
+              placeholder={t("reports.all")}
+            />
+          </div>
 
           {vista === "MOVIMIENTOS" ? (
-            <SelectField
-              label={t("reports.movementType")}
-              value={
-                filtrosDraft.tipoMovimiento
-              }
-              onChange={(value) =>
-                setFiltrosDraft(
-                  (current) => ({
+            <div className="w-full sm:w-56">
+              <SelectField
+                label={t("reports.movementType")}
+                value={filtrosDraft.tipoMovimiento}
+                onChange={(value) =>
+                  setFiltrosDraft((current) => ({
                     ...current,
-                    tipoMovimiento:
-                      value,
-                  }),
-                )
-              }
-              options={[
-                {
-                  value: "",
-                  label: t("reports.all"),
-                },
-                {
-                  value:
-                    "ENTRADA_COMPRA",
-                  label:
-                    translateStatus("movements", "ENTRADA_COMPRA"),
-                },
-                {
-                  value:
-                    "SALIDA_VENTA",
-                  label:
-                    translateStatus("movements", "SALIDA_VENTA"),
-                },
-                {
-                  value:
-                    "REINGRESO_ANULACION_VENTA",
-                  label:
-                    translateStatus("movements", "REINGRESO_ANULACION_VENTA"),
-                },
-              ]}
-            />
+                    tipoMovimiento: value,
+                  }))
+                }
+                options={[
+                  {
+                    value: "",
+                    label: t("reports.all"),
+                  },
+                  {
+                    value: "ENTRADA_COMPRA",
+                    label: translateStatus("movements", "ENTRADA_COMPRA"),
+                  },
+                  {
+                    value: "SALIDA_VENTA",
+                    label: translateStatus("movements", "SALIDA_VENTA"),
+                  },
+                  {
+                    value: "REINGRESO_ANULACION_VENTA",
+                    label: translateStatus("movements", "REINGRESO_ANULACION_VENTA"),
+                  },
+                ]}
+              />
+            </div>
           ) : null}
-        </div>
 
-        <div className="mt-5">
-          <PrimaryButton
-            onClick={() => {
-              void consultarDetalle();
-            }}
-          >
-            {loadingDetalle
-              ? t("audit.consulting")
-              : t("audit.consult")}
-          </PrimaryButton>
+          <div className="w-full sm:w-auto">
+            <PrimaryButton
+              onClick={() => {
+                void consultarDetalle();
+              }}
+              loading={loadingDetalle}
+              loadingText={t("audit.consulting")}
+              disabled={loadingDetalle}
+              className="h-[38px] w-full sm:w-auto"
+            >
+              {t("audit.consult")}
+            </PrimaryButton>
+          </div>
         </div>
       </SectionCard>
     );

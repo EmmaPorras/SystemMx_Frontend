@@ -248,10 +248,10 @@ function ProductosPage() {
               disabled={!hayFiltros}
               aria-label={t("common.cleanFilters")}
               title={t("common.cleanFilters")}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-700 transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400"
+              className="inline-flex h-[38px] w-full items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-3.5 text-xs sm:text-sm font-semibold text-zinc-700 shadow-2xs transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400"
             >
               <RiResetLeftFill
-                className="h-5 w-5"
+                className="h-4 w-4"
                 aria-hidden="true"
               />
               <span>{t("common.cleanFilters")}</span>

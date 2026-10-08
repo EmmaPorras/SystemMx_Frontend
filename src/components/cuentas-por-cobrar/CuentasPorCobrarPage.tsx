@@ -205,28 +205,33 @@ function CuentasPorCobrarPage() {
         title={t("receivables.maturities", "Vencimientos")}
         description={t("receivables.evaluationNotice", "Se evalúan los saldos pendientes actuales comparando sus fechas límite de pago contra la fecha seleccionada.")}
       >
-        <div className="mb-5 flex max-w-lg flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="flex-1">
-            <InputField
-              label={t("receivables.evaluateDueDateTo", "Evaluar vencimientos al")}
-              type="date"
-              value={fechaCorte}
-              onChange={setFechaCorte}
-              disabled={loading}
-              helperText={t("receivables.evaluationHelper", "Clasifica los saldos pendientes actuales según esta fecha límite de referencia.")}
-            />
-          </div>
+        <div className="mb-5 max-w-lg">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <InputField
+                label={t("receivables.evaluateDueDateTo", "Evaluar vencimientos al")}
+                type="date"
+                value={fechaCorte}
+                onChange={setFechaCorte}
+                disabled={loading}
+              />
+            </div>
 
-          <PrimaryButton
-            onClick={() => {
-              void cargar();
-            }}
-            loading={loading}
-            loadingText={t("receivables.consulting", "Consultando...")}
-            disabled={loading}
-          >
-            {t("receivables.consult", "Consultar")}
-          </PrimaryButton>
+            <PrimaryButton
+              onClick={() => {
+                void cargar();
+              }}
+              loading={loading}
+              loadingText={t("receivables.consulting", "Consultando...")}
+              disabled={loading}
+              className="h-[38px] sm:self-end"
+            >
+              {t("receivables.consult", "Consultar")}
+            </PrimaryButton>
+          </div>
+          <p className="mt-1.5 text-xs text-zinc-500">
+            {t("receivables.evaluationHelper", "Clasifica los saldos pendientes actuales según esta fecha límite de referencia.")}
+          </p>
         </div>
 
         {vencimientos ? (

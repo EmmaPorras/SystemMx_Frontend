@@ -422,7 +422,7 @@ function UsuariosPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("usuarios.searchPlaceholder")}
-            className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2 text-xs text-zinc-900 placeholder:text-zinc-400 transition hover:bg-white focus:bg-white focus:border-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950/10"
+            className="h-[38px] w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 transition hover:bg-white focus:bg-white focus:border-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950/10"
           />
         </div>
 
@@ -431,7 +431,7 @@ function UsuariosPage() {
             value={filterRole}
             aria-label={t("usuarios.tableRole")}
             onChange={(e) => setFilterRole(e.target.value)}
-            className="h-8.5 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 text-xs font-medium text-zinc-700 transition hover:bg-white hover:border-zinc-300 focus:border-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950/10"
+            className="h-[38px] rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 text-xs sm:text-sm font-medium text-zinc-700 transition hover:bg-white hover:border-zinc-300 focus:border-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950/10"
           >
             <option value="ALL">{t("usuarios.filterAllRoles")}</option>
             <option value="VENTAS">{getUserRoleLabel(t, "VENTAS")}</option>
@@ -444,7 +444,7 @@ function UsuariosPage() {
             value={filterStatus}
             aria-label={t("usuarios.tableStatus")}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="h-8.5 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 text-xs font-medium text-zinc-700 transition hover:bg-white hover:border-zinc-300 focus:border-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950/10"
+            className="h-[38px] rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 text-xs sm:text-sm font-medium text-zinc-700 transition hover:bg-white hover:border-zinc-300 focus:border-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950/10"
           >
             <option value="ALL">{t("usuarios.filterAllStatuses")}</option>
             <option value="ACTIVE">{t("usuarios.statusActive")}</option>

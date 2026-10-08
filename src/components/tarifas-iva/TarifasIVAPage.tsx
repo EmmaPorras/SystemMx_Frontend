@@ -365,7 +365,7 @@ function TarifasIVAPage() {
         title={t("vatRates.title", "Tarifas")}
         description={t("vatRates.subtitle", "Administre las tarifas de impuestos aplicables.")}
       >
-        <div className="mb-4">
+        <div className="mb-4 max-w-md">
           <InputField
             label={t("common.search", "Buscar")}
             value={busqueda}

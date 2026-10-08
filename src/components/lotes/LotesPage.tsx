@@ -375,165 +375,94 @@ function LotesPage() {
         title={t("lots.title", "Inventario por lote")}
         description={t("lots.subtitle", "Los lotes son generados por Pedidos y su stock es administrado exclusivamente por las operaciones del backend.")}
       >
-        {/* FILTROS */}
+        {/* FILTROS Y ACCIONES */}
 
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <InputField
-            label={`ID ${t("products.title", "Producto")}`}
-            type="number"
-            value={
-              filtrosDraft.productoId
-            }
-            onChange={(
-              value,
-            ) =>
-              setFiltrosDraft(
-                (
-                  current,
-                ) => ({
+        <div className="mb-6 flex flex-wrap items-end gap-3.5">
+          <div className="w-full sm:w-40">
+            <InputField
+              label={`ID ${t("products.title", "Producto")}`}
+              type="number"
+              value={filtrosDraft.productoId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
                   ...current,
+                  productoId: value,
+                }))
+              }
+              min={1}
+              step={1}
+              placeholder="Ej. 10"
+            />
+          </div>
 
-                  productoId:
-                    value,
-                }),
-              )
-            }
-            min={
-              1
-            }
-            step={
-              1
-            }
-            placeholder="Ej. 10"
-          />
-
-          <InputField
-            label={`ID ${t("navigation.orders", "Pedido")}`}
-            type="number"
-            value={
-              filtrosDraft.pedidoId
-            }
-            onChange={(
-              value,
-            ) =>
-              setFiltrosDraft(
-                (
-                  current,
-                ) => ({
+          <div className="w-full sm:w-40">
+            <InputField
+              label={`ID ${t("navigation.orders", "Pedido")}`}
+              type="number"
+              value={filtrosDraft.pedidoId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
                   ...current,
+                  pedidoId: value,
+                }))
+              }
+              min={1}
+              step={1}
+              placeholder="Ej. 5"
+            />
+          </div>
 
-                  pedidoId:
-                    value,
-                }),
-              )
-            }
-            min={
-              1
-            }
-            step={
-              1
-            }
-            placeholder="Ej. 5"
-          />
-
-          <SelectField
-            label={t("lots.filterStatus", "Estado del lote")}
-            value={
-              filtrosDraft.estadoLote
-            }
-            onChange={(
-              value,
-            ) =>
-              setFiltrosDraft(
-                (
-                  current,
-                ) => ({
+          <div className="w-full sm:w-52">
+            <SelectField
+              label={t("lots.filterStatus", "Estado del lote")}
+              value={filtrosDraft.estadoLote}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
                   ...current,
+                  estadoLote: value as "" | EstadoLoteInventario,
+                }))
+              }
+              options={[
+                {
+                  value: "",
+                  label: t("common.all", "Todos"),
+                },
+                {
+                  value: "EN_PROCESO",
+                  label: t("statuses.lots.EN_PROCESO", "En proceso"),
+                },
+                {
+                  value: "EN_STOCK",
+                  label: t("statuses.lots.EN_STOCK", "En stock"),
+                },
+                {
+                  value: "VENDIDO_PARCIAL",
+                  label: t("statuses.lots.VENDIDO_PARCIAL", "Vendido parcial"),
+                },
+                {
+                  value: "AGOTADO",
+                  label: t("statuses.lots.AGOTADO", "Agotado"),
+                },
+              ]}
+            />
+          </div>
 
-                  estadoLote:
-                    value as
-                      | ""
-                      | EstadoLoteInventario,
-                }),
-              )
-            }
-            options={[
-              {
-                value:
-                  "",
-                label:
-                  t("common.all", "Todos"),
-              },
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <PrimaryButton
+              onClick={aplicarFiltros}
+              className="h-[38px] flex-1 sm:flex-initial"
+            >
+              {t("common.filter", "Aplicar filtros")}
+            </PrimaryButton>
 
-              {
-                value:
-                  "EN_PROCESO",
-                label:
-                  t("statuses.lots.EN_PROCESO", "En proceso"),
-              },
-
-              {
-                value:
-                  "EN_STOCK",
-                label:
-                  t("statuses.lots.EN_STOCK", "En stock"),
-              },
-
-              {
-                value:
-                  "VENDIDO_PARCIAL",
-                label:
-                  t("statuses.lots.VENDIDO_PARCIAL", "Vendido parcial"),
-              },
-
-              {
-                value:
-                  "AGOTADO",
-                label:
-                  t("statuses.lots.AGOTADO", "Agotado"),
-              },
-            ]}
-          />
-        </div>
-
-        {/* BOTONES DE FILTRO */}
-
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <PrimaryButton
-            onClick={
-              aplicarFiltros
-            }
-          >
-            {t("common.filter", "Aplicar filtros")}
-          </PrimaryButton>
-
-          <button
-            type="button"
-            onClick={
-              limpiarFiltros
-            }
-            className="
-              inline-flex
-              h-10
-              items-center
-              justify-center
-              rounded-xl
-              border
-              border-zinc-300
-              bg-white
-              px-4
-              text-sm
-              font-semibold
-              text-zinc-700
-              transition
-              hover:bg-zinc-50
-              focus-visible:outline-none
-              focus-visible:ring-2
-              focus-visible:ring-zinc-950
-            "
-          >
-            {t("common.cleanFilters", "Limpiar filtros")}
-          </button>
+            <button
+              type="button"
+              onClick={limpiarFiltros}
+              className="inline-flex h-[38px] flex-1 items-center justify-center rounded-xl border border-zinc-300 bg-white px-3.5 text-xs sm:text-sm font-semibold text-zinc-700 shadow-2xs transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 sm:flex-initial"
+            >
+              {t("common.cleanFilters", "Limpiar filtros")}
+            </button>
+          </div>
         </div>
 
         {/* ====================================== */}
