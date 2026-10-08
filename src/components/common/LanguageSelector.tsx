@@ -45,9 +45,9 @@ export function LanguageSelector({
 
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute left-3 flex items-center text-zinc-500"
+        className="pointer-events-none absolute left-2.5 flex items-center text-zinc-400"
       >
-        <Globe size={16} />
+        <Globe size={14} />
       </span>
 
       <select
@@ -61,24 +61,28 @@ export function LanguageSelector({
           defaultValue: "Cambiar idioma",
         })}
         className="
-          h-9
+          h-8.5
           cursor-pointer
           appearance-none
           rounded-xl
           border
           border-zinc-200
-          bg-white
-          pl-9
-          pr-8
+          bg-white/80
+          pl-8
+          pr-7
           text-xs
-          font-semibold
+          font-medium
           text-zinc-700
-          transition
+          shadow-2xs
+          transition-all
+          duration-150
           hover:border-zinc-300
           hover:bg-zinc-50
+          hover:text-zinc-950
+          focus-visible:border-zinc-950
           focus-visible:outline-none
           focus-visible:ring-2
-          focus-visible:ring-zinc-950
+          focus-visible:ring-zinc-950/10
         "
       >
         {SUPPORTED_LANGUAGES.map((lang) => (
@@ -90,10 +94,10 @@ export function LanguageSelector({
 
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute right-2.5 flex items-center text-zinc-400"
+        className="pointer-events-none absolute right-2 flex items-center text-zinc-400"
       >
         <svg
-          className="h-3.5 w-3.5"
+          className="h-3 w-3"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

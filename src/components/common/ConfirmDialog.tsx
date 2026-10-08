@@ -63,26 +63,26 @@ function ConfirmDialog({
       maxWidthClassName="max-w-md"
       isSubmitting={isLoading}
     >
-      <div className="space-y-5">
-        <div className="flex items-start gap-4">
+      <div className="space-y-4">
+        <div className="flex items-start gap-3.5">
           <div
             aria-hidden="true"
-            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${styles.iconWrapper}`}
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${styles.iconWrapper}`}
           >
-            <IconComponent size={24} />
+            <IconComponent size={20} />
           </div>
 
-          <p className="pt-1 text-sm leading-relaxed text-zinc-600">
+          <p className="pt-1 text-xs sm:text-sm leading-relaxed text-zinc-600">
             {message}
           </p>
         </div>
 
-        <div className="flex flex-col-reverse gap-2 border-t border-zinc-200 pt-4 sm:flex-row sm:justify-end sm:gap-3">
+        <div className="flex flex-col-reverse gap-2 border-t border-zinc-100 pt-3.5 sm:flex-row sm:justify-end sm:gap-2.5">
           <button
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-9 items-center justify-center rounded-xl border border-zinc-200 bg-white px-3.5 text-xs sm:text-sm font-semibold text-zinc-700 shadow-2xs transition hover:bg-zinc-50 hover:border-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {resolvedCancelLabel}
           </button>
@@ -91,13 +91,13 @@ function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            className={`inline-flex h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold shadow-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${styles.confirmButton}`}
+            className={`inline-flex h-9 items-center justify-center rounded-xl px-3.5 text-xs sm:text-sm font-semibold shadow-2xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${styles.confirmButton}`}
           >
             {isLoading ? (
               <span className="inline-flex items-center gap-2">
                 <span
                   aria-hidden="true"
-                  className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                  className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white"
                 />
                 {t("common.processing")}
               </span>

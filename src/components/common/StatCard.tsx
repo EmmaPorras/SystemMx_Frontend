@@ -21,7 +21,6 @@ const variantStyles: Record<
   {
     card: string;
     line: string;
-    decoration: string;
     icon: string;
     label: string;
     indicator: string;
@@ -29,53 +28,48 @@ const variantStyles: Record<
   }
 > = {
   neutral: {
-    card: "border-zinc-200 bg-zinc-50",
-    line: "bg-zinc-300",
-    decoration: "border-zinc-200 bg-white/70",
-    icon: "border-zinc-200 bg-white text-zinc-700",
-    label: "border-zinc-200 bg-zinc-200/70 text-zinc-700",
+    card: "border-zinc-200/90 bg-white",
+    line: "bg-zinc-400",
+    icon: "border-zinc-200 bg-zinc-50 text-zinc-700",
+    label: "border-zinc-200/80 bg-zinc-100/80 text-zinc-700",
     indicator: "text-zinc-400",
     dot: "bg-zinc-400",
   },
 
   info: {
-    card: "border-blue-200 bg-blue-50/70",
-    line: "bg-blue-300",
-    decoration: "border-blue-200 bg-blue-100/50",
-    icon: "border-blue-200 bg-blue-100 text-blue-600",
-    label: "border-blue-200 bg-blue-100 text-blue-700",
-    indicator: "text-blue-400",
-    dot: "bg-blue-400",
+    card: "border-blue-200/90 bg-gradient-to-br from-white to-blue-50/40",
+    line: "bg-blue-500",
+    icon: "border-blue-200/80 bg-blue-50 text-blue-700",
+    label: "border-blue-200/80 bg-blue-50/90 text-blue-800",
+    indicator: "text-blue-500",
+    dot: "bg-blue-500",
   },
 
   success: {
-    card: "border-emerald-200 bg-emerald-50/70",
-    line: "bg-emerald-300",
-    decoration: "border-emerald-200 bg-emerald-100/50",
-    icon: "border-emerald-200 bg-emerald-100 text-emerald-600",
-    label: "border-emerald-200 bg-emerald-100 text-emerald-700",
-    indicator: "text-emerald-400",
-    dot: "bg-emerald-400",
+    card: "border-emerald-200/90 bg-gradient-to-br from-white to-emerald-50/40",
+    line: "bg-emerald-500",
+    icon: "border-emerald-200/80 bg-emerald-50 text-emerald-700",
+    label: "border-emerald-200/80 bg-emerald-50/90 text-emerald-800",
+    indicator: "text-emerald-500",
+    dot: "bg-emerald-500",
   },
 
   warning: {
-    card: "border-amber-200 bg-amber-50/70",
-    line: "bg-amber-300",
-    decoration: "border-amber-200 bg-amber-100/55",
-    icon: "border-amber-200 bg-amber-100 text-amber-700",
-    label: "border-amber-200 bg-amber-100 text-amber-800",
+    card: "border-amber-200/90 bg-gradient-to-br from-white to-amber-50/40",
+    line: "bg-amber-500",
+    icon: "border-amber-200/80 bg-amber-50 text-amber-700",
+    label: "border-amber-200/80 bg-amber-50/90 text-amber-800",
     indicator: "text-amber-500",
-    dot: "bg-amber-400",
+    dot: "bg-amber-500",
   },
 
   danger: {
-    card: "border-red-200 bg-red-50/70",
-    line: "bg-red-300",
-    decoration: "border-red-200 bg-red-100/50",
-    icon: "border-red-200 bg-red-100 text-red-600",
-    label: "border-red-200 bg-red-100 text-red-700",
-    indicator: "text-red-400",
-    dot: "bg-red-400",
+    card: "border-red-200/90 bg-gradient-to-br from-white to-red-50/40",
+    line: "bg-red-500",
+    icon: "border-red-200/80 bg-red-50 text-red-700",
+    label: "border-red-200/80 bg-red-50/90 text-red-800",
+    indicator: "text-red-500",
+    dot: "bg-red-500",
   },
 };
 
@@ -93,73 +87,54 @@ function StatCard({
       className={`
         relative
         flex
-        min-h-[185px]
         overflow-hidden
         rounded-2xl
         border
-        p-5
-        shadow-sm
-        sm:p-6
+        p-4
+        shadow-2xs
+        transition-all
+        duration-150
+        hover:shadow-xs
+        sm:p-5
         ${styles.card}
       `}
     >
       <div
         aria-hidden="true"
-        className={`absolute inset-x-0 top-0 h-1 ${styles.line}`}
-      />
-
-      <div
-        aria-hidden="true"
-        className={`
-          absolute
-          -right-10
-          -top-10
-          h-28
-          w-28
-          rounded-full
-          border
-          ${styles.decoration}
-        `}
+        className={`absolute inset-x-0 top-0 h-0.5 ${styles.line}`}
       />
 
       <div className="relative z-10 flex w-full flex-col">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <div
             className={`
               grid
-              h-12
-              w-12
+              h-9
+              w-9
               shrink-0
               place-items-center
               rounded-xl
               border
-              shadow-sm
+              shadow-2xs
               ${styles.icon}
             `}
           >
-            <Icon className="h-6 w-6" />
+            <Icon className="h-4.5 w-4.5" />
           </div>
 
           <div
             className={`
-              relative
-              z-10
               inline-flex
-              min-h-7
-              max-w-[72%]
               items-center
               justify-center
               rounded-full
               border
-              px-3
-              py-1.5
-              text-center
-              text-[10px]
-              font-bold
-              uppercase
-              leading-tight
-              tracking-[0.13em]
-              sm:text-[11px]
+              px-2.5
+              py-0.5
+              text-[10.5px]
+              font-semibold
+              tracking-tight
+              shadow-2xs
               ${styles.label}
             `}
           >
@@ -167,33 +142,32 @@ function StatCard({
           </div>
         </div>
 
-        <div className="mt-5 flex flex-1 flex-col">
-          <p className="break-words text-2xl font-bold tracking-tight text-zinc-950 sm:text-3xl">
+        <div className="mt-3.5 flex flex-1 flex-col">
+          <p className="break-words text-xl font-bold tracking-tight text-zinc-950 sm:text-2xl">
             {value}
           </p>
 
           {hint ? (
-            <p className="mt-4 text-sm leading-relaxed text-zinc-600">
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500">
               {hint}
             </p>
           ) : null}
 
           <div
             className={`
-              mt-auto
+              mt-3
               flex
               items-center
-              gap-2
-              pt-5
+              gap-1.5
               text-[10px]
               font-semibold
               uppercase
-              tracking-[0.15em]
+              tracking-[0.12em]
               ${styles.indicator}
             `}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${styles.dot}`} />
-            Indicador informativo
+            Indicador
           </div>
         </div>
       </div>

@@ -47,7 +47,7 @@ function TableActionButton({
       aria-label={label}
       onClick={onClick}
       disabled={disabled}
-      className={`grid h-10 w-10 place-items-center rounded-xl border transition-all duration-150 outline-none hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 active:scale-95 focus-visible:ring-2 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none ${variantClasses[variant]} ${className}`}
+      className={`grid h-8 w-8 place-items-center rounded-lg border shadow-2xs transition-all duration-150 outline-none hover:-translate-y-0.5 hover:shadow-xs active:translate-y-0 active:scale-95 focus-visible:ring-2 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none ${variantClasses[variant]} ${className}`}
     >
       {icon}
     </button>
