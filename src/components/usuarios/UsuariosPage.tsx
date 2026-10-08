@@ -1,226 +1,265 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
+  Users,
+  UserPlus,
+  UserCheck,
+  UserX,
   Clock,
   Send,
   Shield,
   ShieldAlert,
-  UserCheck,
-  UserPlus,
-  Users,
-  UserX,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import AlertMessage from "../common/AlertMessage";
-import ConfirmDialog from "../common/ConfirmDialog";
-import DataTableShell, { type DataTableColumn } from "../common/DataTableShell";
-import LoadingState from "../common/LoadingState";
 import PageHeader from "../common/PageHeader";
 import StatCard from "../common/StatCard";
+import DataTableShell, { type DataTableColumn } from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
+import AlertMessage from "../common/AlertMessage";
+import ConfirmDialog from "../common/ConfirmDialog";
+import LoadingState from "../common/LoadingState";
+import CrearUsuarioModal from "./CrearUsuarioModal";
+
 import { useAuth } from "../../auth/useAuth";
-import { ApiError } from "../../api/ApiError";
+import type { BackendRole } from "../../auth/auth.types";
 import {
+  listarUsuariosApi,
   cambiarEstadoUsuarioApi,
   cambiarRolUsuarioApi,
-  getUsuariosApi,
   reenviarInvitacionApi,
   type UsuarioItem,
 } from "../../services/usuariosApi";
-import type { BackendRole } from "../../auth/auth.types";
-import CrearUsuarioModal from "./CrearUsuarioModal";
+import { ApiError } from "../../api/ApiError";
+import { getUserRoleLabel } from "../../i18n/statusMap";
 
 function UsuariosPage() {
   const { t } = useTranslation();
   const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.rol === "ADMIN";
 
   const [usuarios, setUsuarios] = useState<UsuarioItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(
-    null,
-  );
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
+  // Filtros
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<string>("ALL");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
 
+  // Modales y confirmaciones
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [targetToggleUser, setTargetToggleUser] = useState<UsuarioItem | null>(
+    null,
+  );
+  const [isTogglingState, setIsTogglingState] = useState(false);
   const [resendingId, setResendingId] = useState<number | null>(null);
 
-  // Modal para confirmar cambio de estado
-  const [targetToggleUser, setTargetToggleUser] = useState<UsuarioItem | null>(null);
-  const [isTogglingState, setIsTogglingState] = useState(false);
-
-  const isAdmin = currentUser?.rol === "ADMIN";
-
-  function loadUsers() {
+  const fetchUsuarios = useCallback(async () => {
+    if (!isAdmin) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
-    getUsuariosApi()
-      .then((data) => {
-        setUsuarios(data);
-      })
-      .catch((err) => {
-        const msg = err instanceof ApiError ? err.message : t("auth.serverConnectionError");
-        setFeedback({ type: "error", message: msg });
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }
+    try {
+      const data = await listarUsuariosApi();
+      setUsuarios(data);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setFeedback({ type: "error", message: err.message });
+      } else {
+        setFeedback({
+          type: "error",
+          message: t("auth.serverConnectionError"),
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAdmin, t]);
 
   useEffect(() => {
-    loadUsers();
-  }, []);
+    void fetchUsuarios();
+  }, [fetchUsuarios]);
 
-  async function handleResendInvitation(usuario: UsuarioItem) {
-    if (resendingId !== null) return;
-    setResendingId(usuario.idUsuario);
-    setFeedback(null);
-
-    try {
-      const res = await reenviarInvitacionApi(usuario.idUsuario);
-      setFeedback({
-        type: "success",
-        message: res.mensaje || t("usuarios.resendSuccess"),
-      });
-    } catch (err) {
-      const msg = err instanceof ApiError ? err.message : t("auth.serverConnectionError");
-      setFeedback({ type: "error", message: msg });
-    } finally {
-      setResendingId(null);
-    }
-  }
-
+  // Handlers
   async function handleConfirmToggleState() {
     if (!targetToggleUser) return;
     setIsTogglingState(true);
-
     try {
-      const updated = await cambiarEstadoUsuarioApi(
+      const nuevoEstado = !targetToggleUser.activo;
+      const res = await cambiarEstadoUsuarioApi(
         targetToggleUser.idUsuario,
-        !targetToggleUser.activo,
+        nuevoEstado,
       );
 
       setUsuarios((prev) =>
-        prev.map((u) => (u.idUsuario === updated.idUsuario ? { ...u, activo: updated.activo } : u)),
+        prev.map((u) => (u.idUsuario === res.idUsuario ? res : u)),
       );
+
       setFeedback({
         type: "success",
         message: t("usuarios.statusUpdated"),
       });
       setTargetToggleUser(null);
     } catch (err) {
-      const msg = err instanceof ApiError ? err.message : t("auth.serverConnectionError");
-      setFeedback({ type: "error", message: msg });
+      if (err instanceof ApiError) {
+        setFeedback({ type: "error", message: err.message });
+      } else {
+        setFeedback({
+          type: "error",
+          message: t("auth.serverConnectionError"),
+        });
+      }
     } finally {
       setIsTogglingState(false);
     }
   }
 
-  async function handleChangeRole(usuario: UsuarioItem, newRole: BackendRole) {
-    if (usuario.rol === newRole) return;
-    setFeedback(null);
-
+  async function handleChangeRole(usuario: UsuarioItem, nuevoRol: BackendRole) {
+    if (usuario.rol === nuevoRol) return;
     try {
-      const updated = await cambiarRolUsuarioApi(usuario.idUsuario, newRole);
+      const res = await cambiarRolUsuarioApi(usuario.idUsuario, nuevoRol);
       setUsuarios((prev) =>
-        prev.map((u) => (u.idUsuario === updated.idUsuario ? { ...u, rol: updated.rol } : u)),
+        prev.map((u) => (u.idUsuario === res.idUsuario ? res : u)),
       );
       setFeedback({
         type: "success",
         message: t("usuarios.roleUpdated"),
       });
     } catch (err) {
-      const msg = err instanceof ApiError ? err.message : t("auth.serverConnectionError");
-      setFeedback({ type: "error", message: msg });
+      if (err instanceof ApiError) {
+        setFeedback({ type: "error", message: err.message });
+      } else {
+        setFeedback({
+          type: "error",
+          message: t("auth.serverConnectionError"),
+        });
+      }
     }
   }
 
+  async function handleResendInvitation(usuario: UsuarioItem) {
+    setResendingId(usuario.idUsuario);
+    try {
+      await reenviarInvitacionApi(usuario.idUsuario);
+      setFeedback({
+        type: "success",
+        message: t("usuarios.resendSuccess"),
+      });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setFeedback({ type: "error", message: err.message });
+      } else {
+        setFeedback({
+          type: "error",
+          message: t("auth.serverConnectionError"),
+        });
+      }
+    } finally {
+      setResendingId(null);
+    }
+  }
+
+  // Filtrado
   const filteredUsers = useMemo(() => {
     return usuarios.filter((u) => {
-      const q = search.trim().toLowerCase();
       const matchSearch =
-        !q ||
-        u.username.toLowerCase().includes(q) ||
-        u.nombre.toLowerCase().includes(q) ||
-        (u.email && u.email.toLowerCase().includes(q));
+        u.username.toLowerCase().includes(search.toLowerCase()) ||
+        u.nombre.toLowerCase().includes(search.toLowerCase()) ||
+        (u.email ? u.email.toLowerCase().includes(search.toLowerCase()) : false);
 
       const matchRole = filterRole === "ALL" || u.rol === filterRole;
 
       let matchStatus = true;
-      if (filterStatus === "ACTIVE") matchStatus = u.activo && u.estadoActivacion === "ACTIVO";
-      else if (filterStatus === "PENDING") matchStatus = u.estadoActivacion === "PENDIENTE_ACTIVACION";
-      else if (filterStatus === "INACTIVE") matchStatus = !u.activo;
+      if (filterStatus === "ACTIVE") {
+        matchStatus = u.activo && u.estadoActivacion !== "PENDIENTE_ACTIVACION";
+      } else if (filterStatus === "PENDING") {
+        matchStatus = u.estadoActivacion === "PENDIENTE_ACTIVACION";
+      } else if (filterStatus === "INACTIVE") {
+        matchStatus = !u.activo;
+      }
 
       return matchSearch && matchRole && matchStatus;
     });
   }, [usuarios, search, filterRole, filterStatus]);
 
+  // Estadísticas
   const stats = useMemo(() => {
     const total = usuarios.length;
-    const activos = usuarios.filter((u) => u.activo && u.estadoActivacion === "ACTIVO").length;
-    const pendientes = usuarios.filter((u) => u.estadoActivacion === "PENDIENTE_ACTIVACION").length;
+    const activos = usuarios.filter(
+      (u) => u.activo && u.estadoActivacion !== "PENDIENTE_ACTIVACION",
+    ).length;
+    const pendientes = usuarios.filter(
+      (u) => u.estadoActivacion === "PENDIENTE_ACTIVACION",
+    ).length;
     return { total, activos, pendientes };
   }, [usuarios]);
 
-  const columns = useMemo<DataTableColumn<UsuarioItem>[]>(() => {
+  // Columnas para DataTable
+  const columns: DataTableColumn<UsuarioItem>[] = useMemo(() => {
     return [
       {
         key: "username",
         header: t("usuarios.tableUsername"),
-        render: (usuario) => {
-          const isSelf = currentUser?.idUsuario === usuario.idUsuario;
-          return (
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-semibold text-zinc-900">{usuario.username}</span>
-              {isSelf ? (
-                <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 border border-blue-200/80">
-                  Tú
-                </span>
-              ) : null}
-            </div>
-          );
-        },
+        render: (usuario: UsuarioItem) => (
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-zinc-950 text-xs sm:text-sm">
+              {usuario.username}
+            </span>
+            {currentUser?.idUsuario === usuario.idUsuario ? (
+              <span className="rounded-md border border-blue-200/80 bg-blue-50/80 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 shadow-2xs">
+                {t("common.you", "Tú")}
+              </span>
+            ) : null}
+          </div>
+        ),
       },
       {
         key: "nombre",
         header: t("usuarios.tableName"),
-        render: (usuario) => (
-          <span className="text-xs font-medium text-zinc-800">{usuario.nombre}</span>
+        render: (usuario: UsuarioItem) => (
+          <span className="text-zinc-700 text-xs sm:text-sm">{usuario.nombre}</span>
         ),
       },
       {
         key: "email",
         header: t("usuarios.tableEmail"),
-        render: (usuario) =>
+        render: (usuario: UsuarioItem) =>
           usuario.email ? (
-            <span className="text-xs text-zinc-500">{usuario.email}</span>
+            <span className="text-zinc-600 text-xs">{usuario.email}</span>
           ) : (
-            <span className="text-xs italic text-zinc-400">Sin correo</span>
+            <span className="text-zinc-400 italic text-xs">
+              {t("usuarios.noEmail", "Sin correo")}
+            </span>
           ),
       },
       {
         key: "rol",
         header: t("usuarios.tableRole"),
-        render: (usuario) => {
+        render: (usuario: UsuarioItem) => {
           const isSelf = currentUser?.idUsuario === usuario.idUsuario;
           if (isSelf) {
             return (
               <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200/70 bg-zinc-50 px-2 py-0.5 text-xs font-semibold text-zinc-700">
                 <Shield size={13} className="text-blue-600" />
-                {usuario.rol}
+                {getUserRoleLabel(t, usuario.rol)}
               </span>
             );
           }
           return (
             <select
               value={usuario.rol}
+              aria-label={t("usuarios.tableRole")}
               onChange={(e) => handleChangeRole(usuario, e.target.value as BackendRole)}
               className="h-7.5 rounded-lg border border-zinc-200 bg-white/90 px-2 py-0.5 text-xs font-medium text-zinc-700 shadow-2xs hover:border-zinc-300 focus:border-zinc-950 focus:outline-none focus:ring-1 focus:ring-zinc-950/10"
             >
-              <option value="OPERADOR">{t("usuarios.roleOperator")}</option>
-              <option value="ADMIN">{t("usuarios.roleAdmin")}</option>
-              <option value="CONSULTA">{t("usuarios.roleViewer")}</option>
+              <option value="VENTAS">{getUserRoleLabel(t, "VENTAS")}</option>
+              <option value="COMPRAS">{getUserRoleLabel(t, "COMPRAS")}</option>
+              <option value="ADMIN">{getUserRoleLabel(t, "ADMIN")}</option>
+              <option value="CONSULTA">{getUserRoleLabel(t, "CONSULTA")}</option>
             </select>
           );
         },
@@ -228,7 +267,7 @@ function UsuariosPage() {
       {
         key: "estado",
         header: t("usuarios.tableStatus"),
-        render: (usuario) => {
+        render: (usuario: UsuarioItem) => {
           if (usuario.estadoActivacion === "PENDIENTE_ACTIVACION") {
             return (
               <StatusBadge
@@ -258,7 +297,7 @@ function UsuariosPage() {
         header: t("usuarios.tableActions"),
         headerClassName: "text-right",
         className: "text-right",
-        render: (usuario) => {
+        render: (usuario: UsuarioItem) => {
           const isSelf = currentUser?.idUsuario === usuario.idUsuario;
           const isPending = usuario.estadoActivacion === "PENDIENTE_ACTIVACION";
 
@@ -390,17 +429,20 @@ function UsuariosPage() {
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={filterRole}
+            aria-label={t("usuarios.tableRole")}
             onChange={(e) => setFilterRole(e.target.value)}
             className="h-8.5 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 text-xs font-medium text-zinc-700 transition hover:bg-white hover:border-zinc-300 focus:border-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950/10"
           >
             <option value="ALL">{t("usuarios.filterAllRoles")}</option>
-            <option value="ADMIN">{t("usuarios.roleAdmin")}</option>
-            <option value="OPERADOR">{t("usuarios.roleOperator")}</option>
-            <option value="CONSULTA">{t("usuarios.roleViewer")}</option>
+            <option value="VENTAS">{getUserRoleLabel(t, "VENTAS")}</option>
+            <option value="COMPRAS">{getUserRoleLabel(t, "COMPRAS")}</option>
+            <option value="ADMIN">{getUserRoleLabel(t, "ADMIN")}</option>
+            <option value="CONSULTA">{getUserRoleLabel(t, "CONSULTA")}</option>
           </select>
 
           <select
             value={filterStatus}
+            aria-label={t("usuarios.tableStatus")}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="h-8.5 rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 text-xs font-medium text-zinc-700 transition hover:bg-white hover:border-zinc-300 focus:border-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950/10"
           >

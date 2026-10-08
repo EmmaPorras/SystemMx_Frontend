@@ -5,6 +5,8 @@ import {
 } from "react-router";
 
 import ProtectedRoute from "./auth/ProtectedRoute";
+import { useAuth } from "./auth/useAuth";
+import { getDefaultRouteForRole } from "./auth/permissions";
 
 import AppLayout from "./components/common/AppLayout";
 import LoginPage from "./components/auth/LoginPage";
@@ -25,6 +27,14 @@ import CuentasPorCobrarPage from "./components/cuentas-por-cobrar/CuentasPorCobr
 import ReportesPage from "./components/reportes/ReportesPage";
 import AuditoriaPage from "./components/auditoria/AuditoriaPage";
 import UsuariosPage from "./components/usuarios/UsuariosPage";
+
+function HomeRoute() {
+  const { user } = useAuth();
+  if (user && user.rol !== "ADMIN") {
+    return <Navigate to={getDefaultRouteForRole(user.rol)} replace />;
+  }
+  return <HomePage />;
+}
 
 function App() {
   return (
@@ -51,69 +61,123 @@ function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
+          {/* Inicio (ADMIN o redirección automática a módulo asignado) */}
           <Route
             path="/"
-            element={<HomePage />}
+            element={<HomeRoute />}
           />
 
+          {/* Administración exclusiva ADMIN */}
           <Route
             path="/usuarios"
-            element={<UsuariosPage />}
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <UsuariosPage />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/proveedores"
-            element={<ProveedoresPage />}
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <ProveedoresPage />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/categorias"
-            element={<CategoriasPage />}
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <CategoriasPage />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/tarifas-iva"
-            element={<TarifasIVAPage />}
-          />
-
-          <Route
-            path="/productos"
-            element={<ProductosPage />}
-          />
-
-          <Route
-            path="/pedidos"
-            element={<PedidosPage />}
-          />
-
-          <Route
-            path="/lotes"
-            element={<LotesPage />}
-          />
-
-          <Route
-            path="/inventario/movimientos"
-            element={<MovimientosPage />}
-          />
-
-          <Route
-            path="/ventas"
-            element={<VentasPage />}
-          />
-
-          <Route
-            path="/cuentas-por-cobrar"
-            element={<CuentasPorCobrarPage />}
-          />
-
-          <Route
-            path="/reportes"
-            element={<ReportesPage />}
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <TarifasIVAPage />
+              </ProtectedRoute>
+            }
           />
 
           <Route
             path="/auditoria"
-            element={<AuditoriaPage />}
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN"]}>
+                <AuditoriaPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Compras y Pedidos (ADMIN, COMPRAS) */}
+          <Route
+            path="/pedidos"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "COMPRAS"]}>
+                <PedidosPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Ventas y Cuentas por Cobrar (ADMIN, VENTAS) */}
+          <Route
+            path="/ventas"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "VENTAS"]}>
+                <VentasPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/cuentas-por-cobrar"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "VENTAS"]}>
+                <CuentasPorCobrarPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Reportes Globales (ADMIN, CONSULTA) */}
+          <Route
+            path="/reportes"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "CONSULTA"]}>
+                <ReportesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Inventario compartido (ADMIN, VENTAS, COMPRAS, CONSULTA) */}
+          <Route
+            path="/productos"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "VENTAS", "COMPRAS", "CONSULTA"]}>
+                <ProductosPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/lotes"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "VENTAS", "COMPRAS", "CONSULTA"]}>
+                <LotesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/inventario/movimientos"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "VENTAS", "COMPRAS", "CONSULTA"]}>
+                <MovimientosPage />
+              </ProtectedRoute>
+            }
           />
 
           <Route

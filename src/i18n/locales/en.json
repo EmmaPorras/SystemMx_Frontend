@@ -233,8 +233,10 @@
     },
     "roles": {
       "ADMIN": "Administrator",
-      "OPERADOR": "Operator",
-      "CONSULTA": "Read-only"
+      "VENTAS": "Sales Agent",
+      "COMPRAS": "Purchasing Manager",
+      "CONSULTA": "Read Only",
+      "OPERADOR": "Operator"
     }
   },
   "home": {
@@ -896,7 +898,7 @@
     "statusInactive": "Inactive",
     "roleAdmin": "Administrator",
     "roleOperator": "Operator",
-    "roleViewer": "Viewer",
+    "roleViewer": "Read Only",
     "confirmDeactivate": "Deactivate this user?",
     "confirmDeactivateDesc": "The user will immediately lose access to the system.",
     "confirmActivate": "Activate this user?",
@@ -919,6 +921,11 @@
     "searchPlaceholder": "Search by username, name, or email...",
     "noUsersFound": "No registered users found.",
     "filterAllRoles": "All roles",
-    "filterAllStatuses": "All statuses"
+    "filterAllStatuses": "All statuses",
+    "roleSales": "Sales Agent",
+    "rolePurchases": "Purchasing Manager",
+    "forbiddenTitle": "Access Denied",
+    "forbiddenDesc": "Your account (role {{role}}) does not have permission to access this section.",
+    "goToAllowedHome": "Go to assigned module"
   }
 }

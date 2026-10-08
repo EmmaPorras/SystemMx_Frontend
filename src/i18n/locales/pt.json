@@ -233,8 +233,10 @@
     },
     "roles": {
       "ADMIN": "Administrador",
-      "OPERADOR": "Operador",
-      "CONSULTA": "Consulta"
+      "VENTAS": "Agente de vendas",
+      "COMPRAS": "Encarregado de compras",
+      "CONSULTA": "Consulta",
+      "OPERADOR": "Operador"
     }
   },
   "home": {
@@ -919,6 +921,11 @@
     "searchPlaceholder": "Pesquisar por usuário, nome ou e-mail...",
     "noUsersFound": "Nenhum usuário registrado encontrado.",
     "filterAllRoles": "Todas as funções",
-    "filterAllStatuses": "Todos os status"
+    "filterAllStatuses": "Todos os status",
+    "roleSales": "Agente de vendas",
+    "rolePurchases": "Encarregado de compras",
+    "forbiddenTitle": "Acesso negado",
+    "forbiddenDesc": "Sua conta (função {{role}}) não tem permissão para acessar esta seção.",
+    "goToAllowedHome": "Ir para módulo atribuído"
   }
 }

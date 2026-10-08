@@ -10,6 +10,7 @@ import SelectField from "../common/SelectField";
 import { ApiError } from "../../api/ApiError";
 import { invitarUsuarioApi, type UsuarioItem } from "../../services/usuariosApi";
 import type { BackendRole } from "../../auth/auth.types";
+import { getUserRoleLabel } from "../../i18n/statusMap";
 
 type CrearUsuarioModalProps = {
   isOpen: boolean;
@@ -27,7 +28,7 @@ function CrearUsuarioModal({
   const [nombre, setNombre] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [rol, setRol] = useState<BackendRole>("OPERADOR");
+  const [rol, setRol] = useState<BackendRole>("VENTAS");
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState<string | null>(null);
@@ -37,7 +38,7 @@ function CrearUsuarioModal({
     setNombre("");
     setUsername("");
     setEmail("");
-    setRol("OPERADOR");
+    setRol("VENTAS");
     setErrors({});
     setApiError(null);
   }
@@ -184,9 +185,10 @@ function CrearUsuarioModal({
           value={rol}
           onChange={(val) => setRol(val as BackendRole)}
           options={[
-            { value: "OPERADOR", label: `${t("usuarios.roleOperator")} (OPERADOR)` },
-            { value: "ADMIN", label: `${t("usuarios.roleAdmin")} (ADMIN)` },
-            { value: "CONSULTA", label: `${t("usuarios.roleViewer")} (CONSULTA)` },
+            { value: "VENTAS", label: `${getUserRoleLabel(t, "VENTAS")} (VENTAS)` },
+            { value: "COMPRAS", label: `${getUserRoleLabel(t, "COMPRAS")} (COMPRAS)` },
+            { value: "ADMIN", label: `${getUserRoleLabel(t, "ADMIN")} (ADMIN)` },
+            { value: "CONSULTA", label: `${getUserRoleLabel(t, "CONSULTA")} (CONSULTA)` },
           ]}
           required
         />

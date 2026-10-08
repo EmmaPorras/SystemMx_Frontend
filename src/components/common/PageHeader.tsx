@@ -108,21 +108,7 @@ function PageHeader({
         lg:p-6
       "
     >
-      {/* Decoración circular superior */}
-      <div
-        aria-hidden="true"
-        className="
-          absolute
-          -right-16
-          -top-16
-          h-44
-          w-44
-          rounded-full
-          border
-          border-zinc-100
-          bg-white/40
-        "
-      />
+      
 
       <div
         className="

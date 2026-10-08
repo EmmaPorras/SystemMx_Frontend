@@ -127,15 +127,6 @@ function ActivarCuentaPage() {
 
   return (
     <div className="relative grid min-h-screen place-items-center overflow-hidden bg-zinc-100 px-4 py-8">
-      <div
-        aria-hidden="true"
-        className="absolute -right-24 -top-24 h-80 w-80 rounded-full border border-zinc-200 bg-white/60"
-      />
-      <div
-        aria-hidden="true"
-        className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-zinc-200/70 blur-3xl"
-      />
-
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-3 flex justify-end">
           <LanguageSelector id="activate-language-selector" />

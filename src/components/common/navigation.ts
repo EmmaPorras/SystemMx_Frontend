@@ -16,12 +16,15 @@ import {
   Users,
   WalletCards,
 } from "lucide-react";
+import type { BackendRole } from "../../auth/auth.types";
+import { useAuth } from "../../auth/useAuth";
 
 export type NavigationItem = {
   label: string;
   path: string;
   description: string;
   icon: ElementType;
+  allowedRoles?: BackendRole[];
 };
 
 export type NavigationGroup = {
@@ -36,6 +39,7 @@ export type NavigationItemConfig = {
   descriptionKey: string;
   defaultDescription: string;
   icon: ElementType;
+  allowedRoles?: BackendRole[];
 };
 
 export type NavigationGroupConfig = {
@@ -56,6 +60,7 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         descriptionKey: "navigation.homeDesc",
         defaultDescription: "Resumen general del sistema",
         icon: House,
+        allowedRoles: ["ADMIN"],
       },
     ],
   },
@@ -70,6 +75,7 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         descriptionKey: "navigation.suppliersDesc",
         defaultDescription: "Catálogo de proveedores",
         icon: Truck,
+        allowedRoles: ["ADMIN"],
       },
       {
         labelKey: "navigation.orders",
@@ -78,6 +84,7 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         descriptionKey: "navigation.ordersDesc",
         defaultDescription: "Compras y recepción de inventario",
         icon: ReceiptText,
+        allowedRoles: ["ADMIN", "COMPRAS"],
       },
     ],
   },
@@ -92,6 +99,7 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         descriptionKey: "navigation.productsDesc",
         defaultDescription: "Consulta de productos",
         icon: PackageSearch,
+        allowedRoles: ["ADMIN", "VENTAS", "COMPRAS", "CONSULTA"],
       },
       {
         labelKey: "navigation.batches",
@@ -100,6 +108,7 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         descriptionKey: "navigation.batchesDesc",
         defaultDescription: "Trazabilidad de inventario",
         icon: Boxes,
+        allowedRoles: ["ADMIN", "VENTAS", "COMPRAS", "CONSULTA"],
       },
       {
         labelKey: "navigation.movements",
@@ -108,6 +117,7 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         descriptionKey: "navigation.movementsDesc",
         defaultDescription: "Historial de entradas y salidas",
         icon: History,
+        allowedRoles: ["ADMIN", "VENTAS", "COMPRAS", "CONSULTA"],
       },
     ],
   },
@@ -122,6 +132,7 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         descriptionKey: "navigation.categoriesDesc",
         defaultDescription: "Clasificación de productos",
         icon: Tags,
+        allowedRoles: ["ADMIN"],
       },
       {
         labelKey: "navigation.vatRates",
@@ -130,6 +141,7 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         descriptionKey: "navigation.vatRatesDesc",
         defaultDescription: "Catálogo de impuestos",
         icon: Percent,
+        allowedRoles: ["ADMIN"],
       },
       {
         labelKey: "navigation.users",
@@ -138,6 +150,7 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         descriptionKey: "navigation.usersDesc",
         defaultDescription: "Gestión de cuentas e invitaciones",
         icon: Users,
+        allowedRoles: ["ADMIN"],
       },
     ],
   },
@@ -152,6 +165,7 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         descriptionKey: "navigation.salesDesc",
         defaultDescription: "Ventas, pagos y anulaciones",
         icon: ShoppingCart,
+        allowedRoles: ["ADMIN", "VENTAS"],
       },
       {
         labelKey: "navigation.accountsReceivable",
@@ -160,6 +174,7 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         descriptionKey: "navigation.accountsReceivableDesc",
         defaultDescription: "Saldos pendientes y vencimientos",
         icon: WalletCards,
+        allowedRoles: ["ADMIN", "VENTAS"],
       },
     ],
   },
@@ -174,6 +189,7 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         descriptionKey: "navigation.reportsDesc",
         defaultDescription: "Indicadores y análisis",
         icon: FileBarChart,
+        allowedRoles: ["ADMIN", "CONSULTA"],
       },
       {
         labelKey: "navigation.audit",
@@ -182,6 +198,7 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         descriptionKey: "navigation.auditDesc",
         defaultDescription: "Trazabilidad administrativa",
         icon: ShieldCheck,
+        allowedRoles: ["ADMIN"],
       },
     ],
   },
@@ -189,24 +206,39 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
 
 export function getNavigationGroups(
   translateFn: (key: string, defaultValue?: string) => string = (k, d) => i18n.t(k, d ?? ""),
+  userRole?: BackendRole | null,
 ): NavigationGroup[] {
-  return navigationGroupConfigs.map((group) => ({
-    label: translateFn(group.labelKey, group.defaultLabel),
-    items: group.items.map((item) => ({
-      label: translateFn(item.labelKey, item.defaultLabel),
-      path: item.path,
-      description: translateFn(item.descriptionKey, item.defaultDescription),
-      icon: item.icon,
-    })),
-  }));
+  return navigationGroupConfigs
+    .map((group) => {
+      const filteredItems = group.items
+        .filter((item) => {
+          if (!userRole) return true;
+          if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
+          return item.allowedRoles.includes(userRole);
+        })
+        .map((item) => ({
+          label: translateFn(item.labelKey, item.defaultLabel),
+          path: item.path,
+          description: translateFn(item.descriptionKey, item.defaultDescription),
+          icon: item.icon,
+          allowedRoles: item.allowedRoles,
+        }));
+
+      return {
+        label: translateFn(group.labelKey, group.defaultLabel),
+        items: filteredItems,
+      };
+    })
+    .filter((group) => group.items.length > 0);
 }
 
 export function useNavigation() {
   const { t } = useTranslation();
+  const { user } = useAuth();
 
   const groups = useMemo(() => {
-    return getNavigationGroups((k, d) => t(k, d ?? ""));
-  }, [t]);
+    return getNavigationGroups((k, d) => t(k, d ?? ""), user?.rol);
+  }, [t, user?.rol]);
 
   const items = useMemo(() => {
     return groups.flatMap((group) => group.items);
