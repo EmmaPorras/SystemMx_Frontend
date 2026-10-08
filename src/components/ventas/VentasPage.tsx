@@ -40,6 +40,7 @@ import {
   obtenerVentasApi,
   restaurarVentaApi,
 } from "../../services/ventasApi";
+import { obtenerTarifasIva } from "../../services/tarifasIvaApi";
 
 import FormularioVenta from "./FormularioVenta";
 import HistorialPagosVenta from "./HistorialPagosVenta";
@@ -47,6 +48,7 @@ import ModalRegistrarPago from "./ModalRegistrarPago";
 import TablaVentas from "./TablaVentas";
 import VentaDetalleTable from "./VentaDetalleTable";
 
+import type { TarifaIVA } from "../tarifas-iva/tarifas-iva.types";
 import type {
   CrearVentaPayload,
   InventarioDisponibleVenta,
@@ -61,6 +63,8 @@ function VentasPage() {
   const [inventarioDisponible, setInventarioDisponible] = useState<
     InventarioDisponibleVenta[]
   >([]);
+
+  const [tarifasIva, setTarifasIva] = useState<TarifaIVA[]>([]);
 
   const [busqueda, setBusqueda] = useState("");
   const [vista, setVista] = useState<VistaVentas>("ACTIVAS");
@@ -92,13 +96,15 @@ function VentasPage() {
         deudores: vista === "DEUDORES" ? true : undefined,
       };
 
-      const [ventasData, inventarioData] = await Promise.all([
+      const [ventasData, inventarioData, tarifasData] = await Promise.all([
         obtenerVentasApi(query),
         obtenerInventarioDisponibleVentaApi(),
+        obtenerTarifasIva().catch(() => []),
       ]);
 
       setVentas(ventasData);
       setInventarioDisponible(inventarioData);
+      setTarifasIva(tarifasData.filter((t) => t.estado === "ACTIVA"));
     } catch (error) {
       const message =
         error instanceof Error
@@ -438,6 +444,7 @@ function VentasPage() {
           key={formKey}
           inventarioDisponible={inventarioDisponible}
           numeroVentaSugerido={numeroVentaSugerido}
+          tarifasIva={tarifasIva}
           alertMessage={modalAlert}
           guardando={guardando}
           onSubmit={guardarVenta}

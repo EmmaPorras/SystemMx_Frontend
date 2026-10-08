@@ -27,14 +27,15 @@ import type {
   TarifaIVA,
   TarifaIVAFormErrors,
   TarifaIVAFormField,
+  TarifaIVAFormState,
 } from "./tarifas-iva.types";
 
 type ModalMode = "create" | "edit";
 
-const tarifaInicial: TarifaIVA = {
+const formStateInicial: TarifaIVAFormState = {
   id: 0,
   codigo: "",
-  porcentaje: "" as unknown as number,
+  porcentaje: "",
   descripcion: "",
   estado: "ACTIVA",
 };
@@ -45,7 +46,7 @@ function TarifasIVAPage() {
   const [busqueda, setBusqueda] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
-  const [tarifa, setTarifa] = useState<TarifaIVA>(tarifaInicial);
+  const [tarifa, setTarifa] = useState<TarifaIVAFormState>(formStateInicial);
   const [errors, setErrors] = useState<TarifaIVAFormErrors>({});
   const [tarifaAEliminar, setTarifaAEliminar] = useState<TarifaIVA | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -58,11 +59,11 @@ function TarifasIVAPage() {
     message: string;
   } | null>(null);
 
-  function validarTarifaLocal(item: TarifaIVA): TarifaIVAFormErrors {
+  function validarTarifaLocal(item: TarifaIVAFormState): TarifaIVAFormErrors {
     const errs: TarifaIVAFormErrors = {};
     const codigo = item.codigo.trim();
     const descripcion = item.descripcion.trim();
-    const strPorcentaje = String(item.porcentaje ?? "").trim();
+    const strPorcentaje = item.porcentaje.trim();
 
     if (!codigo) {
       errs.codigo = t("common.required", "El código es obligatorio.");
@@ -168,7 +169,7 @@ function TarifasIVAPage() {
     setTarifa({
       id: 0,
       codigo: "",
-      porcentaje: "" as unknown as number,
+      porcentaje: "",
       descripcion: "",
       estado: "ACTIVA",
     });
@@ -178,7 +179,13 @@ function TarifasIVAPage() {
 
   function abrirModalEditar(tarifaSeleccionada: TarifaIVA) {
     setModalMode("edit");
-    setTarifa({ ...tarifaSeleccionada });
+    setTarifa({
+      id: tarifaSeleccionada.id,
+      codigo: tarifaSeleccionada.codigo,
+      porcentaje: String(tarifaSeleccionada.porcentaje),
+      descripcion: tarifaSeleccionada.descripcion,
+      estado: tarifaSeleccionada.estado,
+    });
     setErrors({});
     setIsModalOpen(true);
   }
@@ -186,7 +193,7 @@ function TarifasIVAPage() {
   function cerrarModal() {
     if (isSaving) return;
     setIsModalOpen(false);
-    setTarifa(tarifaInicial);
+    setTarifa(formStateInicial);
     setErrors({});
     setModalMode("create");
   }
@@ -198,11 +205,9 @@ function TarifasIVAPage() {
     setTarifa((prev) => ({
       ...prev,
       [field]:
-        field === "porcentaje"
-          ? (value as unknown as number)
-          : field === "estado"
-            ? (value as EstadoTarifaIVA)
-            : value,
+        field === "estado"
+          ? (value as EstadoTarifaIVA)
+          : value,
     }));
 
     setErrors((prev) => ({
@@ -258,7 +263,7 @@ function TarifasIVAPage() {
       }
 
       setIsModalOpen(false);
-      setTarifa(tarifaInicial);
+      setTarifa(formStateInicial);
       setErrors({});
       setModalMode("create");
     } catch (error) {

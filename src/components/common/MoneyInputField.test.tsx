@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import MoneyInputField from "./MoneyInputField";
 
 describe("MoneyInputField", () => {
-  it("renderiza label, prefijo y valor formateado de forma legible", () => {
+  it("renderiza label, prefijo y valor formateado de forma legible con ₡", () => {
     render(
       <MoneyInputField
         label="Precio de venta"
@@ -18,6 +18,34 @@ describe("MoneyInputField", () => {
     expect(input).toBeInTheDocument();
     expect(input).toHaveValue("30 000");
     expect(screen.getByText("₡")).toBeInTheDocument();
+  });
+
+  it("renderiza correctamente monedas de compra internacionales como USD ($) y EUR (€)", () => {
+    const { rerender } = render(
+      <MoneyInputField
+        label="Costo USD"
+        value="12500.5"
+        onChange={vi.fn()}
+        currencySymbol="$"
+        allowDecimals={true}
+      />,
+    );
+
+    expect(screen.getByText("$")).toBeInTheDocument();
+    expect(screen.getByLabelText(/costo usd/i)).toHaveValue("12 500.5");
+
+    rerender(
+      <MoneyInputField
+        label="Costo EUR"
+        value="8400.75"
+        onChange={vi.fn()}
+        currencySymbol="€"
+        allowDecimals={true}
+      />,
+    );
+
+    expect(screen.getByText("€")).toBeInTheDocument();
+    expect(screen.getByLabelText(/costo eur/i)).toHaveValue("8 400.75");
   });
 
   it("permite escribir números y notifica el valor numérico limpio en onChange", async () => {

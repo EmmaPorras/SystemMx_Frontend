@@ -3,13 +3,13 @@ import InputField from "../common/InputField";
 import SelectField from "../common/SelectField";
 import PrimaryButton from "../common/PrimaryButton";
 import type {
-  TarifaIVA,
   TarifaIVAFormErrors,
   TarifaIVAFormField,
+  TarifaIVAFormState,
 } from "./tarifas-iva.types";
 
 type FormularioTarifaProps = {
-  tarifa: TarifaIVA;
+  tarifa: TarifaIVAFormState;
   errors: TarifaIVAFormErrors;
   isSubmitting?: boolean;
   submitLabel?: string;
@@ -29,11 +29,6 @@ function FormularioTarifa({
 }: FormularioTarifaProps) {
   const { t } = useTranslation();
   const resolvedSubmitLabel = submitLabel ?? t("common.save");
-
-  const rawPorcentaje =
-    tarifa.porcentaje === null || tarifa.porcentaje === undefined
-      ? ""
-      : String(tarifa.porcentaje);
 
   return (
     <form
@@ -61,7 +56,7 @@ function FormularioTarifa({
           label={t("vatRates.percentage", "Porcentaje (%)")}
           required
           type="text"
-          value={rawPorcentaje}
+          value={tarifa.porcentaje}
           onChange={(value) => {
             const clean = value.replace(",", ".").replace(/[^\d.]/g, "");
             const parts = clean.split(".");

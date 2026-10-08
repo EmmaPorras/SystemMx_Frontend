@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import AlertMessage from "../common/AlertMessage";
 import DataTableShell from "../common/DataTableShell";
 import InputField from "../common/InputField";
+import MoneyInputField from "../common/MoneyInputField";
 import PrimaryButton from "../common/PrimaryButton";
 import SelectField from "../common/SelectField";
 import TableActionButton from "../common/TableActionButton";
@@ -351,22 +352,19 @@ function FormularioDetallePedido({
             showCharacterCount
           />
 
-          <InputField
+          <MoneyInputField
             label={t("orders.costOrigin")}
-            type="text"
             value={detalleForm.costoUnitarioOrigen}
             onChange={(value) => onDetalleChange("costoUnitarioOrigen", value)}
             placeholder="0.00"
             required
             error={errors.costoUnitarioOrigen}
-            maxLength={8}
-            showCharacterCount
-            prefix={simboloMoneda}
+            currencySymbol={simboloMoneda}
+            allowDecimals={pedido.monedaCompra !== "CRC"}
           />
 
-          <InputField
+          <MoneyInputField
             label={t("orders.recommendedPrice")}
-            type="text"
             value={detalleForm.precioVentaRecomendado}
             onChange={(value) =>
               onDetalleChange("precioVentaRecomendado", value)
@@ -374,9 +372,8 @@ function FormularioDetallePedido({
             placeholder="0"
             required
             error={errors.precioVentaRecomendado}
-            maxLength={8}
-            showCharacterCount
-            prefix={simboloMoneda}
+            currencySymbol="₡"
+            allowDecimals={false}
           />
 
           {isEditingDetail && Number(detalleForm.cantidadRecibidaPrevia) > 0 ? (

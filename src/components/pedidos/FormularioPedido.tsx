@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import AlertMessage from "../common/AlertMessage";
 import InputField from "../common/InputField";
+import MoneyInputField from "../common/MoneyInputField";
 import PrimaryButton from "../common/PrimaryButton";
 import SelectField from "../common/SelectField";
 import type {
@@ -144,17 +145,17 @@ function FormularioPedido({
         />
 
         <div>
-          <InputField
+          <MoneyInputField
             label={t("orders.exchangeRate")}
-            type="text"
             value={pedido.tipoCambio}
             onChange={(value) => onChange("tipoCambio", value)}
             placeholder={compraLocal ? "1.00" : "520.00"}
             required={!compraLocal && Boolean(pedido.proveedorId)}
             disabled={!pedido.proveedorId || compraLocal}
             error={errors.tipoCambio}
-            maxLength={6}
-            showCharacterCount={!compraLocal && Boolean(pedido.proveedorId)}
+            currencySymbol="₡"
+            allowDecimals={true}
+            maxDecimals={4}
           />
           {!compraLocal && pedido.monedaCompra && pedido.monedaCompra !== "CRC" ? (
             <p className="mt-1 text-xs text-zinc-500">
