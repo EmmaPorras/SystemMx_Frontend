@@ -52,6 +52,30 @@ describe("FormularioVenta - Tarifas Dinámicas y MoneyInputField", () => {
     expect(screen.queryByText(/INACTIVA_TEST/)).not.toBeInTheDocument();
   });
 
+  it("impide agregar productos sin elegir explícitamente una tarifa del catálogo", async () => {
+    const user = userEvent.setup();
+    render(
+      <FormularioVenta
+        inventarioDisponible={mockInventario}
+        numeroVentaSugerido="0001"
+        tarifasIva={mockTarifas}
+        guardando={false}
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    const inputTarifa = screen.getByLabelText(/Tarifa/i) as HTMLSelectElement;
+    expect(inputTarifa.value).toBe("");
+
+    await user.selectOptions(screen.getByLabelText(/Producto/i), "1");
+    await user.click(screen.getByRole("button", { name: /Agregar a venta/i }));
+
+    expect(screen.getByText(/Debe seleccionar una tarifa válida/i)).toBeInTheDocument();
+    expect(inputTarifa.value).toBe("");
+    expect(screen.getByText(/Todavía no has agregado productos/i)).toBeInTheDocument();
+  });
+
   it("calcula exactamente 5% de IVA y envía idTarifaIva al seleccionar tarifa activa de 5%", async () => {
     const user = userEvent.setup();
     const handleSubmit = vi.fn();
