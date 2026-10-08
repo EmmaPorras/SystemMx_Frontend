@@ -1,4 +1,6 @@
-import { useId } from "react";
+import { useId, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type InputFieldProps = {
   label: string;
@@ -43,11 +45,16 @@ function InputField({
   name,
   className = "",
 }: InputFieldProps) {
+  const { t } = useTranslation();
   const generatedId = useId();
   const inputId = customId || generatedId;
   const errorId = `${inputId}-error`;
   const helperId = `${inputId}-helper`;
   const countId = `${inputId}-count`;
+
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === "password";
+  const effectiveType = isPassword ? (showPassword ? "text" : "password") : type;
 
   const hasPrefix = Boolean(prefix);
   const stringValue = String(value ?? "");
@@ -88,7 +95,7 @@ function InputField({
         <input
           id={inputId}
           name={name}
-          type={type}
+          type={effectiveType}
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
@@ -103,13 +110,33 @@ function InputField({
           aria-invalid={Boolean(error)}
           aria-describedby={describedBy}
           className={`w-full rounded-xl border py-2 text-xs sm:text-sm outline-none shadow-2xs transition disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 ${
-            hasPrefix ? "pl-8 pr-3" : "px-3"
+            hasPrefix ? "pl-8 pr-3" : isPassword ? "pl-3 pr-10" : "px-3"
           } ${
             error
               ? "border-rose-300 bg-rose-50/40 text-zinc-900 focus-visible:border-rose-500 focus-visible:ring-2 focus-visible:ring-rose-200"
               : "border-zinc-200/90 bg-white text-zinc-900 hover:border-zinc-300 focus-visible:border-zinc-950 focus-visible:ring-2 focus-visible:ring-zinc-950/10"
           }`}
         />
+
+        {isPassword ? (
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            aria-label={
+              showPassword
+                ? t("auth.hidePassword", "Ocultar contraseña")
+                : t("auth.showPassword", "Mostrar contraseña")
+            }
+            title={
+              showPassword
+                ? t("auth.hidePassword", "Ocultar contraseña")
+                : t("auth.showPassword", "Mostrar contraseña")
+            }
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 rounded-lg p-1 transition"
+          >
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        ) : null}
       </div>
 
       <div className="mt-1.5 flex items-start justify-between gap-3">

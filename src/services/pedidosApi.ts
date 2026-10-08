@@ -45,6 +45,18 @@ function mapPedidoToUpdatePayload(pedido: PedidoCompra) {
     observaciones:
       pedido.observaciones?.trim() || undefined,
     estado: pedido.estado,
+    detalles: pedido.detalles.map((detalle) => ({
+      productoId: detalle.productoId,
+      productoNombre: detalle.productoNombre.trim(),
+      categoriaId: Number(detalle.categoriaId),
+      marca: detalle.marca?.trim() || undefined,
+      loteCodigo: detalle.loteCodigo,
+      cantidad: Number(detalle.cantidad),
+      cantidadRecibida: 0,
+      costoUnitarioOrigen: Number(detalle.costoUnitarioOrigen),
+      precioVentaRecomendado: Number(detalle.precioVentaRecomendado),
+      estadoLote: "EN_PROCESO" as const,
+    })),
   };
 }
 

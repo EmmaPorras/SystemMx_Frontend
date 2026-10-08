@@ -402,8 +402,7 @@ function PedidosPage() {
     setModalAbierto(true);
   }
 
-  function cerrarModal() {
-    if (guardando) return;
+  function limpiarEstadoModal() {
     setModalAbierto(false);
     setPasoModal(1);
     setPedido({ ...pedidoInicial });
@@ -417,7 +416,11 @@ function PedidosPage() {
     setCabeceraErrors({});
     setDetalleErrors({});
     setModalAlert(null);
-    setGuardando(false);
+  }
+
+  function cerrarModal() {
+    if (guardando) return;
+    limpiarEstadoModal();
   }
 
   function actualizarPedido(field: keyof PedidoCompra, value: string) {
@@ -972,12 +975,24 @@ function PedidosPage() {
             item.id === pedidoEditandoId ? actualizado : item,
           ),
         );
+
+        if (pedidoDetalle?.id === pedidoEditandoId) {
+          setPedidoDetalle(actualizado);
+        }
+
+        setPageAlert(
+          `El pedido #${actualizado.numeroPedido} fue actualizado correctamente.`,
+        );
       } else {
         const creado = await crearPedidoApi(pedidoParaGuardar);
         setPedidos((prev) => [creado, ...prev]);
+        setPageAlert(
+          `El pedido #${creado.numeroPedido} fue registrado correctamente.`,
+        );
       }
 
-      cerrarModal();
+      await cargarDatos();
+      limpiarEstadoModal();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "No se pudo guardar el pedido.";

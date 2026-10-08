@@ -227,17 +227,17 @@ function FormularioVenta({
 
   const tipoTarifaOptions = useMemo(
     () => [
-      { value: "EXENTO", label: `${t("vatRates.title", "Exento")} 0%` },
+      { value: "EXENTO", label: `${t("vatRates.title", "Tarifa")} ${t("vatRates.exempt", "Exento")} 0%` },
       { value: "IVA", label: `${t("sales.tax", "IVA")} 13%` },
-      { value: "ESPECIAL", label: t("vatRates.title", "Tarifa especial") },
+      { value: "ESPECIAL", label: t("sales.specialRate", "Tarifa especial") },
     ],
     [t],
   );
 
   const modoDescuentoOptions = useMemo(
     () => [
-      { value: "FIFO", label: t("sales.title", "Automático FIFO") },
-      { value: "MANUAL", label: t("sales.title", "Seleccionar lote manualmente") },
+      { value: "FIFO", label: t("sales.selectFifo", "Automático FIFO") },
+      { value: "MANUAL", label: t("sales.selectManual", "Seleccionar lote manualmente") },
     ],
     [t],
   );
@@ -808,7 +808,7 @@ function FormularioVenta({
               />
 
               <SelectField
-                label={t("sales.title", "Modo de descuento")}
+                label={t("sales.discountMode", "Modo de descuento")}
                 value={detalleForm.modoDescuentoLote}
                 onChange={(value) =>
                   actualizarDetalle("modoDescuentoLote", value)
@@ -870,7 +870,7 @@ function FormularioVenta({
               />
 
               <SelectField
-                label={t("vatRates.title", "Tarifa")}
+                label={t("sales.vatRate", "Tarifa")}
                 value={detalleForm.tipoTarifa}
                 onChange={(value) => actualizarDetalle("tipoTarifa", value)}
                 options={tipoTarifaOptions}
@@ -899,7 +899,7 @@ function FormularioVenta({
 
             <div className="mt-5 flex flex-wrap gap-3">
               <PrimaryButton onClick={agregarOActualizarDetalle}>
-                {detalleEditandoId ? t("common.saveChanges", "Actualizar línea") : `+ ${t("sales.newSale", "Agregar a venta")}`}
+                {detalleEditandoId ? t("sales.updateProduct", "Actualizar producto") : `+ ${t("sales.addToSale", "Agregar a venta")}`}
               </PrimaryButton>
 
               {detalleEditandoId ? (
@@ -1246,10 +1246,10 @@ function FormularioVenta({
               <PrimaryButton
                 onClick={() => guardarVenta()}
                 loading={guardando}
-                loadingText={t("common.processing", "Procesando venta...")}
+                loadingText={t("sales.processingSale", "Procesando venta...")}
                 disabled={guardando}
               >
-                {t("sales.newSale", "Procesar venta")}
+                {t("sales.processSale", "Procesar venta")}
               </PrimaryButton>
             </div>
           </div>

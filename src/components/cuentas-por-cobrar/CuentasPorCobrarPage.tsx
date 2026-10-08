@@ -203,16 +203,19 @@ function CuentasPorCobrarPage() {
 
       <SectionCard
         title={t("receivables.maturities", "Vencimientos")}
-        description={t("receivables.maturitiesDesc", "La clasificación proviene directamente del reporte oficial del backend.")}
+        description={t("receivables.evaluationNotice", "Se evalúan los saldos pendientes actuales comparando sus fechas límite de pago contra la fecha seleccionada.")}
       >
-        <div className="mb-5 flex max-w-md flex-col gap-3 sm:flex-row sm:items-end">
-          <InputField
-            label={t("receivables.cutoffDate", "Fecha de corte")}
-            type="date"
-            value={fechaCorte}
-            onChange={setFechaCorte}
-            disabled={loading}
-          />
+        <div className="mb-5 flex max-w-lg flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1">
+            <InputField
+              label={t("receivables.evaluateDueDateTo", "Evaluar vencimientos al")}
+              type="date"
+              value={fechaCorte}
+              onChange={setFechaCorte}
+              disabled={loading}
+              helperText={t("receivables.evaluationHelper", "Clasifica los saldos pendientes actuales según esta fecha límite de referencia.")}
+            />
+          </div>
 
           <PrimaryButton
             onClick={() => {

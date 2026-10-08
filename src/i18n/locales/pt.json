@@ -54,7 +54,11 @@
     "deleting": "Excluindo...",
     "errorOccurred": "Ocorreu um erro",
     "notice": "Aviso",
-    "success": "Sucesso"
+    "success": "Sucesso",
+    "code": "Código",
+    "retry": "Tentar novamente",
+    "next": "Avançar",
+    "you": "(Você)"
   },
   "language": {
     "label": "Idioma",
@@ -144,9 +148,11 @@
     "resetSuccess": "Senha atualizada!",
     "resetSuccessMessage": "Sua senha foi atualizada. Todas as sessões anteriores foram encerradas por segurança.",
     "passwordsDoNotMatch": "As senhas não coincidem.",
-    "passwordMinLength": "A senha deve ter pelo menos 12 caracteres.",
+    "passwordMinLength": "A senha deve ter pelo menos 8 caracteres.",
     "invalidTokenTitle": "Link inválido ou expirado",
-    "invalidTokenMessage": "Este link seguro de uso único é inválido ou expirou. Se precisar de acesso, solicite um novo link ou entre em contato com o administrador."
+    "invalidTokenMessage": "Este link seguro de uso único é inválido ou expirou. Se precisar de acesso, solicite um novo link ou entre em contato com o administrador.",
+    "hidePassword": "Ocultar senha",
+    "showPassword": "Mostrar senha"
   },
   "appLayout": {
     "admin": "Administrador",
@@ -172,7 +178,8 @@
     "perPage": "{{count}} por página",
     "pageOf": "Página {{current}} de {{total}}",
     "previousPage": "Página anterior",
-    "nextPage": "Próxima página"
+    "nextPage": "Próxima página",
+    "recordsCount": "{{count}} registros"
   },
   "dialog": {
     "confirmTitle": "Confirmar ação",
@@ -334,7 +341,8 @@
     "noSalesInPeriod": "Não há vendas neste período",
     "changePeriodHint": "Altere o período do gráfico para consultar outros dados.",
     "units": "Unidades",
-    "profitGain": "+ {{amount}} lucro"
+    "profitGain": "+ {{amount}} lucro",
+    "unitsCount": "{{count}} unidades"
   },
   "categories": {
     "title": "Categorias",
@@ -358,10 +366,10 @@
     "descMaxLength": "A descrição não pode exceder 255 caracteres."
   },
   "vatRates": {
-    "title": "Alíquotas de IVA",
-    "subtitle": "Gerencie as alíquotas de impostos aplicáveis.",
-    "newRate": "Nova alíquota de IVA",
-    "editRate": "Editar alíquota de IVA",
+    "title": "Tarifas",
+    "subtitle": "Gerencie as alíquotas e tarifas aplicáveis.",
+    "newRate": "Nova tarifa",
+    "editRate": "Editar tarifa",
     "percentage": "Alíquota (%)",
     "percentagePlaceholder": "Ex.: 13, 8, 4, 0",
     "description": "Descrição",
@@ -370,14 +378,15 @@
     "createSuccess": "Alíquota criada com sucesso.",
     "updateSuccess": "Alíquota atualizada com sucesso.",
     "deleteConfirmTitle": "Excluir alíquota",
-    "deleteConfirmMessage": "Deseja excluir esta alíquota de IVA?",
+    "deleteConfirmMessage": "Deseja excluir esta tarifa?",
     "deleteSuccess": "Alíquota excluída com sucesso.",
-    "emptyTitle": "Nenhuma alíquota de IVA cadastrada",
-    "emptyDesc": "Adicione uma alíquota para aplicá-la aos produtos e vendas.",
+    "emptyTitle": "Nenhuma tarifa registrada",
+    "emptyDesc": "Adicione uma tarifa para aplicá-la a produtos e vendas.",
     "percentageRequired": "A alíquota é obrigatória.",
     "percentageMin": "A alíquota não pode ser negativa.",
     "percentageMax": "A alíquota não pode ser superior a 100.",
-    "descriptionRequired": "A descrição é obrigatória."
+    "descriptionRequired": "A descrição é obrigatória.",
+    "exempt": "Isento"
   },
   "suppliers": {
     "title": "Fornecedores",
@@ -491,7 +500,12 @@
     "supplierRequired": "O fornecedor é obrigatório.",
     "currencyRequired": "A moeda é obrigatória.",
     "exchangeRatePositive": "A taxa de câmbio deve ser maior que 0.",
-    "detailsRequired": "Adicione pelo menos um produto ao pedido."
+    "detailsRequired": "Adicione pelo menos um produto ao pedido.",
+    "addOrder": "Novo pedido",
+    "detailTitle": "Detalhes do pedido",
+    "cancelConfirmTitle": "Cancelar pedido",
+    "cancelConfirmMessage": "Tem certeza de que deseja cancelar o pedido #{{number}}? Esta ação é definitiva.",
+    "orderSummary": "Resumo do pedido"
   },
   "lots": {
     "title": "Lotes de Estoque",
@@ -632,7 +646,35 @@
     "trashError": "Não foi possível enviar a venda para a lixeira.",
     "restoreError": "Não foi possível restaurar a venda.",
     "voidError": "Não foi possível cancelar a venda.",
-    "saveError": "Não foi possível salvar a venda."
+    "saveError": "Não foi possível salvar a venda.",
+    "addToSale": "Adicionar à venda",
+    "updateProduct": "Atualizar produto",
+    "processSale": "Processar venda",
+    "processingSale": "Processando venda...",
+    "selectFifo": "Automático FIFO",
+    "selectManual": "Selecionar lote manualmente",
+    "vatRate": "Tarifa",
+    "specialRate": "Tarifa especial",
+    "discountMode": "Modo de desconto",
+    "lotUnavailable": "O lote selecionado não existe ou não possui estoque disponível.",
+    "discountInvalid": "O desconto deve ser uma porcentagem entre 0 e 100.",
+    "specialRateRequired": "Você deve especificar a porcentagem da tarifa especial.",
+    "specialRateInvalid": "A porcentagem da tarifa especial deve ser válida.",
+    "dateRequired": "A data da venda é obrigatória.",
+    "paymentMethodRequired": "Você deve selecionar um método de pagamento.",
+    "totalPositive": "O total da venda deve ser maior que zero.",
+    "fifoNotice": "Por padrão, o desconto é feito via FIFO. Os itens adicionados reservam estoque temporariamente para evitar vender mais do que o disponível.",
+    "discountHint": "Porcentagem de desconto sobre o subtotal desta linha (0 a 100).",
+    "generalDataDesc": "Registre o comprador e o pagamento. Se houver saldo devedor, a venda será registrada em devedores.",
+    "autoNumberNotice": "O número é atribuído automaticamente ao salvar a venda.",
+    "cashPayment": "Pagamento em dinheiro",
+    "sinpePayment": "Pagamento por SINPE / transferência",
+    "unpaidHelper": "Se permanecer em 0, o valor total é registrado como dívida.",
+    "deliveryDate": "Data de entrega",
+    "change": "Troco",
+    "debtWarning": "Esta venda possui saldo devedor pendente.",
+    "reviewPayment": "Revisar pagamento",
+    "changeReturn": "Troco a devolver"
   },
   "receivables": {
     "title": "Contas a Receber",
@@ -678,7 +720,10 @@
     "sale": "Venda",
     "noClient": "Sem cliente",
     "date": "Data",
-    "balance": "Saldo"
+    "balance": "Saldo",
+    "evaluateDueDateTo": "Avaliar vencimentos em",
+    "evaluationNotice": "Os saldos pendentes atuais são avaliados comparando as datas de vencimento com a data selecionada.",
+    "evaluationHelper": "Classifica os saldos pendentes atuais com base nesta data de corte de referência."
   },
   "reports": {
     "title": "Relatórios e Análises",
@@ -747,7 +792,11 @@
     "familyCompras": "Compras",
     "familyPagos": "Pagamentos",
     "familyCuentas": "Contas a receber",
-    "familyAuditoria": "Auditoria"
+    "familyAuditoria": "Auditoria",
+    "reportsCount": "{{count}} relatórios",
+    "familiesCount": "{{count}} famílias",
+    "consultReport": "Consultar {{count}} relatórios",
+    "readyToExport": "{{count}} relatórios prontos para exportar"
   },
   "reportExport": {
     "documentTitle": "SystemMx - Relatórios",
@@ -781,7 +830,8 @@
     "noRecords": "Sem registros",
     "filter": "Filtro",
     "filters": "Filtros",
-    "allPeriod": "Sem filtros"
+    "allPeriod": "Sem filtros",
+    "recordsCount": "{{count}} registros"
   },
   "audit": {
     "title": "Auditoria do Sistema",
@@ -861,7 +911,8 @@
     "filterAction": "Tipo de ação",
     "allActions": "Todas as ações",
     "emptyTitle": "Nenhum registro de auditoria",
-    "emptyDesc": "As ações operacionais do sistema ficarão registradas aqui."
+    "emptyDesc": "As ações operacionais do sistema ficarão registradas aqui.",
+    "dateRangeError": "A data inicial não pode ser posterior à data final."
   },
   "validation": {
     "required": "Este campo é obrigatório.",
@@ -926,6 +977,11 @@
     "rolePurchases": "Encarregado de compras",
     "forbiddenTitle": "Acesso negado",
     "forbiddenDesc": "Sua conta (função {{role}}) não tem permissão para acessar esta seção.",
-    "goToAllowedHome": "Ir para módulo atribuído"
+    "goToAllowedHome": "Ir para módulo atribuído",
+    "nameMinLength": "O nome deve ter pelo menos 2 caracteres.",
+    "usernameLength": "O usuário deve ter entre 3 e 50 caracteres.",
+    "usernameInvalidChars": "O nome de usuário pode conter apenas letras, números, pontos, hífens e sublinhados.",
+    "inviteNotice": "Um e-mail seguro com o link de ativação será enviado para o usuário configurar sua senha.",
+    "noEmail": "Nenhum e-mail registrado"
   }
 }

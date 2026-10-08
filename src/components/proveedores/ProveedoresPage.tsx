@@ -147,18 +147,12 @@ function ProveedoresPage() {
       ),
     ).sort((a, b) => a.localeCompare(b));
 
-    return [
-      { value: "", label: t("suppliers.allCountries") },
-      ...unicos.map((pais) => ({ value: pais, label: pais })),
-    ];
-  }, [proveedores, t]);
+    return unicos.map((pais) => ({ value: pais, label: pais }));
+  }, [proveedores]);
 
   const monedasRegistradasOptions = useMemo(() => {
-    return [
-      { value: "", label: t("common.all") },
-      ...monedaPreferidaOptions,
-    ];
-  }, [t]);
+    return monedaPreferidaOptions;
+  }, []);
 
   const proveedoresFiltrados = useMemo(() => {
     const query = busqueda.trim().toLowerCase();

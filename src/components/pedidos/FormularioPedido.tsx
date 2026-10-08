@@ -26,19 +26,21 @@ type FormularioPedidoProps = {
 };
 
 const monedas: Array<{ value: MonedaCompra; label: string }> = [
-  { value: "CRC", label: "₡ CRC - Colones" },
-  { value: "USD", label: "$ USD - Dólares" },
-  { value: "EUR", label: "€ EUR - Euros" },
+  { value: "CRC", label: "CRC - Colones costarricenses (₡)" },
+  { value: "USD", label: "USD - Dólares estadounidenses ($)" },
+  { value: "EUR", label: "EUR - Euros (€)" },
   { value: "COP", label: "COP - Pesos colombianos" },
-  { value: "BRL", label: "R$ BRL - Reales brasileños" },
+  { value: "BRL", label: "BRL - Reales brasileños (R$)" },
 ];
 
 function esCostaRica(pais: string) {
-  return pais
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase() === "costa rica";
+  return (
+    pais
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase() === "costa rica"
+  );
 }
 
 function FormularioPedido({
@@ -77,9 +79,7 @@ function FormularioPedido({
 
           <div className="flex min-h-[42px] items-center rounded-xl border border-zinc-300 bg-zinc-50 px-3.5 py-2.5 text-sm">
             <span className="font-semibold text-zinc-950">
-              {pedido.numeroPedido
-                ? `#${pedido.numeroPedido}`
-                : "—"}
+              {pedido.numeroPedido ? `#${pedido.numeroPedido}` : "—"}
             </span>
           </div>
         </div>
@@ -108,7 +108,10 @@ function FormularioPedido({
 
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-zinc-700">
-            {t("orders.origin")}<span className="ml-1 text-red-500" aria-hidden="true">*</span>
+            {t("orders.origin")}
+            <span className="ml-1 text-red-500" aria-hidden="true">
+              *
+            </span>
           </label>
 
           <div
@@ -140,18 +143,28 @@ function FormularioPedido({
           options={monedas}
         />
 
-        <InputField
-          label={t("orders.exchangeRate")}
-          type="text"
-          value={pedido.tipoCambio}
-          onChange={(value) => onChange("tipoCambio", value)}
-          placeholder={compraLocal ? "1.00" : "445.00"}
-          required={!compraLocal && Boolean(pedido.proveedorId)}
-          disabled={!pedido.proveedorId || compraLocal}
-          error={errors.tipoCambio}
-          maxLength={6}
-          showCharacterCount={!compraLocal && Boolean(pedido.proveedorId)}
-        />
+        <div>
+          <InputField
+            label={t("orders.exchangeRate")}
+            type="text"
+            value={pedido.tipoCambio}
+            onChange={(value) => onChange("tipoCambio", value)}
+            placeholder={compraLocal ? "1.00" : "520.00"}
+            required={!compraLocal && Boolean(pedido.proveedorId)}
+            disabled={!pedido.proveedorId || compraLocal}
+            error={errors.tipoCambio}
+            maxLength={6}
+            showCharacterCount={!compraLocal && Boolean(pedido.proveedorId)}
+          />
+          {!compraLocal && pedido.monedaCompra && pedido.monedaCompra !== "CRC" ? (
+            <p className="mt-1 text-xs text-zinc-500">
+              1 {pedido.monedaCompra} equivale a{" "}
+              <span className="font-semibold text-zinc-700">
+                {pedido.tipoCambio ? `₡ ${pedido.tipoCambio}` : "X CRC"}
+              </span>
+            </p>
+          ) : null}
+        </div>
 
         <SelectField
           label={t("common.status")}

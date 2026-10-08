@@ -74,7 +74,7 @@ function RestablecerPasswordPage() {
 
     if (!password) {
       nextErrors.password = t("auth.passwordRequired");
-    } else if (password.length < 12) {
+    } else if (password.length < 8) {
       nextErrors.password = t("auth.passwordMinLength");
     } else if (password.length > 128) {
       nextErrors.password = t("auth.passwordMaxLength");
