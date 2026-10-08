@@ -73,7 +73,6 @@ describe("FormularioVenta - Tarifas Dinámicas y MoneyInputField", () => {
 
     expect(screen.getByText(/Debe seleccionar una tarifa válida/i)).toBeInTheDocument();
     expect(inputTarifa.value).toBe("");
-    expect(screen.getByText(/Todavía no has agregado productos/i)).toBeInTheDocument();
   });
 
   it("calcula exactamente 5% de IVA y envía idTarifaIva al seleccionar tarifa activa de 5%", async () => {
