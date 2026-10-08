@@ -104,13 +104,13 @@ describe(
 
         expect(
           screen.getByText(
-            "VENDIDO PARCIAL",
+            /vendido parcial/i,
           ),
         ).toBeInTheDocument();
 
         expect(
           screen.getByLabelText(
-            "Ver detalle",
+            /detalle/i,
           ),
         ).toBeInTheDocument();
 

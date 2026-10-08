@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import AlertMessage from "../common/AlertMessage";
 import DataTableShell from "../common/DataTableShell";
 import InputField from "../common/InputField";
 import PrimaryButton from "../common/PrimaryButton";
 import SelectField from "../common/SelectField";
-import { formatCurrency } from "../common/formatters";
+import { formatCurrency, getActiveLocale } from "../common/formatters";
+import { getPaymentMethodLabel } from "../../i18n/statusMap";
 import type {
   CrearVentaPayload,
   InventarioDisponibleVenta,
@@ -36,23 +38,6 @@ type CabeceraVentaForm = {
   observaciones: string;
 };
 
-const metodosPagoOptions = [
-  { value: "EFECTIVO", label: "Efectivo" },
-  { value: "SINPE", label: "SINPE" },
-  { value: "TRANSFERENCIA", label: "Transferencia" },
-  { value: "MIXTO", label: "Mixto" },
-];
-
-const tipoTarifaOptions = [
-  { value: "EXENTO", label: "Exento 0%" },
-  { value: "IVA", label: "IVA 13%" },
-  { value: "ESPECIAL", label: "Tarifa especial" },
-];
-
-const modoDescuentoOptions = [
-  { value: "FIFO", label: "Automa¡tico FIFO" },
-  { value: "MANUAL", label: "Seleccionar lote manualmente" },
-];
 
 function crearDetalleInicial(): VentaDetalleForm {
   return {
@@ -80,7 +65,7 @@ function limpiarMonto(value: string, maxDigits: number) {
 
   if (!digits) return "";
 
-  return new Intl.NumberFormat("es-CR", {
+  return new Intl.NumberFormat(getActiveLocale(), {
     maximumFractionDigits: 0,
   }).format(Number(digits));
 }
@@ -226,6 +211,37 @@ function FormularioVenta({
   onSubmit,
   onCancel,
 }: FormularioVentaProps) {
+  const { t } = useTranslation();
+
+  const metodosPagoOptions = useMemo(
+    () => [
+      { value: "EFECTIVO", label: getPaymentMethodLabel(t, "EFECTIVO") },
+      { value: "SINPE", label: getPaymentMethodLabel(t, "SINPE") },
+      { value: "TRANSFERENCIA", label: getPaymentMethodLabel(t, "TRANSFERENCIA") },
+      { value: "TARJETA", label: getPaymentMethodLabel(t, "TARJETA") },
+      { value: "MIXTO", label: getPaymentMethodLabel(t, "MIXTO") },
+      { value: "OTRO", label: getPaymentMethodLabel(t, "OTRO") },
+    ],
+    [t],
+  );
+
+  const tipoTarifaOptions = useMemo(
+    () => [
+      { value: "EXENTO", label: `${t("vatRates.title", "Exento")} 0%` },
+      { value: "IVA", label: `${t("sales.tax", "IVA")} 13%` },
+      { value: "ESPECIAL", label: t("vatRates.title", "Tarifa especial") },
+    ],
+    [t],
+  );
+
+  const modoDescuentoOptions = useMemo(
+    () => [
+      { value: "FIFO", label: t("sales.title", "Automático FIFO") },
+      { value: "MANUAL", label: t("sales.title", "Seleccionar lote manualmente") },
+    ],
+    [t],
+  );
+
   const today = new Date().toISOString().slice(0, 10);
 
   const [paso, setPaso] = useState<1 | 2>(1);
@@ -511,7 +527,7 @@ function FormularioVenta({
 
     if (detalleForm.modoDescuentoLote === "MANUAL") {
       if (!detalleForm.loteId) {
-        return "Debe seleccionar un lote en modo manual.";
+        return t("validation.required", "Debe seleccionar un lote en modo manual.");
       }
 
       const lote = lotesDelProducto.find(
@@ -519,16 +535,16 @@ function FormularioVenta({
       );
 
       if (!lote) {
-        return "El lote seleccionado no existe o ya no tiene stock disponible.";
+        return t("sales.lotUnavailable", "El lote seleccionado no existe o ya no tiene stock disponible.");
       }
 
       if (cantidad > lote.cantidadDisponible) {
-        return `Stock insuficiente en ${lote.loteCodigo}. Disponible: ${lote.cantidadDisponible}.`;
+        return `${t("sales.insufficientStock", "Stock insuficiente")} (${lote.loteCodigo}). ${t("lots.availableQuantity", "Disponible")}: ${lote.cantidadDisponible}.`;
       }
     }
 
     if (precioUnitario <= 0) {
-      return "El precio unitario debe ser mayor a cero.";
+      return t("validation.positiveNumber", "El precio unitario debe ser mayor a cero.");
     }
 
     if (
@@ -536,16 +552,16 @@ function FormularioVenta({
       porcentajeDescuento < 0 ||
       porcentajeDescuento > 100
     ) {
-      return "El descuento debe ser un porcentaje entre 0 y 100.";
+      return t("sales.discountInvalid", "El descuento debe ser un porcentaje entre 0 y 100.");
     }
 
     if (detalleForm.tipoTarifa === "ESPECIAL") {
       if (!detalleForm.porcentajeIva.trim()) {
-        return "Debe indicar el porcentaje de la tarifa especial.";
+        return t("sales.specialRateRequired", "Debe indicar el porcentaje de la tarifa especial.");
       }
 
       if (parsePorcentaje(detalleForm.porcentajeIva) < 0) {
-        return "La tarifa especial debe ser va¡lida.";
+        return t("sales.specialRateInvalid", "La tarifa especial debe ser válida.");
       }
     }
 
@@ -601,7 +617,7 @@ function FormularioVenta({
 
   function pasarADatosGenerales() {
     if (detalles.length === 0) {
-      setFormError("Debe agregar al menos un producto vendido.");
+      setFormError(t("sales.productsRequired", "Debe agregar al menos un producto vendido."));
       return;
     }
 
@@ -611,23 +627,23 @@ function FormularioVenta({
 
   function validarVentaCompleta() {
     if (!cabecera.fechaVenta) {
-      return "La fecha de venta es obligatoria.";
+      return t("sales.dateRequired", "La fecha de venta es obligatoria.");
     }
 
     if (!cabecera.metodoPago) {
-      return "Debe seleccionar un método de pago.";
+      return t("sales.paymentMethodRequired", "Debe seleccionar un método de pago.");
     }
 
     if (cabecera.observaciones.length > 150) {
-      return "Las observaciones no pueden superar 150 caracteres.";
+      return t("validation.maxLength", { count: 150 });
     }
 
     if (detalles.length === 0) {
-      return "Debe agregar al menos un producto vendido.";
+      return t("sales.productsRequired", "Debe agregar al menos un producto vendido.");
     }
 
     if (resumenVenta.totalVenta <= 0) {
-      return "El total de la venta debe ser mayor a cero.";
+      return t("sales.totalPositive", "El total de la venta debe ser mayor a cero.");
     }
 
     return null;
@@ -688,7 +704,7 @@ function FormularioVenta({
       <div className="grid gap-3 md:grid-cols-4">
         <div className="rounded-2xl bg-slate-50 p-4">
           <p className="text-xs font-semibold uppercase text-slate-500">
-            Subtotal
+            {t("sales.subtotal", "Subtotal")}
           </p>
           <p className="mt-1 text-lg font-bold text-slate-950">
             {formatCurrency(resumenVenta.subtotal)}
@@ -697,7 +713,7 @@ function FormularioVenta({
 
         <div className="rounded-2xl bg-slate-50 p-4">
           <p className="text-xs font-semibold uppercase text-slate-500">
-            Descuento
+            {t("sales.discount", "Descuento")}
           </p>
           <p className="mt-1 text-lg font-bold text-slate-950">
             {formatCurrency(resumenVenta.descuentoTotal)}
@@ -705,7 +721,9 @@ function FormularioVenta({
         </div>
 
         <div className="rounded-2xl bg-slate-50 p-4">
-          <p className="text-xs font-semibold uppercase text-slate-500">IVA</p>
+          <p className="text-xs font-semibold uppercase text-slate-500">
+            {t("sales.tax", "IVA")}
+          </p>
           <p className="mt-1 text-lg font-bold text-slate-950">
             {formatCurrency(resumenVenta.ivaTotal)}
           </p>
@@ -713,7 +731,7 @@ function FormularioVenta({
 
         <div className="rounded-2xl bg-slate-900 p-4 text-white">
           <p className="text-xs font-semibold uppercase text-slate-300">
-            Total
+            {t("sales.total", "Total")}
           </p>
           <p className="mt-1 text-lg font-bold">
             {formatCurrency(resumenVenta.totalVenta)}
@@ -728,7 +746,7 @@ function FormularioVenta({
       {alertMessage ? (
         <AlertMessage
           variant="error"
-          title="No se pudo guardar la venta"
+          title={t("common.errorOccurred", "No se pudo guardar la venta")}
           message={alertMessage}
         />
       ) : null}
@@ -736,7 +754,7 @@ function FormularioVenta({
       {formError ? (
         <AlertMessage
           variant="error"
-          title="Revisa¡ la informacia³n"
+          title={t("common.errorOccurred", "Revise la información")}
           message={formError}
           onClose={() => setFormError(null)}
         />
@@ -750,7 +768,7 @@ function FormularioVenta({
               : "border border-slate-300 text-slate-600"
           }`}
         >
-          1. Producto vendido
+          1. {t("products.title", "Producto vendido")}
         </span>
 
         <span
@@ -760,7 +778,7 @@ function FormularioVenta({
               : "border border-slate-300 text-slate-600"
           }`}
         >
-          2. Datos generales
+          2. {t("common.details", "Datos generales")}
         </span>
       </div>
 
@@ -769,29 +787,28 @@ function FormularioVenta({
           <div className="rounded-2xl border border-slate-200 p-4">
             <div className="mb-4">
               <h3 className="text-base font-bold text-slate-950">
-                Producto vendido
+                {t("products.title", "Producto vendido")}
               </h3>
               <p className="text-sm text-slate-600">
-                Por defecto se descuenta usando FIFO. Lo agregado en esta venta
-                se reserva temporalmente para no vender ma¡s stock del disponible.
+                {t("sales.fifoNotice", "Por defecto se descuenta usando FIFO. Lo agregado en esta venta se reserva temporalmente para no vender más stock del disponible.")}
               </p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <SelectField
-                label="Producto"
+                label={t("products.title", "Producto")}
                 value={detalleForm.productoId}
                 onChange={(value) => actualizarDetalle("productoId", value)}
-                placeholder="Seleccione producto"
+                placeholder={t("products.categoryPlaceholder", "Seleccione producto")}
                 required
                 options={productosDisponibles.map((producto) => ({
                   value: String(producto.id),
-                  label: `${producto.nombre}  Stock ${producto.stockTotal}`,
+                  label: `${producto.nombre}  ${t("products.stock", "Stock")} ${producto.stockTotal}`,
                 }))}
               />
 
               <SelectField
-                label="Modo de descuento"
+                label={t("sales.title", "Modo de descuento")}
                 value={detalleForm.modoDescuentoLote}
                 onChange={(value) =>
                   actualizarDetalle("modoDescuentoLote", value)
@@ -802,14 +819,14 @@ function FormularioVenta({
 
               {detalleForm.modoDescuentoLote === "MANUAL" ? (
                 <SelectField
-                  label="Lote"
+                  label={t("lots.title", "Lote")}
                   value={detalleForm.loteId}
                   onChange={(value) => actualizarDetalle("loteId", value)}
-                  placeholder="Seleccione lote"
+                  placeholder={t("lots.details", "Seleccione lote")}
                   required
                   options={lotesDelProducto.map((lote) => ({
                     value: String(lote.loteId),
-                    label: `Pedido ${lote.numeroPedido}  ${lote.loteCodigo}  Stock ${lote.cantidadDisponible}`,
+                    label: `${t("navigation.orders", "Pedido")} ${lote.numeroPedido}  ${lote.loteCodigo}  ${t("products.stock", "Stock")} ${lote.cantidadDisponible}`,
                   }))}
                 />
               ) : (
@@ -818,13 +835,13 @@ function FormularioVenta({
                     Stock FIFO
                   </p>
                   <p className="mt-1 text-sm text-slate-500">
-                    Disponible total: {stockProductoSeleccionado}
+                    {t("lots.availableQuantity", "Disponible total")}: {stockProductoSeleccionado}
                   </p>
                 </div>
               )}
 
               <InputField
-                label="Cantidad"
+                label={t("common.quantity", "Cantidad")}
                 value={detalleForm.cantidad}
                 onChange={(value) => actualizarDetalle("cantidad", value)}
                 required
@@ -833,27 +850,27 @@ function FormularioVenta({
               />
 
               <InputField
-                label="Precio unitario"
+                label={t("lots.salePrice", "Precio unitario")}
                 value={detalleForm.precioUnitario}
                 onChange={(value) => actualizarDetalle("precioUnitario", value)}
                 placeholder="0"
                 required
-                prefix="{MonedaSymbol}"
+                prefix="₡"
               />
 
               <InputField
-                label="Descuento (%)"
+                label={`${t("sales.discount", "Descuento")} (%)`}
                 value={detalleForm.porcentajeDescuento}
                 onChange={(value) =>
                   actualizarDetalle("porcentajeDescuento", value)
                 }
                 placeholder="0"
                 prefix="%"
-                helperText="Porcentaje de descuento sobre el subtotal de esta línea (0 a 100)."
+                helperText={t("sales.discountHint", "Porcentaje de descuento sobre el subtotal de esta línea (0 a 100).")}
               />
 
               <SelectField
-                label="Tarifa"
+                label={t("vatRates.title", "Tarifa")}
                 value={detalleForm.tipoTarifa}
                 onChange={(value) => actualizarDetalle("tipoTarifa", value)}
                 options={tipoTarifaOptions}
@@ -862,7 +879,7 @@ function FormularioVenta({
 
               {detalleForm.tipoTarifa === "ESPECIAL" ? (
                 <InputField
-                  label="Porcentaje tarifa especial"
+                  label={t("vatRates.percentage", "Porcentaje tarifa especial")}
                   value={detalleForm.porcentajeIva}
                   onChange={(value) => actualizarDetalle("porcentajeIva", value)}
                   placeholder="5"
@@ -872,17 +889,17 @@ function FormularioVenta({
               ) : null}
 
               <InputField
-                label="Detalle"
+                label={t("common.details", "Detalle")}
                 value={detalleForm.detalle}
                 onChange={(value) => actualizarDetalle("detalle", value)}
-                placeholder="Combo careta + LED, promocia³n..."
+                placeholder={t("common.optional", "Opcional")}
                 maxLength={150}
               />
             </div>
 
             <div className="mt-5 flex flex-wrap gap-3">
               <PrimaryButton onClick={agregarOActualizarDetalle}>
-                {detalleEditandoId ? "Actualizar la­nea" : "+ Agregar a venta"}
+                {detalleEditandoId ? t("common.saveChanges", "Actualizar línea") : `+ ${t("sales.newSale", "Agregar a venta")}`}
               </PrimaryButton>
 
               {detalleEditandoId ? (
@@ -894,7 +911,7 @@ function FormularioVenta({
                   }}
                   className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                 >
-                  Cancelar edicia³n
+                  {t("common.cancel", "Cancelar edición")}
                 </button>
               ) : null}
             </div>
@@ -902,17 +919,17 @@ function FormularioVenta({
 
           <div className="rounded-2xl border border-slate-200 p-4">
             <h3 className="mb-3 text-base font-bold text-slate-950">
-              Productos agregados
+              {t("products.title", "Productos agregados")}
             </h3>
 
             <DataTableShell
               data={detalles}
-              emptyMessage="Todava­a no has agregado productos a esta venta."
+              emptyMessage={t("sales.productsRequired", "Todavía no has agregado productos a esta venta.")}
               getRowKey={(row) => row.idTemporal}
               columns={[
                 {
                   key: "producto",
-                  header: "Producto",
+                  header: t("products.title", "Producto"),
                   render: (row: VentaDetalleForm) => (
                     <div>
                       <p className="font-semibold text-slate-900">
@@ -920,7 +937,7 @@ function FormularioVenta({
                       </p>
                       <p className="text-xs text-slate-500">
                         {row.modoDescuentoLote === "FIFO"
-                          ? "FIFO automa¡tico"
+                          ? "FIFO"
                           : row.loteDescripcion}
                       </p>
                     </div>
@@ -928,18 +945,18 @@ function FormularioVenta({
                 },
                 {
                   key: "cantidad",
-                  header: "Cant.",
+                  header: t("common.quantity", "Cant."),
                   render: (row: VentaDetalleForm) => row.cantidad,
                 },
                 {
                   key: "precio",
-                  header: "Precio",
+                  header: t("common.price", "Precio"),
                   render: (row: VentaDetalleForm) =>
                     formatCurrency(parseMonto(row.precioUnitario)),
                 },
                 {
                   key: "descuento",
-                  header: "Desc.",
+                  header: t("sales.discount", "Desc."),
                   render: (row: VentaDetalleForm) => {
                     const calculo = calcularLineaTemporal(row);
 
@@ -957,13 +974,13 @@ function FormularioVenta({
                 },
                 {
                   key: "iva",
-                  header: "IVA",
+                  header: t("sales.tax", "IVA"),
                   render: (row: VentaDetalleForm) =>
                     `${row.tipoTarifa} ${getPorcentajeIva(row)}%`,
                 },
                 {
                   key: "total",
-                  header: "Total estimado",
+                  header: t("sales.total", "Total estimado"),
                   render: (row: VentaDetalleForm) =>
                     formatCurrency(calcularLineaTemporal(row).total),
                 },
@@ -975,7 +992,7 @@ function FormularioVenta({
                     onClick={() => editarDetalle(row)}
                     className="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
                   >
-                    Editar
+                    {t("common.edit", "Editar")}
                   </button>
 
                   <button
@@ -983,7 +1000,7 @@ function FormularioVenta({
                     onClick={() => eliminarDetalle(row.idTemporal)}
                     className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50"
                   >
-                    Eliminar
+                    {t("common.delete", "Eliminar")}
                   </button>
                 </div>
               )}
@@ -999,11 +1016,11 @@ function FormularioVenta({
               disabled={guardando}
               className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Cancelar
+              {t("common.cancel", "Cancelar")}
             </button>
 
             <PrimaryButton onClick={pasarADatosGenerales}>
-              Siguiente
+              {t("common.next", "Siguiente")}
             </PrimaryButton>
           </div>
         </>
@@ -1012,11 +1029,10 @@ function FormularioVenta({
           <div className="rounded-2xl border border-slate-200 p-4">
             <div className="mb-4">
               <h3 className="text-base font-bold text-slate-950">
-                Datos generales
+                {t("common.details", "Datos generales")}
               </h3>
               <p className="text-sm text-slate-600">
-                Registra quién compra y cuánto paga. Si falta dinero, la venta
-                queda automáticamente en deudores.
+                {t("sales.generalDataDesc", "Registra quién compra y cuánto paga. Si falta dinero, la venta queda automáticamente en deudores.")}
               </p>
             </div>
 
@@ -1025,24 +1041,24 @@ function FormularioVenta({
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div>
                 <p className="mb-1.5 block text-sm font-semibold text-zinc-700">
-                  Número de venta
+                  {t("sales.saleNumber", "Número de venta")}
                 </p>
 
                 <div className="flex min-h-[42px] items-center rounded-xl border border-zinc-300 bg-zinc-50 px-3.5 py-2.5 text-sm">
                   <span className="font-semibold text-zinc-900">
                     {cabecera.numeroVenta
-                      ? `Venta #${cabecera.numeroVenta}`
-                      : "Calculando número..."}
+                      ? `${t("sales.title", "Venta")} #${cabecera.numeroVenta}`
+                      : t("common.loading", "Calculando número...")}
                   </span>
                 </div>
 
                 <p className="mt-1.5 text-xs text-zinc-500">
-                  El número se asigna automáticamente al guardar la venta.
+                  {t("sales.autoNumberNotice", "El número se asigna automáticamente al guardar la venta.")}
                 </p>
               </div>
 
               <InputField
-                label="Fecha de venta"
+                label={t("sales.date", "Fecha de venta")}
                 type="date"
                 value={cabecera.fechaVenta}
                 onChange={(value) => actualizarCabecera("fechaVenta", value)}
@@ -1050,15 +1066,15 @@ function FormularioVenta({
               />
 
               <InputField
-                label="Cliente"
+                label={t("sales.client", "Cliente")}
                 value={cabecera.clienteNombre}
                 onChange={(value) => actualizarCabecera("clienteNombre", value)}
-                placeholder="Venta mostrador"
+                placeholder={t("sales.clientPlaceholder", "Venta mostrador")}
                 maxLength={100}
               />
 
               <SelectField
-                label="Método de pago"
+                label={t("sales.paymentMethod", "Método de pago")}
                 value={cabecera.metodoPago}
                 onChange={(value) => actualizarCabecera("metodoPago", value)}
                 options={metodosPagoOptions}
@@ -1068,38 +1084,38 @@ function FormularioVenta({
               {cabecera.metodoPago === "MIXTO" ? (
                 <>
                   <InputField
-                    label="Paga en efectivo"
+                    label={t("sales.cashPayment", "Paga en efectivo")}
                     value={cabecera.montoEfectivo}
                     onChange={(value) =>
                       actualizarCabecera("montoEfectivo", value)
                     }
                     placeholder="0"
-                    prefix="{MonedaSymbol}"
+                    prefix="₡"
                   />
 
                   <InputField
-                    label="Paga por SINPE / transferencia"
+                    label={t("sales.sinpePayment", "Paga por SINPE / transferencia")}
                     value={cabecera.montoSinpeTransferencia}
                     onChange={(value) =>
                       actualizarCabecera("montoSinpeTransferencia", value)
                     }
                     placeholder="0"
-                    prefix="{MonedaSymbol}"
+                    prefix="₡"
                   />
                 </>
               ) : (
                 <InputField
-                  label="Monto recibido"
+                  label={t("sales.paid", "Monto recibido")}
                   value={cabecera.montoPagado}
                   onChange={(value) => actualizarCabecera("montoPagado", value)}
                   placeholder="0"
-                  helperText="Si queda en 0, se registra como deuda completa."
-                  prefix="{MonedaSymbol}"
+                  helperText={t("sales.unpaidHelper", "Si queda en 0, se registra como deuda completa.")}
+                  prefix="₡"
                 />
               )}
 
               <InputField
-                label="Fecha de entrega"
+                label={t("sales.deliveryDate", "Fecha de entrega")}
                 type="date"
                 value={cabecera.fechaEntrega}
                 onChange={(value) => actualizarCabecera("fechaEntrega", value)}
@@ -1107,7 +1123,7 @@ function FormularioVenta({
 
               {hayDeuda ? (
                 <InputField
-                  label="Fecha la­mite de pago"
+                  label={t("receivables.dueDate", "Fecha límite de pago")}
                   type="date"
                   value={cabecera.fechaVencimientoPago}
                   onChange={(value) =>
@@ -1117,10 +1133,10 @@ function FormularioVenta({
               ) : null}
 
               <InputField
-                label="Observaciones"
+                label={t("orders.observations", "Observaciones")}
                 value={cabecera.observaciones}
                 onChange={(value) => actualizarCabecera("observaciones", value)}
-                placeholder="Combo, entrega, detalle de deuda..."
+                placeholder={t("orders.observationsPlaceholder", "Observaciones opcionales")}
                 maxLength={150}
                 showCharacterCount
               />
@@ -1129,7 +1145,7 @@ function FormularioVenta({
             <div className="mt-5 grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-xs font-semibold uppercase text-slate-500">
-                  Monto recibido
+                  {t("sales.paid", "Monto recibido")}
                 </p>
                 <p className="mt-1 text-lg font-bold text-slate-950">
                   {formatCurrency(montoRecibido)}
@@ -1146,20 +1162,20 @@ function FormularioVenta({
                     hayDeuda ? "text-amber-700" : "text-emerald-700"
                   }`}
                 >
-                  {hayDeuda ? "Saldo pendiente" : "Estado de pago"}
+                  {hayDeuda ? t("sales.balance", "Saldo pendiente") : t("sales.status", "Estado de pago")}
                 </p>
                 <p
                   className={`mt-1 text-lg font-bold ${
                     hayDeuda ? "text-amber-900" : "text-emerald-900"
                   }`}
                 >
-                  {hayDeuda ? formatCurrency(saldoPendiente) : "Pagada"}
+                  {hayDeuda ? formatCurrency(saldoPendiente) : t("statuses.sales.PAGADA", "Pagada")}
                 </p>
               </div>
 
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-xs font-semibold uppercase text-slate-500">
-                  Cambio
+                  {t("sales.change", "Cambio")}
                 </p>
                 <p className="mt-1 text-lg font-bold text-slate-950">
                   {formatCurrency(cambio)}
@@ -1170,17 +1186,17 @@ function FormularioVenta({
             {confirmarDeuda ? (
               <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
                 <p className="font-semibold text-amber-900">
-                  Esta venta queda con deuda pendiente.
+                  {t("sales.debtWarning", "Esta venta queda con deuda pendiente.")}
                 </p>
                 <p className="mt-1 text-sm text-amber-800">
-                  Total: {formatCurrency(resumenVenta.totalVenta)}  Recibido:{" "}
-                  {formatCurrency(montoRecibido)} Pendiente:{" "}
+                  {t("sales.total", "Total")}: {formatCurrency(resumenVenta.totalVenta)} · {t("sales.paid", "Recibido")}:{" "}
+                  {formatCurrency(montoRecibido)} · {t("sales.balance", "Pendiente")}:{" "}
                   {formatCurrency(saldoPendiente)}
                 </p>
 
                 <div className="mt-4 flex flex-wrap gap-3">
                   <PrimaryButton onClick={() => guardarVenta(true)}>
-                    Sa­, guardar con deuda
+                    {t("common.yes", "Sí, guardar con deuda")}
                   </PrimaryButton>
 
                   <button
@@ -1188,7 +1204,7 @@ function FormularioVenta({
                     onClick={() => setConfirmarDeuda(false)}
                     className="rounded-full border border-amber-300 px-5 py-2 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
                   >
-                    Revisar pago
+                    {t("sales.reviewPayment", "Revisar pago")}
                   </button>
                 </div>
               </div>
@@ -1197,7 +1213,7 @@ function FormularioVenta({
             {cambio > 0 ? (
               <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
                 <p className="font-semibold text-emerald-900">
-                  Cambio a devolver: {formatCurrency(cambio)}
+                  {t("sales.changeReturn", "Cambio a devolver")}: {formatCurrency(cambio)}
                 </p>
               </div>
             ) : null}
@@ -1214,7 +1230,7 @@ function FormularioVenta({
               disabled={guardando}
               className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Atra¡s
+              {t("common.back", "Atrás")}
             </button>
 
             <div className="flex flex-wrap gap-3">
@@ -1224,16 +1240,16 @@ function FormularioVenta({
                 disabled={guardando}
                 className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Cancelar
+                {t("common.cancel", "Cancelar")}
               </button>
 
               <PrimaryButton
                 onClick={() => guardarVenta()}
                 loading={guardando}
-                loadingText="Procesando venta..."
+                loadingText={t("common.processing", "Procesando venta...")}
                 disabled={guardando}
               >
-                Procesar venta
+                {t("sales.newSale", "Procesar venta")}
               </PrimaryButton>
             </div>
           </div>

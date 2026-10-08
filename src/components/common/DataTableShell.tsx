@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import EmptyState from "./EmptyState";
 
 export type DataTableColumn<T> = {
@@ -23,18 +24,23 @@ type DataTableShellProps<T> = {
 function DataTableShell<T>({
   data,
   columns,
-  emptyMessage = "No hay datos para mostrar.",
-  emptyDescription = "Los registros aparecerán aquí cuando estén disponibles.",
+  emptyMessage,
+  emptyDescription,
   actions,
-  actionsHeader = "Acciones",
+  actionsHeader,
   getRowKey,
   tableName,
 }: DataTableShellProps<T>) {
+  const { t } = useTranslation();
+  const resolvedEmptyMessage = emptyMessage ?? t("dataTable.noData");
+  const resolvedEmptyDescription = emptyDescription ?? t("dataTable.emptySubtitle");
+  const resolvedActionsHeader = actionsHeader ?? t("dataTable.actions");
+
   if (data.length === 0) {
     return (
       <EmptyState
-        title={emptyMessage}
-        description={emptyDescription}
+        title={resolvedEmptyMessage}
+        description={resolvedEmptyDescription}
       />
     );
   }
@@ -65,7 +71,7 @@ function DataTableShell<T>({
                   scope="col"
                   className="whitespace-nowrap px-4 py-3.5 text-center text-[11px] font-bold uppercase tracking-[0.14em] sm:px-5 sm:py-4"
                 >
-                  {actionsHeader}
+                  {resolvedActionsHeader}
                 </th>
               ) : null}
             </tr>

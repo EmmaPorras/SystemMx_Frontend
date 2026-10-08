@@ -4,6 +4,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   Ban,
@@ -24,6 +25,11 @@ import SectionCard from "../common/SectionCard";
 import StatCard from "../common/StatCard";
 import StatusBadge from "../common/StatusBadge";
 import { formatCurrency } from "../common/formatters";
+import {
+  getPaymentMethodLabel,
+  getPaymentStatusLabel,
+  getSaleStatusLabel,
+} from "../../i18n/statusMap";
 
 import {
   anularVentaApi,
@@ -50,6 +56,7 @@ import type {
 type VistaVentas = "ACTIVAS" | "DEUDORES" | "PAPELERA";
 
 function VentasPage() {
+  const { t } = useTranslation();
   const [ventas, setVentas] = useState<Venta[]>([]);
   const [inventarioDisponible, setInventarioDisponible] = useState<
     InventarioDisponibleVenta[]
@@ -96,13 +103,13 @@ function VentasPage() {
       const message =
         error instanceof Error
           ? error.message
-          : "No fue posible cargar las ventas.";
+          : t("sales.loadError", "No fue posible cargar las ventas.");
 
       setPageAlert(message);
     } finally {
       setCargando(false);
     }
-  }, [vista]);
+  }, [t, vista]);
 
   useEffect(() => {
     void cargarDatos();
@@ -165,7 +172,7 @@ function VentasPage() {
       setPageAlert(
         error instanceof Error
           ? error.message
-          : "No fue posible preparar el número de la nueva venta.",
+          : t("sales.prepareError", "No fue posible preparar el número de la nueva venta."),
       );
     } finally {
       setPreparandoVenta(false);
@@ -189,7 +196,7 @@ function VentasPage() {
       await cargarDatos();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "No se pudo guardar la venta.";
+        error instanceof Error ? error.message : t("sales.saveError", "No se pudo guardar la venta.");
 
       setModalAlert(message);
     } finally {
@@ -209,7 +216,7 @@ function VentasPage() {
       setPageAlert(
         error instanceof Error
           ? error.message
-          : "No fue posible enviar la venta a papelera.",
+          : t("sales.trashError", "No fue posible enviar la venta a papelera."),
       );
     } finally {
       setActionLoading(false);
@@ -228,7 +235,7 @@ function VentasPage() {
       setPageAlert(
         error instanceof Error
           ? error.message
-          : "No fue posible restaurar la venta.",
+          : t("sales.restoreError", "No fue posible restaurar la venta."),
       );
     } finally {
       setActionLoading(false);
@@ -247,7 +254,7 @@ function VentasPage() {
       setPageAlert(
         error instanceof Error
           ? error.message
-          : "No fue posible anular la venta.",
+          : t("sales.voidError", "No fue posible anular la venta."),
       );
     } finally {
       setActionLoading(false);
@@ -275,8 +282,8 @@ function VentasPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Ventas"
-        description="Registrar ventas, gestionar cobros y consultar el historial oficial."
+        title={t("sales.title", "Ventas")}
+        description={t("sales.pageDesc", "Registrar ventas, gestionar cobros y consultar el historial oficial.")}
         icon={ShoppingCart}
         action={
           <PrimaryButton
@@ -284,11 +291,11 @@ function VentasPage() {
               void abrirModalNuevaVenta();
             }}
             loading={preparandoVenta}
-            loadingText="Preparando..."
+            loadingText={t("sales.preparing", "Preparando...")}
           >
             <span className="flex items-center gap-1.5">
               <Plus size={18} />
-              <span>Nueva venta</span>
+              <span>{t("sales.newSale", "Nueva venta")}</span>
             </span>
           </PrimaryButton>
         }
@@ -297,7 +304,7 @@ function VentasPage() {
       {pageAlert ? (
         <AlertMessage
           variant="error"
-          title="Aviso"
+          title={t("common.notice", "Aviso")}
           message={pageAlert}
           onClose={() => setPageAlert(null)}
         />
@@ -305,47 +312,47 @@ function VentasPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Total en vista"
+          label={t("sales.totalInView", "Total en vista")}
           value={String(ventas.length)}
           hint={
             vista === "PAPELERA"
-              ? "Ventas en papelera"
+              ? t("sales.trashHint", "Ventas en papelera")
               : vista === "DEUDORES"
-                ? "Ventas con deuda activa"
-                : "Ventas registradas"
+                ? t("sales.debtorsHint", "Ventas con deuda activa")
+                : t("sales.registeredHint", "Ventas registradas")
           }
           icon={ShoppingCart}
           variant="info"
         />
 
         <StatCard
-          label="Con saldo pendiente"
+          label={t("sales.withPendingBalance", "Con saldo pendiente")}
           value={String(ventasConDeuda)}
-          hint="Ventas que registran deuda"
+          hint={t("sales.withDebtHint", "Ventas que registran deuda")}
           icon={CircleDollarSign}
           variant="warning"
         />
 
         <StatCard
-          label="Lotes disponibles"
+          label={t("sales.availableLots", "Lotes disponibles")}
           value={String(inventarioDisponible.length)}
-          hint="Lotes en stock para venta"
+          hint={t("sales.lotsInStockHint", "Lotes en stock para venta")}
           icon={Users}
           variant="success"
         />
 
         <StatCard
-          label="Anuladas"
+          label={t("sales.voided", "Anuladas")}
           value={String(ventasAnuladas)}
-          hint="Ventas anuladas formalmente"
+          hint={t("sales.voidedHint", "Ventas anuladas formalmente")}
           icon={Ban}
           variant="neutral"
         />
       </div>
 
       <SectionCard
-        title="Listado de ventas"
-        description="Gestión oficial de ventas generadas y sus cobros asociados."
+        title={t("sales.salesList", "Listado de ventas")}
+        description={t("sales.salesListDesc", "Gestión oficial de ventas generadas y sus cobros asociados.")}
       >
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-4">
           <div className="flex flex-wrap gap-2">
@@ -361,7 +368,7 @@ function VentasPage() {
                   : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
               }`}
             >
-              Ventas activas
+              {t("sales.activeSales", "Ventas activas")}
             </button>
 
             <button
@@ -376,7 +383,7 @@ function VentasPage() {
                   : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
               }`}
             >
-              Deudores
+              {t("sales.debtors", "Deudores")}
             </button>
 
             <button
@@ -391,22 +398,22 @@ function VentasPage() {
                   : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
               }`}
             >
-              Papelera
+              {t("sales.trash", "Papelera")}
             </button>
           </div>
 
           <div className="w-full sm:w-72">
             <InputField
-              label="Buscar venta"
+              label={t("sales.searchSale", "Buscar venta")}
               value={busqueda}
               onChange={setBusqueda}
-              placeholder="Número, cliente, producto o detalle"
+              placeholder={t("sales.searchPlaceholderFull", "Número, cliente, producto o detalle")}
             />
           </div>
         </div>
 
         {cargando ? (
-          <LoadingState message="Cargando ventas..." />
+          <LoadingState message={t("sales.loadingSales", "Cargando ventas...")} />
         ) : (
           <TablaVentas
             ventas={ventasFiltradas}
@@ -421,8 +428,8 @@ function VentasPage() {
 
       <AppModal
         isOpen={modalAbierto}
-        title="Registrar nueva venta"
-        description="Creación de venta con descuento de inventario según modo FIFO o lote manual."
+        title={t("sales.newSaleTitle", "Registrar nueva venta")}
+        description={t("sales.newSaleDesc", "Creación de venta con descuento de inventario según modo FIFO o lote manual.")}
         onClose={cerrarModal}
         isSubmitting={guardando}
         maxWidthClassName="max-w-6xl"
@@ -440,11 +447,15 @@ function VentasPage() {
 
       <AppModal
         isOpen={ventaParaDetalle !== null}
-        title="Detalle de venta"
+        title={t("sales.saleDetailTitle", "Detalle de venta")}
         description={
           ventaParaDetalle
-            ? `Venta #${ventaParaDetalle.numeroVenta} · ${ventaParaDetalle.fechaVenta}`
-            : "Información de la venta"
+            ? t("sales.saleDetailSubtitle", {
+                number: ventaParaDetalle.numeroVenta,
+                date: ventaParaDetalle.fechaVenta,
+                defaultValue: `Venta #${ventaParaDetalle.numeroVenta} · ${ventaParaDetalle.fechaVenta}`,
+              })
+            : t("sales.saleDetailFallback", "Información de la venta")
         }
         onClose={() => setVentaParaDetalle(null)}
         maxWidthClassName="max-w-5xl"
@@ -454,16 +465,19 @@ function VentasPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 pb-4">
               <div>
                 <p className="text-xl font-bold text-zinc-950">
-                  {ventaParaDetalle.clienteNombre || "Venta mostrador"}
+                  {ventaParaDetalle.clienteNombre || t("sales.overTheCounter", "Venta mostrador")}
                 </p>
                 <p className="mt-0.5 text-sm text-zinc-500">
-                  Método de pago: {ventaParaDetalle.medioPago}
+                  {t("sales.paymentMethodWithColon", {
+                    method: getPaymentMethodLabel(t, ventaParaDetalle.medioPago),
+                    defaultValue: `Método de pago: ${ventaParaDetalle.medioPago}`,
+                  })}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
                 <StatusBadge
-                  label={ventaParaDetalle.estadoPago}
+                  label={getPaymentStatusLabel(t, ventaParaDetalle.estadoPago)}
                   variant={
                     ventaParaDetalle.estadoPago === "PAGADA"
                       ? "success"
@@ -475,7 +489,7 @@ function VentasPage() {
                 />
 
                 <StatusBadge
-                  label={ventaParaDetalle.estadoVenta}
+                  label={getSaleStatusLabel(t, ventaParaDetalle.estadoVenta)}
                   variant={
                     ventaParaDetalle.estadoVenta === "REGISTRADA"
                       ? "success"
@@ -488,7 +502,7 @@ function VentasPage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
                 <p className="text-xs font-semibold uppercase text-zinc-500">
-                  Subtotal
+                  {t("sales.subtotal", "Subtotal")}
                 </p>
                 <p className="mt-1 text-base font-bold text-zinc-950">
                   {formatCurrency(ventaParaDetalle.subtotal)}
@@ -497,7 +511,7 @@ function VentasPage() {
 
               <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
                 <p className="text-xs font-semibold uppercase text-zinc-500">
-                  IVA Total
+                  {t("sales.ivaTotal", "IVA Total")}
                 </p>
                 <p className="mt-1 text-base font-bold text-zinc-950">
                   {formatCurrency(ventaParaDetalle.ivaTotal)}
@@ -506,7 +520,7 @@ function VentasPage() {
 
               <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
                 <p className="text-xs font-semibold uppercase text-zinc-500">
-                  Total Venta
+                  {t("sales.totalSale", "Total Venta")}
                 </p>
                 <p className="mt-1 text-base font-bold text-zinc-950">
                   {formatCurrency(ventaParaDetalle.totalVenta)}
@@ -515,7 +529,7 @@ function VentasPage() {
 
               <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
                 <p className="text-xs font-semibold uppercase text-zinc-500">
-                  Saldo Pendiente
+                  {t("sales.pendingBalance", "Saldo Pendiente")}
                 </p>
                 <p
                   className={`mt-1 text-base font-bold ${
@@ -532,7 +546,7 @@ function VentasPage() {
             {ventaParaDetalle.observaciones?.trim() ? (
               <div className="rounded-2xl border border-zinc-200 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  Observaciones
+                  {t("sales.observations", "Observaciones")}
                 </p>
                 <p className="mt-1 text-sm text-zinc-700">
                   {ventaParaDetalle.observaciones}
@@ -542,7 +556,7 @@ function VentasPage() {
 
             <div className="space-y-3">
               <h4 className="text-sm font-bold uppercase tracking-wider text-zinc-500">
-                Productos y detalles
+                {t("sales.productsAndDetails", "Productos y detalles")}
               </h4>
               <VentaDetalleTable detalles={ventaParaDetalle.detalles} />
             </div>
@@ -550,7 +564,7 @@ function VentasPage() {
             <div className="space-y-3 border-t border-zinc-200 pt-5">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-bold uppercase tracking-wider text-zinc-500">
-                  Historial de pagos
+                  {t("sales.paymentHistory", "Historial de pagos")}
                 </h4>
 
                 {ventaParaDetalle.saldoPendiente > 0 &&
@@ -561,7 +575,7 @@ function VentasPage() {
                   >
                     <span className="flex items-center gap-1.5">
                       <CircleDollarSign size={16} />
-                      <span>Registrar pago</span>
+                      <span>{t("sales.registerPayment", "Registrar pago")}</span>
                     </span>
                   </PrimaryButton>
                 ) : null}
@@ -585,14 +599,17 @@ function VentasPage() {
 
       <ConfirmDialog
         isOpen={ventaAPapelera !== null}
-        title="Enviar venta a papelera"
+        title={t("sales.trashConfirmTitle", "Enviar venta a papelera")}
         message={
           ventaAPapelera
-            ? `¿Quieres enviar la venta #${ventaAPapelera.numeroVenta} a la papelera? Esta operación no anula la venta ni restaura inventario.`
+            ? t("sales.trashConfirmMessage", {
+                number: ventaAPapelera.numeroVenta,
+                defaultValue: `¿Quieres enviar la venta #${ventaAPapelera.numeroVenta} a la papelera? Esta operación no anula la venta ni restaura inventario.`,
+              })
             : ""
         }
-        confirmLabel={actionLoading ? "Enviando..." : "Enviar a papelera"}
-        cancelLabel="Cancelar"
+        confirmLabel={actionLoading ? t("sales.sendingToTrash", "Enviando...") : t("sales.sendToTrash", "Enviar a papelera")}
+        cancelLabel={t("common.cancel", "Cancelar")}
         variant="warning"
         onConfirm={confirmarPapelera}
         onCancel={() => {
@@ -602,14 +619,17 @@ function VentasPage() {
 
       <ConfirmDialog
         isOpen={ventaARestaurar !== null}
-        title="Restaurar venta"
+        title={t("sales.restoreConfirmTitle", "Restaurar venta")}
         message={
           ventaARestaurar
-            ? `¿Quieres restaurar la venta #${ventaARestaurar.numeroVenta} desde la papelera?`
+            ? t("sales.restoreConfirmMessage", {
+                number: ventaARestaurar.numeroVenta,
+                defaultValue: `¿Quieres restaurar la venta #${ventaARestaurar.numeroVenta} desde la papelera?`,
+              })
             : ""
         }
-        confirmLabel={actionLoading ? "Restaurando..." : "Restaurar"}
-        cancelLabel="Cancelar"
+        confirmLabel={actionLoading ? t("sales.restoring", "Restaurando...") : t("sales.restore", "Restaurar")}
+        cancelLabel={t("common.cancel", "Cancelar")}
         variant="warning"
         onConfirm={confirmarRestauracion}
         onCancel={() => {
@@ -619,14 +639,17 @@ function VentasPage() {
 
       <ConfirmDialog
         isOpen={ventaAAnular !== null}
-        title="Anular venta"
+        title={t("sales.voidConfirmTitle", "Anular venta")}
         message={
           ventaAAnular
-            ? `¿Seguro que quieres anular la venta #${ventaAAnular.numeroVenta}? El backend restaurará el inventario correspondiente y conservará el historial de la operación.`
+            ? t("sales.voidConfirmMessage", {
+                number: ventaAAnular.numeroVenta,
+                defaultValue: `¿Seguro que quieres anular la venta #${ventaAAnular.numeroVenta}? El backend restaurará el inventario correspondiente y conservará el historial de la operación.`,
+              })
             : ""
         }
-        confirmLabel={actionLoading ? "Anulando..." : "Anular venta"}
-        cancelLabel="Cancelar"
+        confirmLabel={actionLoading ? t("sales.voiding", "Anulando...") : t("sales.voidSale", "Anular venta")}
+        cancelLabel={t("common.cancel", "Cancelar")}
         variant="danger"
         onConfirm={confirmarAnulacion}
         onCancel={() => {

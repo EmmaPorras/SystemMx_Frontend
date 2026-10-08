@@ -6,6 +6,9 @@ import {
 
 import autoTable from "jspdf-autotable";
 
+import i18n from "../../i18n";
+import { formatDateTime } from "../common/formatters";
+
 import type {
   ReportFilterValues,
 } from "./ReportFilters";
@@ -550,6 +553,8 @@ function buildFilterRows(
   filters:
     ReportFilterValues,
 ): ExportRow[] {
+  const filterKey = i18n.t("reportExport.filter");
+  const valueKey = i18n.t("reportExport.value");
   const rows:
     ExportRow[] =
     [];
@@ -558,10 +563,10 @@ function buildFilterRows(
     filters.fechaDesde
   ) {
     rows.push({
-      Filtro:
-        "Fecha desde",
+      [filterKey]:
+        i18n.t("reports.dateFrom"),
 
-      Valor:
+      [valueKey]:
         filters.fechaDesde,
     });
   }
@@ -570,10 +575,10 @@ function buildFilterRows(
     filters.fechaHasta
   ) {
     rows.push({
-      Filtro:
-        "Fecha hasta",
+      [filterKey]:
+        i18n.t("reports.dateTo"),
 
-      Valor:
+      [valueKey]:
         filters.fechaHasta,
     });
   }
@@ -582,10 +587,10 @@ function buildFilterRows(
     filters.fechaCorte
   ) {
     rows.push({
-      Filtro:
-        "Fecha de corte",
+      [filterKey]:
+        i18n.t("reports.cutoffDate"),
 
-      Valor:
+      [valueKey]:
         filters.fechaCorte,
     });
   }
@@ -594,10 +599,10 @@ function buildFilterRows(
     filters.usuarioId
   ) {
     rows.push({
-      Filtro:
-        "ID usuario",
+      [filterKey]:
+        i18n.t("reports.userId"),
 
-      Valor:
+      [valueKey]:
         filters.usuarioId,
     });
   }
@@ -606,10 +611,10 @@ function buildFilterRows(
     filters.tipoMovimiento
   ) {
     rows.push({
-      Filtro:
-        "Tipo de movimiento",
+      [filterKey]:
+        i18n.t("reports.movementType"),
 
-      Valor:
+      [valueKey]:
         filters.tipoMovimiento,
     });
   }
@@ -619,11 +624,11 @@ function buildFilterRows(
     0
   ) {
     rows.push({
-      Filtro:
-        "Filtros",
+      [filterKey]:
+        i18n.t("reportExport.filters"),
 
-      Valor:
-        "Sin filtros",
+      [valueKey]:
+        i18n.t("reportExport.allPeriod"),
     });
   }
 
@@ -1637,7 +1642,7 @@ function crearHojaResumen(
     );
 
   subtitle.value =
-    "Reporte consolidado";
+    i18n.t("reportExport.consolidatedReport");
 
   subtitle.font = {
     bold:
@@ -1678,7 +1683,7 @@ function crearHojaResumen(
     );
 
   infoTitle.value =
-    "Información del documento";
+    i18n.t("reportExport.documentInformation");
 
   infoTitle.font = {
     bold:
@@ -1727,7 +1732,7 @@ function crearHojaResumen(
     );
 
   filtersTitle.value =
-    "Filtros aplicados";
+    i18n.t("reportExport.filtersApplied");
 
   filtersTitle.font = {
     bold:
@@ -1770,22 +1775,22 @@ function crearHojaResumen(
     ]
   > = [
     [
-      "Sistema",
+      i18n.t("reportExport.system"),
       "SystemMx",
     ],
 
     [
-      "Fecha de generación",
+      i18n.t("reportExport.generationDate"),
       new Date(),
     ],
 
     [
-      "Reportes incluidos",
+      i18n.t("reportExport.includedReports"),
       bundle.reports.length,
     ],
 
     [
-      "Familias incluidas",
+      i18n.t("reportExport.includedFamilies"),
       Array.from(
         new Set(
           bundle.reports.map(
@@ -3314,13 +3319,13 @@ export async function exportarReportesExcel(
     "SystemMx";
 
   workbook.subject =
-    "Reporte administrativo";
+    i18n.t("reportExport.administrativeReport");
 
   workbook.title =
-    "SystemMx - Reportes";
+    i18n.t("reportExport.documentTitle");
 
   workbook.description =
-    "Reporte generado desde el centro analítico de SystemMx.";
+    i18n.t("reportExport.analyticsCenterNotice");
 
   crearHojaResumen(
     workbook,
@@ -3458,7 +3463,7 @@ export function exportarReportesPdf(
   );
 
   doc.text(
-    "SystemMx - Reportes",
+    i18n.t("reportExport.documentTitle"),
     12,
     y,
   );
@@ -3476,8 +3481,8 @@ export function exportarReportesPdf(
   );
 
   doc.text(
-    `Generado: ${new Date().toLocaleString(
-      "es-CR",
+    `${i18n.t("reportExport.generatedPrefix")} ${formatDateTime(
+      new Date(),
     )}`,
     12,
     y,
@@ -3501,7 +3506,7 @@ export function exportarReportesPdf(
   );
 
   doc.text(
-    "Filtros aplicados",
+    i18n.t("reportExport.filtersApplied"),
     12,
     y,
   );
@@ -3522,24 +3527,20 @@ export function exportarReportesPdf(
 
       head: [
         [
-          "Filtro",
-          "Valor",
+          i18n.t("reportExport.filter"),
+          i18n.t("reportExport.value"),
         ],
       ],
 
       body:
         filterRows.map(
-          (row) => [
-            String(
-              row.Filtro ??
-                "",
-            ),
-
-            String(
-              row.Valor ??
-                "",
-            ),
-          ],
+          (row) => {
+            const vals = Object.values(row);
+            return [
+              String(vals[0] ?? ""),
+              String(vals[1] ?? ""),
+            ];
+          },
         ),
 
       styles: {

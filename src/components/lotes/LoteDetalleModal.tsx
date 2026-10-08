@@ -1,6 +1,7 @@
 import {
   useEffect,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   Boxes,
@@ -16,7 +17,12 @@ import {
 import StatusBadge from "../common/StatusBadge";
 import {
   formatCurrency,
+  formatDate,
 } from "../common/formatters";
+import {
+  getLotStatusLabel,
+  getOrderStatusLabel,
+} from "../../i18n/statusMap";
 
 import type {
   EstadoLoteInventario,
@@ -55,24 +61,6 @@ function getEstadoVariant(
   }
 }
 
-function getEstadoLabel(
-  estado: EstadoLoteInventario,
-) {
-  switch (estado) {
-    case "EN_PROCESO":
-      return "EN PROCESO";
-
-    case "EN_STOCK":
-      return "EN STOCK";
-
-    case "VENDIDO_PARCIAL":
-      return "VENDIDO PARCIAL";
-
-    case "AGOTADO":
-      return "AGOTADO";
-  }
-}
-
 function formatearFecha(
   fecha:
     | string
@@ -82,26 +70,7 @@ function formatearFecha(
   if (!fecha) {
     return "—";
   }
-
-  const soloFecha =
-    fecha.substring(
-      0,
-      10,
-    );
-
-  const partes =
-    soloFecha.split(
-      "-",
-    );
-
-  if (
-    partes.length !==
-    3
-  ) {
-    return fecha;
-  }
-
-  return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  return formatDate(fecha);
 }
 
 function formatearMonedaNullable(
@@ -161,6 +130,8 @@ function LoteDetalleModal({
   lote,
   onClose,
 }: LoteDetalleModalProps) {
+  const { t } = useTranslation();
+
   /*
    * ==========================================
    * CERRAR CON ESC
@@ -221,11 +192,6 @@ function LoteDetalleModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="lote-detalle-title"
-
-      /*
-       * Cierra únicamente si se toca
-       * directamente el fondo.
-       */
       onPointerDown={(
         event,
       ) => {
@@ -262,7 +228,7 @@ function LoteDetalleModal({
 
             <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-400">
-                Información del lote
+                {t("lots.details", "Información del lote")}
               </p>
 
               <h2
@@ -275,7 +241,7 @@ function LoteDetalleModal({
               </h2>
 
               <p className="mt-1 text-sm text-zinc-500">
-                Consulta de trazabilidad e inventario.
+                {t("lots.subtitle", "Consulta de trazabilidad e inventario.")}
               </p>
             </div>
           </div>
@@ -285,7 +251,7 @@ function LoteDetalleModal({
             onClick={
               onClose
             }
-            aria-label="Cerrar detalle"
+            aria-label={t("common.close", "Cerrar")}
             className="
               grid
               h-9
@@ -319,16 +285,17 @@ function LoteDetalleModal({
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                Estado actual
+                {t("lots.status", "Estado actual")}
               </p>
 
               <p className="mt-1 text-sm text-zinc-500">
-                Situación actual del lote dentro del inventario.
+                {t("lots.subtitle", "Situación actual del lote dentro del inventario.")}
               </p>
             </div>
 
             <StatusBadge
-              label={getEstadoLabel(
+              label={getLotStatusLabel(
+                t,
                 lote.estadoLote,
               )}
               variant={getEstadoVariant(
@@ -347,27 +314,27 @@ function LoteDetalleModal({
               />
 
               <h3 className="text-sm font-bold text-zinc-950">
-                Identificación
+                {t("common.details", "Identificación")}
               </h3>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <DetailItem
-                label="ID del lote"
+                label={`ID ${t("lots.title", "Lote")}`}
                 value={
                   lote.idLote
                 }
               />
 
               <DetailItem
-                label="Código del lote"
+                label={t("lots.lotCode", "Código del lote")}
                 value={
                   lote.codigoLote
                 }
               />
 
               <DetailItem
-                label="ID detalle pedido"
+                label={`ID ${t("orders.details", "Detalle pedido")}`}
                 value={
                   lote.idDetallePedido
                 }
@@ -385,13 +352,13 @@ function LoteDetalleModal({
               />
 
               <h3 className="text-sm font-bold text-zinc-950">
-                Producto
+                {t("products.title", "Producto")}
               </h3>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <DetailItem
-                label="Producto"
+                label={t("products.name", "Producto")}
                 value={
                   lote.producto
                     ?.nombre ??
@@ -400,7 +367,7 @@ function LoteDetalleModal({
               />
 
               <DetailItem
-                label="ID producto"
+                label={`ID ${t("products.title", "Producto")}`}
                 value={
                   lote.idProducto
                 }
@@ -418,13 +385,13 @@ function LoteDetalleModal({
               />
 
               <h3 className="text-sm font-bold text-zinc-950">
-                Pedido de origen
+                {t("orders.title", "Pedido de origen")}
               </h3>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <DetailItem
-                label="Número de pedido"
+                label={t("orders.orderNumber", "Número de pedido")}
                 value={
                   lote.pedido
                     ? `#${lote.pedido.numeroPedido}`
@@ -433,18 +400,18 @@ function LoteDetalleModal({
               />
 
               <DetailItem
-                label="ID pedido"
+                label={`ID ${t("navigation.orders", "Pedido")}`}
                 value={
                   lote.idPedido
                 }
               />
 
               <DetailItem
-                label="Estado del pedido"
-                value={
-                  lote.pedido
-                    ?.estado
-                }
+                label={t("orders.status", "Estado del pedido")}
+                value={getOrderStatusLabel(
+                  t,
+                  lote.pedido?.estado,
+                )}
               />
             </div>
           </section>
@@ -459,41 +426,41 @@ function LoteDetalleModal({
               />
 
               <h3 className="text-sm font-bold text-zinc-950">
-                Inventario
+                {t("navigation.inventory", "Inventario")}
               </h3>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <DetailItem
-                label="Cantidad inicial"
+                label={t("lots.initialQuantity", "Cantidad inicial")}
                 value={
                   lote.cantidadInicial
                 }
               />
 
               <DetailItem
-                label="Cantidad recibida"
+                label={t("lots.receivedQuantity", "Cantidad recibida")}
                 value={
                   lote.cantidadRecibida
                 }
               />
 
               <DetailItem
-                label="Cantidad disponible"
+                label={t("lots.availableQuantity", "Cantidad disponible")}
                 value={
                   lote.cantidadDisponible
                 }
               />
 
               <DetailItem
-                label="Cantidad vendida"
+                label={t("home.unitsSold", "Cantidad vendida")}
                 value={
                   lote.cantidadVendida
                 }
               />
 
               <DetailItem
-                label="Pendiente recepción"
+                label={t("orders.pending", "Pendiente recepción")}
                 value={
                   lote.cantidadPendienteRecepcion
                 }
@@ -511,20 +478,20 @@ function LoteDetalleModal({
               />
 
               <h3 className="text-sm font-bold text-zinc-950">
-                Información económica
+                {t("orders.totalInvestment", "Información económica")}
               </h3>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <DetailItem
-                label="Costo unitario real"
+                label={t("lots.costReal", "Costo unitario real")}
                 value={formatearMonedaNullable(
                   lote.costoUnitarioReal,
                 )}
               />
 
               <DetailItem
-                label="Precio recomendado"
+                label={t("lots.salePrice", "Precio recomendado")}
                 value={formatearMonedaNullable(
                   lote.precioVentaRecomendado,
                 )}
@@ -542,21 +509,22 @@ function LoteDetalleModal({
               />
 
               <h3 className="text-sm font-bold text-zinc-950">
-                Trazabilidad
+                {t("navigation.batchesDesc", "Trazabilidad")}
               </h3>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <DetailItem
-                label="Fecha de entrada"
+                label={t("orders.receptionDate", "Fecha de entrada")}
                 value={formatearFecha(
                   lote.fechaEntrada,
                 )}
               />
 
               <DetailItem
-                label="Estado del lote"
-                value={getEstadoLabel(
+                label={t("lots.status", "Estado del lote")}
+                value={getLotStatusLabel(
+                  t,
                   lote.estadoLote,
                 )}
               />
@@ -591,7 +559,7 @@ function LoteDetalleModal({
               focus-visible:ring-offset-2
             "
           >
-            Cerrar
+            {t("common.close", "Cerrar")}
           </button>
         </div>
       </div>
@@ -599,4 +567,4 @@ function LoteDetalleModal({
   );
 }
 
-export default LoteDetalleModal;
+export default LoteDetalleModal;

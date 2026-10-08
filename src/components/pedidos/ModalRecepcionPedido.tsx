@@ -12,6 +12,7 @@ import DataTableShell from "../common/DataTableShell";
 import InputField from "../common/InputField";
 import LoadingState from "../common/LoadingState";
 import PrimaryButton from "../common/PrimaryButton";
+import { useTranslation } from "react-i18next";
 
 import {
   obtenerPedidoApi,
@@ -52,6 +53,7 @@ function ModalRecepcionPedido({
   onClose,
   onSuccess,
 }: ModalRecepcionPedidoProps) {
+  const { t } = useTranslation();
   const [pedido, setPedido] = useState<PedidoCompra | null>(null);
   const [fechaRecepcion, setFechaRecepcion] = useState("");
   const [cantidades, setCantidades] = useState<CantidadesPorLote>({});
@@ -189,12 +191,12 @@ function ModalRecepcionPedido({
   return (
     <AppModal
       isOpen={isOpen}
-      title="Recibir mercancía"
-      description={
+      title={
         pedido
-          ? `Pedido #${pedido.numeroPedido}`
-          : "Registro de recepción del pedido."
+          ? t("orders.receiveModalTitle", { number: pedido.numeroPedido })
+          : t("orders.receiveOrder")
       }
+      description={t("orders.subtitle")}
       onClose={() => {
         if (!isSubmitting) {
           onClose();
@@ -204,7 +206,7 @@ function ModalRecepcionPedido({
       maxWidthClassName="max-w-6xl"
     >
       {loading ? (
-        <LoadingState message="Cargando pedido..." />
+        <LoadingState message={t("common.loading")} />
       ) : error && !pedido ? (
         <div className="space-y-4">
           <AlertMessage
@@ -244,7 +246,7 @@ function ModalRecepcionPedido({
 
           <div className="max-w-xs">
             <InputField
-              label="Fecha de recepción"
+              label={t("orders.receptionDateLabel")}
               type="date"
               value={fechaRecepcion}
               onChange={(value) => {
@@ -264,32 +266,32 @@ function ModalRecepcionPedido({
             columns={[
               {
                 key: "producto",
-                header: "Producto",
+                header: t("products.title"),
                 render: (row) => row.productoNombre,
               },
               {
                 key: "lote",
-                header: "Lote",
+                header: t("orders.lotCode"),
                 render: (row) => row.loteCodigo,
               },
               {
                 key: "pedido",
-                header: "Pedido",
+                header: t("orders.title"),
                 render: (row) => String(row.cantidad),
               },
               {
                 key: "recibido",
-                header: "Recibido",
+                header: t("orders.quantityReceived"),
                 render: (row) => String(row.cantidadRecibida ?? 0),
               },
               {
                 key: "pendiente",
-                header: "Pendiente",
+                header: t("orders.pending"),
                 render: (row) => String(obtenerCantidadPendiente(row)),
               },
               {
                 key: "recibir",
-                header: "Recibir ahora",
+                header: t("orders.receiveOrder"),
                 render: (row) => {
                   const pendiente = obtenerCantidadPendiente(row);
 
@@ -338,16 +340,16 @@ function ModalRecepcionPedido({
               disabled={isSubmitting}
               className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Cancelar
+              {t("common.cancel")}
             </button>
 
             {puedeRecibirPedido(pedido) ? (
               <PrimaryButton
                 type="submit"
                 loading={isSubmitting}
-                loadingText="Registrando..."
+                loadingText={t("common.processing")}
               >
-                Registrar recepción
+                {t("orders.confirmReception")}
               </PrimaryButton>
             ) : null}
           </div>

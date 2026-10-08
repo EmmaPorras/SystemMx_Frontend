@@ -1,11 +1,13 @@
 import {
   Eye,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
 import TableActionButton from "../common/TableActionButton";
 import { formatCurrency } from "../common/formatters";
+import { getCatalogStatusLabel } from "../../i18n/statusMap";
 
 import type { Producto } from "./productos.types";
 
@@ -18,15 +20,18 @@ function TablaProductos({
   productos,
   onView,
 }: TablaProductosProps) {
+  const { t } = useTranslation();
+
   return (
     <DataTableShell
       data={productos}
-      emptyMessage="No hay productos registrados."
+      emptyMessage={t("products.emptyTitle")}
+      emptyDescription={t("products.emptyDesc")}
       getRowKey={(row) => row.idProducto}
       columns={[
         {
           key: "producto",
-          header: "Producto",
+          header: t("products.title"),
           render: (row) => (
             <div>
               <p className="font-semibold text-zinc-950">
@@ -34,20 +39,20 @@ function TablaProductos({
               </p>
 
               <p className="mt-0.5 text-xs text-zinc-500">
-                {row.sku?.trim() || "Sin SKU"}
+                {row.sku?.trim() || "—"}
               </p>
             </div>
           ),
         },
         {
           key: "categoria",
-          header: "Categoría",
+          header: t("products.category"),
           render: (row) =>
             row.categoria?.nombre ?? "—",
         },
         {
           key: "marca",
-          header: "Marca / variante",
+          header: t("products.brand"),
           render: (row) => (
             <div>
               <p>
@@ -64,7 +69,7 @@ function TablaProductos({
         },
         {
           key: "precio",
-          header: "Precio sugerido",
+          header: t("products.suggestedPrice"),
           render: (row) =>
             formatCurrency(
               row.precioVentaSugeridoSinIva,
@@ -72,7 +77,7 @@ function TablaProductos({
         },
         {
           key: "stock",
-          header: "Stock",
+          header: t("products.stock"),
           render: (row) => (
             <div>
               <p className="font-semibold text-zinc-950">
@@ -80,7 +85,7 @@ function TablaProductos({
               </p>
 
               <p className="text-xs text-zinc-500">
-                Mínimo: {row.stockMinimo}
+                Min: {row.stockMinimo}
               </p>
             </div>
           ),
@@ -95,14 +100,10 @@ function TablaProductos({
         },
         {
           key: "estado",
-          header: "Estado",
+          header: t("common.status"),
           render: (row) => (
             <StatusBadge
-              label={
-                row.activo
-                  ? "ACTIVO"
-                  : "INACTIVO"
-              }
+              label={getCatalogStatusLabel(t, row.activo)}
               variant={
                 row.activo
                   ? "success"
@@ -114,7 +115,7 @@ function TablaProductos({
       ]}
       actions={(row) => (
         <TableActionButton
-          label="Ver detalle"
+          label={t("products.details")}
           variant="view"
           icon={<Eye size={17} />}
           onClick={() => onView(row)}

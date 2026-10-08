@@ -3,6 +3,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -192,47 +193,49 @@ function MovimientosPage() {
     (movimiento) => movimiento.tipoMovimiento === "SALIDA_VENTA",
   ).length;
 
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Movimientos de inventario"
-        description="Consultá el historial generado automáticamente por compras, ventas y anulaciones."
+        title={t("movements.title", "Movimientos")}
+        description={t("movements.subtitle", "Registro histórico y bitácora de entradas y salidas de stock.")}
         icon={History}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          label="Resultados"
+          label={t("common.details", "Resultados")}
           value={String(total)}
-          hint="Movimientos según filtros actuales"
+          hint={t("movements.subtitle", "Movimientos según filtros actuales")}
           icon={History}
           variant="info"
         />
 
         <StatCard
-          label="Entradas en página"
+          label={t("movements.inbound", "Entradas en página")}
           value={String(entradasPagina)}
-          hint="Compras y reingresos visibles"
+          hint={t("movements.inboundHint", "Compras y reingresos visibles")}
           icon={ArrowDownToLine}
           variant="success"
         />
 
         <StatCard
-          label="Salidas en página"
+          label={t("movements.outbound", "Salidas en página")}
           value={String(salidasPagina)}
-          hint="Ventas visibles"
+          hint={t("movements.outboundHint", "Ventas visibles")}
           icon={ArrowUpFromLine}
           variant="warning"
         />
       </div>
 
       <SectionCard
-        title="Historial de movimientos"
-        description="Los movimientos son registros de auditoría generados por el backend y no pueden editarse."
+        title={t("movements.history", "Historial de movimientos")}
+        description={t("movements.historyDesc", "Los movimientos son registros de auditoría generados por el backend y no pueden editarse.")}
       >
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <InputField
-            label="ID producto"
+            label={`ID ${t("products.title", "Producto")}`}
             type="number"
             value={filtrosDraft.productoId}
             onChange={(value) =>
@@ -246,7 +249,7 @@ function MovimientosPage() {
           />
 
           <InputField
-            label="ID lote"
+            label={`ID ${t("lots.title", "Lote")}`}
             type="number"
             value={filtrosDraft.loteId}
             onChange={(value) =>
@@ -260,7 +263,7 @@ function MovimientosPage() {
           />
 
           <SelectField
-            label="Tipo de movimiento"
+            label={t("movements.filterType", "Tipo de movimiento")}
             value={filtrosDraft.tipoMovimiento}
             onChange={(value) =>
               setFiltrosDraft((current) => ({
@@ -271,25 +274,25 @@ function MovimientosPage() {
             options={[
               {
                 value: "",
-                label: "Todos",
+                label: t("common.all", "Todos"),
               },
               {
                 value: "ENTRADA_COMPRA",
-                label: "Entrada por compra",
+                label: t("statuses.movements.ENTRADA_COMPRA", "Entrada por compra"),
               },
               {
                 value: "SALIDA_VENTA",
-                label: "Salida por venta",
+                label: t("statuses.movements.SALIDA_VENTA", "Salida por venta"),
               },
               {
                 value: "REINGRESO_ANULACION_VENTA",
-                label: "Reingreso por anulación",
+                label: t("statuses.movements.REINGRESO_ANULACION_VENTA", "Reingreso por anulación"),
               },
             ]}
           />
 
           <SelectField
-            label="Tipo de referencia"
+            label={t("movements.referenceType", "Tipo de referencia")}
             value={filtrosDraft.referenciaTipo}
             onChange={(value) =>
               setFiltrosDraft((current) => ({
@@ -300,21 +303,21 @@ function MovimientosPage() {
             options={[
               {
                 value: "",
-                label: "Todas",
+                label: t("movements.allReferences", "Todas"),
               },
               {
                 value: "PEDIDO",
-                label: "Pedido",
+                label: t("movements.orderRef", "Pedido"),
               },
               {
                 value: "VENTA",
-                label: "Venta",
+                label: t("movements.saleRef", "Venta"),
               },
             ]}
           />
 
           <InputField
-            label="ID referencia"
+            label={t("movements.referenceId", "ID referencia")}
             type="number"
             value={filtrosDraft.referenciaId}
             onChange={(value) =>
@@ -328,7 +331,7 @@ function MovimientosPage() {
           />
 
           <InputField
-            label="Desde"
+            label={t("movements.from", "Desde")}
             type="date"
             value={filtrosDraft.desde}
             onChange={(value) =>
@@ -340,7 +343,7 @@ function MovimientosPage() {
           />
 
           <InputField
-            label="Hasta"
+            label={t("movements.to", "Hasta")}
             type="date"
             value={filtrosDraft.hasta}
             onChange={(value) =>
@@ -352,7 +355,7 @@ function MovimientosPage() {
           />
 
           <InputField
-            label="ID usuario"
+            label={t("movements.userId", "ID usuario")}
             type="number"
             value={filtrosDraft.usuarioId}
             onChange={(value) =>
@@ -368,7 +371,7 @@ function MovimientosPage() {
 
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <PrimaryButton onClick={aplicarFiltros}>
-            Aplicar filtros
+            {t("common.filter", "Aplicar filtros")}
           </PrimaryButton>
 
           <button
@@ -376,17 +379,17 @@ function MovimientosPage() {
             onClick={limpiarFiltros}
             className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
           >
-            Limpiar filtros
+            {t("common.cleanFilters", "Limpiar filtros")}
           </button>
         </div>
 
         {loading ? (
-          <LoadingState message="Cargando movimientos..." />
+          <LoadingState message={t("common.loading", "Cargando movimientos...")} />
         ) : error ? (
           <div className="space-y-4">
             <AlertMessage
               variant="error"
-              title="No fue posible cargar los movimientos"
+              title={t("common.errorOccurred", "No fue posible cargar los movimientos")}
               message={error}
             />
 
@@ -395,7 +398,7 @@ function MovimientosPage() {
                 void cargarMovimientos();
               }}
             >
-              Reintentar
+              {t("common.reload", "Reintentar")}
             </PrimaryButton>
           </div>
         ) : (

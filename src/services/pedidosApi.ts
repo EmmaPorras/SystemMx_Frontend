@@ -24,7 +24,7 @@ function mapPedidoToCreatePayload(pedido: PedidoCompra) {
       productoId: detalle.productoId,
       productoNombre: detalle.productoNombre.trim(),
       categoriaId: Number(detalle.categoriaId),
-      marca: detalle.marca.trim() || undefined,
+      marca: detalle.marca?.trim() || undefined,
       loteCodigo: detalle.loteCodigo,
       cantidad: Number(detalle.cantidad),
       cantidadRecibida: 0,

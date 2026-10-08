@@ -3,6 +3,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   Boxes,
@@ -28,11 +29,12 @@ import ModuleCard from "./ModuleCard";
 import HomeCommercialOverview from "./HomeCommercialOverview";
 
 import {
-  navigationItems,
+  useNavigation,
 } from "../common/navigation";
 
 import {
   formatCurrency,
+  getActiveLocale,
 } from "../common/formatters";
 
 import {
@@ -63,20 +65,12 @@ type PuntoGrafica = {
   cantidadVentas: number;
 };
 
-const MESES_CORTOS = [
-  "Ene",
-  "Feb",
-  "Mar",
-  "Abr",
-  "May",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dic",
-];
+function obtenerMesCorto(indice: number): string {
+  const locale = getActiveLocale();
+  const fecha = new Date(2026, indice, 1);
+  const nombre = new Intl.DateTimeFormat(locale, { month: "short" }).format(fecha);
+  return nombre.charAt(0).toUpperCase() + nombre.slice(1);
+}
 
 function fechaISO(
   fecha: Date,
@@ -218,14 +212,14 @@ function generarPuntosTodo(
         clave,
 
         etiqueta:
-          `${MESES_CORTOS[
+          `${obtenerMesCorto(
             mes - 1
-          ]} ${year}`,
+          )} ${year}`,
 
         etiquetaCorta:
-          `${MESES_CORTOS[
+          `${obtenerMesCorto(
             mes - 1
-          ]} ${String(
+          )} ${String(
             year,
           ).slice(-2)}`,
 
@@ -315,14 +309,14 @@ function generarPuntosTodo(
         clave,
 
         etiqueta:
-          `${MESES_CORTOS[
+          `${obtenerMesCorto(
             mes - 1
-          ]} ${year}`,
+          )} ${year}`,
 
         etiquetaCorta:
-          `${MESES_CORTOS[
+          `${obtenerMesCorto(
             mes - 1
-          ]} ${String(
+          )} ${String(
             year,
           ).slice(-2)}`,
 
@@ -394,14 +388,14 @@ function generarPuntosGrafica(
           clave,
 
           etiqueta:
-            `${MESES_CORTOS[
+            `${obtenerMesCorto(
               indice
-            ]} ${fechaHasta.getFullYear()}`,
+            )} ${fechaHasta.getFullYear()}`,
 
           etiquetaCorta:
-            MESES_CORTOS[
+            obtenerMesCorto(
               indice
-            ],
+            ),
 
           ventas:
             filasMes.reduce(
@@ -571,6 +565,7 @@ function GraficaVentas({
 }: {
   puntos: PuntoGrafica[];
 }) {
+  const { t } = useTranslation();
   const [
     puntoActivo,
     setPuntoActivo,
@@ -772,7 +767,7 @@ function GraficaVentas({
         viewBox={`0 0 ${width} ${height}`}
         className="w-full min-w-[680px]"
         role="img"
-        aria-label="Gráfica de evolución de ventas"
+        aria-label={t("home.salesChartAria", "Gráfica de evolución de ventas")}
         onMouseLeave={() =>
           setPuntoActivo(
             null,
@@ -1010,12 +1005,12 @@ function GraficaVentas({
                   }
                   className="fill-zinc-300 text-[11px]"
                 >
-                  {`${puntoTooltip.cantidadVentas} ${
-                    puntoTooltip.cantidadVentas ===
-                    1
-                      ? "venta"
-                      : "ventas"
-                  }`}
+                  {t("home.salesCount", {
+                    count: puntoTooltip.cantidadVentas,
+                    defaultValue: `${puntoTooltip.cantidadVentas} ${
+                      puntoTooltip.cantidadVentas === 1 ? "venta" : "ventas"
+                    }`,
+                  })}
                 </text>
 
                 <text
@@ -1029,9 +1024,12 @@ function GraficaVentas({
                   }
                   className="fill-emerald-300 text-[11px]"
                 >
-                  {`Ganancia: ${formatCurrency(
-                    puntoTooltip.gananciaBruta,
-                  )}`}
+                  {t("home.profitAmountWithColon", {
+                    amount: formatCurrency(puntoTooltip.gananciaBruta),
+                    defaultValue: `Ganancia: ${formatCurrency(
+                      puntoTooltip.gananciaBruta,
+                    )}`,
+                  })}
                 </text>
               </g>
             ) : null}
@@ -1042,28 +1040,10 @@ function GraficaVentas({
   );
 }
 
-function obtenerRutaModulo(
-  nombre: string,
-  fallback: string,
-) {
-  const item =
-    navigationItems.find(
-      (navigationItem) =>
-        navigationItem.label
-          .toLowerCase()
-          .trim() ===
-        nombre
-          .toLowerCase()
-          .trim(),
-    );
-
-  return (
-    item?.path ??
-    fallback
-  );
-}
-
 function HomePage() {
+  const { t } = useTranslation();
+  const { navigationItems } = useNavigation();
+
   const [
     resumen,
     setResumen,
@@ -1156,7 +1136,7 @@ function HomePage() {
         requestError instanceof
           Error
           ? requestError.message
-          : "No fue posible cargar el resumen del sistema.",
+          : t("home.loadErrorSummary"),
       );
     } finally {
       setLoading(false);
@@ -1261,7 +1241,7 @@ function HomePage() {
             requestError instanceof
               Error
               ? requestError.message
-              : "No fue posible cargar la evolución de ventas.",
+              : t("home.loadErrorChart"),
           );
         }
       } finally {
@@ -1318,7 +1298,7 @@ function HomePage() {
             requestError instanceof
               Error
               ? requestError.message
-              : "No fue posible cargar los productos más vendidos.",
+              : t("home.loadErrorTopProducts"),
           );
         }
       } finally {
@@ -1412,28 +1392,24 @@ function HomePage() {
     );
 
   const ventasPath =
-    obtenerRutaModulo(
-      "Ventas",
-      "/ventas",
-    );
+    navigationItems.find(
+      (item) => item.path === "/ventas",
+    )?.path ?? "/ventas";
 
   const pedidosPath =
-    obtenerRutaModulo(
-      "Pedidos",
-      "/pedidos",
-    );
+    navigationItems.find(
+      (item) => item.path === "/pedidos",
+    )?.path ?? "/pedidos";
 
   const productosPath =
-    obtenerRutaModulo(
-      "Productos",
-      "/productos",
-    );
+    navigationItems.find(
+      (item) => item.path === "/productos",
+    )?.path ?? "/productos";
 
   const reportesPath =
-    obtenerRutaModulo(
-      "Reportes",
-      "/reportes",
-    );
+    navigationItems.find(
+      (item) => item.path === "/reportes",
+    )?.path ?? "/reportes";
 
   return (
     <div className="space-y-8 pb-8">
@@ -1442,8 +1418,8 @@ function HomePage() {
       {/* ====================================== */}
 
       <PageHeader
-        title="Inicio"
-        description="Vista general del sistema."
+        title={t("navigation.home")}
+        description={t("navigation.homeDesc")}
         icon={
           TbMotorbikeFilled
         }
@@ -1457,7 +1433,7 @@ function HomePage() {
         <div className="space-y-3">
           <AlertMessage
             variant="error"
-            title="No fue posible cargar el Dashboard"
+            title={t("home.loadErrorTitle")}
             message={
               error
             }
@@ -1471,7 +1447,7 @@ function HomePage() {
               void cargarResumen();
             }}
           >
-            Reintentar
+            {t("common.retry")}
           </PrimaryButton>
         </div>
       ) : null}
@@ -1484,11 +1460,11 @@ function HomePage() {
         <div className="flex items-center gap-4">
           <div className="shrink-0">
             <h2 className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-500 sm:text-sm">
-              Resumen general
+              {t("home.generalSummary")}
             </h2>
 
             <p className="mt-1 text-sm text-zinc-400">
-              Indicadores principales del negocio.
+              {t("home.generalSummaryDesc")}
             </p>
           </div>
 
@@ -1497,20 +1473,22 @@ function HomePage() {
 
         {loading ? (
           <div className="rounded-2xl border border-zinc-200 bg-white p-8">
-            <LoadingState message="Cargando resumen del sistema..." />
+            <LoadingState message={t("home.loadingSummary")} />
           </div>
         ) : resumen ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
-              label="Ventas registradas"
+              label={t("home.registeredSales")}
               value={String(
                 resumen.ventas
                   .cantidad,
               )}
-              hint={`Ventas acumuladas por ${formatCurrency(
-                resumen.ventas
-                  .total,
-              )}`}
+              hint={t("home.salesHint", {
+                total: formatCurrency(
+                  resumen.ventas
+                    .total,
+                ),
+              })}
               icon={
                 ShoppingCart
               }
@@ -1518,14 +1496,16 @@ function HomePage() {
             />
 
             <StatCard
-              label="Ganancia bruta"
+              label={t("home.grossProfit")}
               value={formatCurrency(
                 resumen.ventas
                   .gananciaBruta,
               )}
-              hint={`Margen bruto: ${resumen.ventas.margenBrutoPorcentaje.toFixed(
-                2,
-              )}%`}
+              hint={t("home.grossMarginHint", {
+                percent: resumen.ventas.margenBrutoPorcentaje.toFixed(
+                  2,
+                ),
+              })}
               icon={
                 CircleDollarSign
               }
@@ -1533,12 +1513,14 @@ function HomePage() {
             />
 
             <StatCard
-              label="Inventario disponible"
+              label={t("home.availableInventory")}
               value={String(
                 resumen.inventario
                   .unidadesDisponibles,
               )}
-              hint={`${resumen.inventario.lotesConStock} lotes con stock`}
+              hint={t("home.lotsWithStockHint", {
+                count: resumen.inventario.lotesConStock,
+              })}
               icon={
                 Boxes
               }
@@ -1546,13 +1528,15 @@ function HomePage() {
             />
 
             <StatCard
-              label="Cuentas por cobrar"
+              label={t("home.receivables")}
               value={formatCurrency(
                 resumen
                   .cuentasPorCobrar
                   .saldo,
               )}
-              hint={`${resumen.cuentasPorCobrar.ventasConSaldo} ventas con saldo pendiente`}
+              hint={t("home.salesWithPendingBalanceHint", {
+                count: resumen.cuentasPorCobrar.ventasConSaldo,
+              })}
               icon={
                 WalletCards
               }
@@ -1566,12 +1550,14 @@ function HomePage() {
             />
 
             <StatCard
-              label="Pedidos registrados"
+              label={t("home.registeredOrders")}
               value={String(
                 resumen.pedidos
                   .total,
               )}
-              hint={`${resumen.pedidos.pendientes} pedidos pendientes`}
+              hint={t("home.pendingOrdersHint", {
+                count: resumen.pedidos.pendientes,
+              })}
               icon={
                 ReceiptText
               }
@@ -1579,12 +1565,14 @@ function HomePage() {
             />
 
             <StatCard
-              label="Pedidos recibidos"
+              label={t("home.receivedOrders")}
               value={String(
                 resumen.pedidos
                   .recibidos,
               )}
-              hint={`${resumen.pedidos.enTransito} pedidos en tránsito`}
+              hint={t("home.ordersInTransitHint", {
+                count: resumen.pedidos.enTransito,
+              })}
               icon={
                 PackageCheck
               }
@@ -1592,15 +1580,17 @@ function HomePage() {
             />
 
             <StatCard
-              label="Saldo pendiente ventas"
+              label={t("home.salesPendingBalance")}
               value={formatCurrency(
                 resumen.ventas
                   .saldoPendiente,
               )}
-              hint={`Pagado: ${formatCurrency(
-                resumen.ventas
-                  .montoPagado,
-              )}`}
+              hint={t("home.paidHint", {
+                total: formatCurrency(
+                  resumen.ventas
+                    .montoPagado,
+                ),
+              })}
               icon={
                 WalletCards
               }
@@ -1614,12 +1604,12 @@ function HomePage() {
             />
 
             <StatCard
-              label="Valor del inventario"
+              label={t("home.inventoryValue")}
               value={formatCurrency(
                 resumen.inventario
                   .valorCosto,
               )}
-              hint="Valor actual del inventario disponible a costo"
+              hint={t("home.inventoryValueHint")}
               icon={
                 Boxes
               }
@@ -1637,11 +1627,11 @@ function HomePage() {
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <h2 className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-500 sm:text-sm">
-              Evolución de ventas
+              {t("home.salesEvolution")}
             </h2>
 
             <p className="mt-1 text-sm text-zinc-400">
-              Comportamiento de las ventas registradas.
+              {t("home.salesEvolutionDesc")}
             </p>
           </div>
 
@@ -1651,25 +1641,25 @@ function HomePage() {
                 value:
                   "7d",
                 label:
-                  "7 días",
+                  t("home.period7d"),
               },
               {
                 value:
                   "30d",
                 label:
-                  "30 días",
+                  t("home.period30d"),
               },
               {
                 value:
                   "year",
                 label:
-                  "Este año",
+                  t("home.periodThisYear"),
               },
               {
                 value:
                   "all",
                 label:
-                  "Todo",
+                  t("home.periodAll"),
               },
             ].map(
               (
@@ -1714,7 +1704,7 @@ function HomePage() {
           <div className="grid border-b border-zinc-200 sm:grid-cols-2 lg:grid-cols-4">
             <div className="border-b border-zinc-200 p-5 sm:border-r lg:border-b-0">
               <p className="text-xs font-medium text-zinc-400">
-                Total vendido
+                {t("home.chartSummaryVentas")}
               </p>
 
               <p className="mt-1 text-xl font-bold text-zinc-950">
@@ -1726,7 +1716,7 @@ function HomePage() {
 
             <div className="border-b border-zinc-200 p-5 lg:border-r lg:border-b-0">
               <p className="text-xs font-medium text-zinc-400">
-                Ganancia bruta
+                {t("home.grossProfit")}
               </p>
 
               <p className="mt-1 text-xl font-bold text-emerald-600">
@@ -1738,7 +1728,7 @@ function HomePage() {
 
             <div className="border-b border-zinc-200 p-5 sm:border-r sm:border-b-0">
               <p className="text-xs font-medium text-zinc-400">
-                Ventas
+                {t("navigation.sales")}
               </p>
 
               <p className="mt-1 text-xl font-bold text-zinc-950">
@@ -1750,7 +1740,7 @@ function HomePage() {
 
             <div className="p-5">
               <p className="text-xs font-medium text-zinc-400">
-                Margen
+                {t("home.margin")}
               </p>
 
               <p className="mt-1 text-xl font-bold text-zinc-950">
@@ -1765,14 +1755,14 @@ function HomePage() {
           <div className="p-4 sm:p-6">
             {loadingGrafica ? (
               <div className="flex min-h-[310px] items-center justify-center">
-                <LoadingState message="Cargando evolución de ventas..." />
+                <LoadingState message={t("home.loadingEvolution")} />
               </div>
             ) : errorGrafica ? (
               <div className="flex min-h-[260px] flex-col items-center justify-center text-center">
                 <TriangleAlert className="mb-3 h-8 w-8 text-amber-500" />
 
                 <p className="font-bold text-zinc-950">
-                  No fue posible cargar la gráfica
+                  {t("home.loadErrorChartTitle")}
                 </p>
 
                 <p className="mt-1 max-w-md text-sm text-zinc-500">
@@ -1787,11 +1777,11 @@ function HomePage() {
                 <ShoppingCart className="mb-3 h-8 w-8 text-zinc-300" />
 
                 <p className="font-bold text-zinc-950">
-                  No hay ventas en este período
+                  {t("home.noSalesPeriod")}
                 </p>
 
                 <p className="mt-1 text-sm text-zinc-500">
-                  Seleccioná otro período para consultar el historial.
+                  {t("home.selectOtherPeriodHint")}
                 </p>
               </div>
             ) : (
@@ -1799,7 +1789,7 @@ function HomePage() {
                 <div className="mb-2 flex items-center justify-end gap-2 text-xs text-zinc-500">
                   <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
 
-                  Ventas
+                  {t("navigation.sales")}
                 </div>
 
                 <GraficaVentas
@@ -1851,11 +1841,11 @@ function HomePage() {
           <div className="flex items-center gap-4">
             <div className="shrink-0">
               <h2 className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-500 sm:text-sm">
-                Estado operativo
+                {t("home.operationalStatus")}
               </h2>
 
               <p className="mt-1 text-sm text-zinc-400">
-                Situaciones que requieren atención.
+                {t("home.operationalStatusDesc")}
               </p>
             </div>
 
@@ -1897,15 +1887,15 @@ function HomePage() {
 
               <div>
                 <p className="text-sm font-bold text-zinc-950">
-                  Cuentas por cobrar
+                  {t("home.receivables")}
                 </p>
 
                 <p className="mt-1 text-sm leading-6 text-zinc-500">
                   {resumen
                     .cuentasPorCobrar
                     .saldo > 0
-                    ? `${resumen.cuentasPorCobrar.ventasConSaldo} ventas tienen saldo pendiente.`
-                    : "No existen ventas con saldo pendiente."}
+                    ? t("home.salesHavePendingBalance", { count: resumen.cuentasPorCobrar.ventasConSaldo })
+                    : t("home.noSalesWithPendingBalance")}
                 </p>
 
                 <p className="mt-2 text-sm font-bold text-zinc-900">
@@ -1927,7 +1917,7 @@ function HomePage() {
 
               <div>
                 <p className="text-sm font-bold text-zinc-950">
-                  Pedidos pendientes
+                  {t("home.pendingOrders")}
                 </p>
 
                 <p className="mt-1 text-sm leading-6 text-zinc-500">
@@ -1935,17 +1925,12 @@ function HomePage() {
                     .pedidos
                     .pendientes >
                   0
-                    ? "Hay pedidos que todavía no han finalizado su proceso."
-                    : "No hay pedidos pendientes actualmente."}
+                    ? t("home.ordersNotFinished")
+                    : t("home.noPendingOrdersCurrently")}
                 </p>
 
                 <p className="mt-2 text-sm font-bold text-zinc-900">
-                  {
-                    resumen
-                      .pedidos
-                      .pendientes
-                  }{" "}
-                  pendientes
+                  {t("home.pendingCount", { count: resumen.pedidos.pendientes })}
                 </p>
               </div>
             </div>
@@ -1959,20 +1944,15 @@ function HomePage() {
 
               <div>
                 <p className="text-sm font-bold text-zinc-950">
-                  Inventario actual
+                  {t("home.currentInventory")}
                 </p>
 
                 <p className="mt-1 text-sm leading-6 text-zinc-500">
-                  Existencias disponibles actualmente en los lotes registrados.
+                  {t("home.currentInventoryDesc")}
                 </p>
 
                 <p className="mt-2 text-sm font-bold text-zinc-900">
-                  {
-                    resumen
-                      .inventario
-                      .unidadesDisponibles
-                  }{" "}
-                  unidades
+                  {t("home.unitsCount", { count: resumen.inventario.unidadesDisponibles })}
                 </p>
               </div>
             </div>
@@ -1991,11 +1971,11 @@ function HomePage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-400">
-                  Ventas
+                  {t("navigation.sales")}
                 </p>
 
                 <h3 className="mt-1 text-lg font-bold text-zinc-950">
-                  Resumen financiero
+                  {t("home.financialSummary")}
                 </h3>
               </div>
 
@@ -2009,7 +1989,7 @@ function HomePage() {
             <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
               <div>
                 <p className="text-xs font-medium text-zinc-400">
-                  Vendido
+                  {t("home.sold")}
                 </p>
 
                 <p className="mt-1 text-base font-bold text-zinc-950">
@@ -2023,7 +2003,7 @@ function HomePage() {
 
               <div>
                 <p className="text-xs font-medium text-zinc-400">
-                  Pagado
+                  {t("home.paid")}
                 </p>
 
                 <p className="mt-1 text-base font-bold text-zinc-950">
@@ -2037,7 +2017,7 @@ function HomePage() {
 
               <div>
                 <p className="text-xs font-medium text-zinc-400">
-                  Pendiente
+                  {t("home.pending")}
                 </p>
 
                 <p className="mt-1 text-base font-bold text-zinc-950">
@@ -2051,7 +2031,7 @@ function HomePage() {
 
               <div>
                 <p className="text-xs font-medium text-zinc-400">
-                  Costo
+                  {t("common.cost")}
                 </p>
 
                 <p className="mt-1 text-base font-bold text-zinc-950">
@@ -2065,7 +2045,7 @@ function HomePage() {
 
               <div>
                 <p className="text-xs font-medium text-zinc-400">
-                  Ganancia
+                  {t("home.profit")}
                 </p>
 
                 <p className="mt-1 text-base font-bold text-emerald-600">
@@ -2079,7 +2059,7 @@ function HomePage() {
 
               <div>
                 <p className="text-xs font-medium text-zinc-400">
-                  Margen
+                  {t("home.margin")}
                 </p>
 
                 <p className="mt-1 text-base font-bold text-zinc-950">
@@ -2098,11 +2078,11 @@ function HomePage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-400">
-                  Compras
+                  {t("navigation.purchases")}
                 </p>
 
                 <h3 className="mt-1 text-lg font-bold text-zinc-950">
-                  Estado de pedidos
+                  {t("home.ordersStatus")}
                 </h3>
               </div>
 
@@ -2116,7 +2096,7 @@ function HomePage() {
             <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
               <div>
                 <p className="text-xs font-medium text-zinc-400">
-                  Total
+                  {t("common.total")}
                 </p>
 
                 <p className="mt-1 text-xl font-bold text-zinc-950">
@@ -2130,7 +2110,7 @@ function HomePage() {
 
               <div>
                 <p className="text-xs font-medium text-zinc-400">
-                  Registrados
+                  {t("home.ordersRegistered")}
                 </p>
 
                 <p className="mt-1 text-xl font-bold text-zinc-950">
@@ -2144,7 +2124,7 @@ function HomePage() {
 
               <div>
                 <p className="text-xs font-medium text-zinc-400">
-                  En tránsito
+                  {t("home.ordersInTransit")}
                 </p>
 
                 <p className="mt-1 text-xl font-bold text-blue-600">
@@ -2158,7 +2138,7 @@ function HomePage() {
 
               <div>
                 <p className="text-xs font-medium text-zinc-400">
-                  Recibidos
+                  {t("home.ordersReceived")}
                 </p>
 
                 <p className="mt-1 text-xl font-bold text-emerald-600">
@@ -2172,7 +2152,7 @@ function HomePage() {
 
               <div>
                 <p className="text-xs font-medium text-zinc-400">
-                  Pendientes
+                  {t("home.ordersPending")}
                 </p>
 
                 <p className="mt-1 text-xl font-bold text-amber-600">
@@ -2186,7 +2166,7 @@ function HomePage() {
 
               <div>
                 <p className="text-xs font-medium text-zinc-400">
-                  Cancelados
+                  {t("home.ordersCanceled")}
                 </p>
 
                 <p className="mt-1 text-xl font-bold text-red-600">
@@ -2210,11 +2190,11 @@ function HomePage() {
         <div className="flex items-center gap-4">
           <div className="min-w-0">
             <h2 className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-500 sm:text-sm">
-              Módulos del sistema
+              {t("home.systemModules")}
             </h2>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Seleccioná el módulo que deseás administrar.
+              {t("home.systemModulesDesc")}
             </p>
           </div>
 

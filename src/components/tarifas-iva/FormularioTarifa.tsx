@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import InputField from "../common/InputField";
 import SelectField from "../common/SelectField";
 import PrimaryButton from "../common/PrimaryButton";
@@ -21,11 +22,14 @@ function FormularioTarifa({
   tarifa,
   errors,
   isSubmitting = false,
-  submitLabel = "Guardar tarifa",
+  submitLabel,
   onChange,
   onSubmit,
   onCancel,
 }: FormularioTarifaProps) {
+  const { t } = useTranslation();
+  const resolvedSubmitLabel = submitLabel ?? t("common.save");
+
   return (
     <form
       onSubmit={(e) => {
@@ -38,37 +42,36 @@ function FormularioTarifa({
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <InputField
-          label="Código"
+          label={t("common.code")}
           required
           value={tarifa.codigo}
           onChange={(value) => onChange("codigo", value)}
-          placeholder="Ejemplo: IVA13"
+          placeholder="Ej. IVA13"
           maxLength={20}
           showCharacterCount
           error={errors.codigo}
         />
 
         <InputField
-          label="Porcentaje"
+          label={t("vatRates.percentage")}
           required
           type="number"
           value={tarifa.porcentaje}
           onChange={(value) => onChange("porcentaje", value)}
-          placeholder="Ejemplo: 13"
+          placeholder={t("vatRates.percentagePlaceholder")}
           min={0}
           max={100}
           step={0.01}
-          helperText="Solo números. Puede escribirse o ajustarse con las flechas."
           error={errors.porcentaje}
         />
 
         <div className="sm:col-span-2">
           <InputField
-            label="Descripción"
+            label={t("common.description")}
             required
             value={tarifa.descripcion}
             onChange={(value) => onChange("descripcion", value)}
-            placeholder="Ejemplo: Tarifa general del IVA"
+            placeholder={t("vatRates.descriptionPlaceholder")}
             maxLength={45}
             showCharacterCount
             error={errors.descripcion}
@@ -76,14 +79,14 @@ function FormularioTarifa({
         </div>
 
         <SelectField
-          label="Estado"
+          label={t("common.status")}
           required
           value={tarifa.estado}
           onChange={(value) => onChange("estado", value)}
           error={errors.estado}
           options={[
-            { value: "ACTIVA", label: "Activa" },
-            { value: "INACTIVA", label: "Inactiva" },
+            { value: "ACTIVA", label: t("common.active") },
+            { value: "INACTIVA", label: t("common.inactive") },
           ]}
         />
       </div>
@@ -95,15 +98,15 @@ function FormularioTarifa({
           disabled={isSubmitting}
           className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Cancelar
+          {t("common.cancel")}
         </button>
 
         <PrimaryButton
           type="submit"
           loading={isSubmitting}
-          loadingText="Guardando..."
+          loadingText={t("common.processing")}
         >
-          {submitLabel}
+          {resolvedSubmitLabel}
         </PrimaryButton>
       </div>
     </form>

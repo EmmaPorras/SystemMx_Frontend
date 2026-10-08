@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type AlertVariant = "success" | "error" | "warning" | "info";
 
@@ -70,6 +71,7 @@ function AlertMessage({
   onClose,
   className = "",
 }: AlertMessageProps) {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const styles = alertStyles[variant];
 
@@ -121,8 +123,8 @@ function AlertMessage({
             type="button"
             onClick={handleClose}
             className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition outline-none focus-visible:ring-2 ${styles.closeButton}`}
-            aria-label="Cerrar mensaje"
-            title="Cerrar mensaje"
+            aria-label={t("common.closeAlert")}
+            title={t("common.closeAlert")}
           >
             <X size={16} aria-hidden="true" />
           </button>

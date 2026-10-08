@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import PrimaryButton from "../common/PrimaryButton";
 
 type BotonAgregarTarifaProps = {
@@ -5,7 +6,8 @@ type BotonAgregarTarifaProps = {
 };
 
 function BotonAgregarTarifa({ onClick }: BotonAgregarTarifaProps) {
-  return <PrimaryButton onClick={onClick}>+ Nueva tarifa</PrimaryButton>;
+  const { t } = useTranslation();
+  return <PrimaryButton onClick={onClick}>+ {t("vatRates.newRate")}</PrimaryButton>;
 }
 
 export default BotonAgregarTarifa;

@@ -1,5 +1,9 @@
+import { useTranslation } from "react-i18next";
+
 import DataTableShell from "../common/DataTableShell";
 import SectionCard from "../common/SectionCard";
+import { formatNumber } from "../common/formatters";
+import i18n from "../../i18n";
 
 type ReportRow =
   Record<string, unknown>;
@@ -43,16 +47,11 @@ function formatValue(
   }
 
   if (typeof value === "boolean") {
-    return value ? "Sí" : "No";
+    return value ? i18n.t("common.yes") : i18n.t("common.no");
   }
 
   if (typeof value === "number") {
-    return new Intl.NumberFormat(
-      "es-CR",
-      {
-        maximumFractionDigits: 2,
-      },
-    ).format(value);
+    return formatNumber(value, { maximumFractionDigits: 2 });
   }
 
   if (typeof value === "string") {
@@ -60,11 +59,7 @@ function formatValue(
   }
 
   if (Array.isArray(value)) {
-    return `${value.length} registro${
-      value.length === 1
-        ? ""
-        : "s"
-    }`;
+    return i18n.t("reportExport.recordsCount", { count: value.length });
   }
 
   if (isRecord(value)) {
@@ -86,6 +81,8 @@ function ArrayResult({
 }: {
   value: unknown[];
 }) {
+  const { t } = useTranslation();
+
   const rows: ReportRow[] =
     value.map((item, index) =>
       isRecord(item)
@@ -99,7 +96,7 @@ function ArrayResult({
   if (rows.length === 0) {
     return (
       <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
-        El reporte no contiene registros para los filtros seleccionados.
+        {t("reports.emptyReport")}
       </div>
     );
   }
@@ -115,7 +112,7 @@ function ArrayResult({
   return (
     <DataTableShell
       data={rows}
-      emptyMessage="Sin registros."
+      emptyMessage={t("common.noData")}
       getRowKey={(row) => {
         const idEntry =
           Object.entries(row).find(
@@ -202,13 +199,15 @@ function ObjectResult({
 function ReportResultView({
   data,
 }: ReportResultViewProps) {
+  const { t } = useTranslation();
+
   if (
     data === null ||
     data === undefined
   ) {
     return (
       <p className="py-8 text-center text-sm text-zinc-500">
-        Sin información disponible.
+        {t("reports.noInfoAvailable")}
       </p>
     );
   }

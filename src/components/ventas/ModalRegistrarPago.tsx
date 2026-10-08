@@ -3,6 +3,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import AlertMessage from "../common/AlertMessage";
 import AppModal from "../common/AppModal";
@@ -10,6 +11,7 @@ import InputField from "../common/InputField";
 import PrimaryButton from "../common/PrimaryButton";
 import SelectField from "../common/SelectField";
 import { formatCurrency } from "../common/formatters";
+import { getPaymentMethodLabel } from "../../i18n/statusMap";
 
 import {
   registrarPagoVentaApi,
@@ -34,6 +36,8 @@ function ModalRegistrarPago({
   onClose,
   onSuccess,
 }: ModalRegistrarPagoProps) {
+  const { t } = useTranslation();
+
   const [monto, setMonto] =
     useState("");
 
@@ -87,7 +91,7 @@ function ModalRegistrarPago({
       montoNumero <= 0
     ) {
       setError(
-        "Ingrese un monto de pago mayor que cero.",
+        t("validation.positiveNumber", "Ingrese un monto de pago mayor que cero."),
       );
 
       return;
@@ -98,9 +102,7 @@ function ModalRegistrarPago({
       venta.saldoPendiente
     ) {
       setError(
-        `El pago no puede superar el saldo pendiente de ${formatCurrency(
-          venta.saldoPendiente,
-        )}.`,
+        `${t("sales.balance", "Saldo pendiente")}: ${formatCurrency(venta.saldoPendiente)}`,
       );
 
       return;
@@ -108,7 +110,7 @@ function ModalRegistrarPago({
 
     if (referencia.length > 150) {
       setError(
-        "La referencia no puede superar 150 caracteres.",
+        t("validation.maxLength", { count: 150 }),
       );
 
       return;
@@ -116,7 +118,7 @@ function ModalRegistrarPago({
 
     if (observaciones.length > 1000) {
       setError(
-        "Las observaciones no pueden superar 1000 caracteres.",
+        t("validation.maxLength", { count: 1000 }),
       );
 
       return;
@@ -148,7 +150,7 @@ function ModalRegistrarPago({
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "No fue posible registrar el pago.",
+          : t("common.errorOccurred", "No fue posible registrar el pago."),
       );
     } finally {
       setSubmitting(false);
@@ -158,11 +160,11 @@ function ModalRegistrarPago({
   return (
     <AppModal
       isOpen={isOpen}
-      title="Registrar pago"
+      title={t("sales.registerPayment", "Registrar pago")}
       description={
         venta
-          ? `Venta #${venta.numeroVenta}`
-          : "Registrar pago de venta"
+          ? `${t("sales.title", "Venta")} #${venta.numeroVenta}`
+          : t("sales.registerPayment", "Registrar pago")
       }
       onClose={onClose}
       isSubmitting={submitting}
@@ -175,7 +177,7 @@ function ModalRegistrarPago({
         >
           <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Saldo pendiente
+              {t("sales.balance", "Saldo pendiente")}
             </p>
 
             <p className="mt-1 text-xl font-bold text-zinc-950">
@@ -188,7 +190,7 @@ function ModalRegistrarPago({
           {error ? (
             <AlertMessage
               variant="error"
-              title="No fue posible registrar el pago"
+              title={t("common.errorOccurred", "No fue posible registrar el pago")}
               message={error}
               onClose={() =>
                 setError(null)
@@ -197,7 +199,7 @@ function ModalRegistrarPago({
           ) : null}
 
           <InputField
-            label="Monto"
+            label={t("sales.paymentAmount", "Monto")}
             type="number"
             value={monto}
             onChange={setMonto}
@@ -208,7 +210,7 @@ function ModalRegistrarPago({
           />
 
           <SelectField
-            label="Método de pago"
+            label={t("sales.paymentMethod", "Método de pago")}
             value={metodoPago}
             onChange={(value) =>
               setMetodoPago(
@@ -218,49 +220,49 @@ function ModalRegistrarPago({
             options={[
               {
                 value: "EFECTIVO",
-                label: "Efectivo",
+                label: getPaymentMethodLabel(t, "EFECTIVO"),
               },
               {
                 value: "SINPE",
-                label: "SINPE",
+                label: getPaymentMethodLabel(t, "SINPE"),
               },
               {
                 value: "TRANSFERENCIA",
-                label: "Transferencia",
+                label: getPaymentMethodLabel(t, "TRANSFERENCIA"),
               },
               {
                 value: "TARJETA",
-                label: "Tarjeta",
+                label: getPaymentMethodLabel(t, "TARJETA"),
               },
               {
                 value: "MIXTO",
-                label: "Mixto",
+                label: getPaymentMethodLabel(t, "MIXTO"),
               },
               {
                 value: "OTRO",
-                label: "Otro",
+                label: getPaymentMethodLabel(t, "OTRO"),
               },
             ]}
             disabled={submitting}
           />
 
           <InputField
-            label="Referencia"
+            label={t("movements.reference", "Referencia")}
             value={referencia}
             onChange={setReferencia}
             maxLength={150}
             showCharacterCount
-            placeholder="Opcional"
+            placeholder={t("common.optional", "Opcional")}
             disabled={submitting}
           />
 
           <InputField
-            label="Observaciones"
+            label={t("orders.observations", "Observaciones")}
             value={observaciones}
             onChange={setObservaciones}
             maxLength={1000}
             showCharacterCount
-            placeholder="Opcional"
+            placeholder={t("common.optional", "Opcional")}
             disabled={submitting}
           />
 
@@ -271,16 +273,16 @@ function ModalRegistrarPago({
               disabled={submitting}
               className="rounded-xl border border-zinc-300 px-4 py-2.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100 disabled:opacity-50"
             >
-              Cancelar
+              {t("common.cancel", "Cancelar")}
             </button>
 
             <PrimaryButton
               type="submit"
               loading={submitting}
-              loadingText="Registrando..."
+              loadingText={t("common.processing", "Registrando...")}
               disabled={submitting}
             >
-              Registrar pago
+              {t("sales.registerPayment", "Registrar pago")}
             </PrimaryButton>
           </div>
         </form>
