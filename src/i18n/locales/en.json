@@ -108,7 +108,7 @@
     "password": "Password",
     "loginTitle": "Log In",
     "loginSubtitle": "Administrative access to the system.",
-    "loginAdminAccess": "Access reserved for the SystemMx administrator.",
+    "loginAdminAccess": "Access for authorized SystemMx users only.",
     "submitting": "Logging in...",
     "enter": "Sign In",
     "invalidCredentials": "Incorrect username or password.",
