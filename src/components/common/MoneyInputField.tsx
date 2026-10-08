@@ -71,17 +71,19 @@ function MoneyInputField({
 
   return (
     <div className={className}>
-      <label
-        htmlFor={inputId}
-        className="mb-1 block text-xs font-semibold text-zinc-700"
-      >
-        {label}
-        {required ? (
-          <span className="ml-1 text-rose-500" aria-hidden="true">
-            *
-          </span>
-        ) : null}
-      </label>
+      {label ? (
+        <label
+          htmlFor={inputId}
+          className="mb-1 block text-xs font-semibold text-zinc-700"
+        >
+          {label}
+          {required ? (
+            <span className="ml-1 text-rose-500" aria-hidden="true">
+              *
+            </span>
+          ) : null}
+        </label>
+      ) : null}
 
       <div className="relative">
         {effectivePrefix ? (
@@ -118,19 +120,21 @@ function MoneyInputField({
         />
       </div>
 
-      <div className="mt-1.5 flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          {error ? (
-            <p id={errorId} role="alert" className="text-xs font-medium text-red-600">
-              {error}
-            </p>
-          ) : helperText ? (
-            <p id={helperId} className="text-xs text-zinc-500">
-              {helperText}
-            </p>
-          ) : null}
+      {error || helperText ? (
+        <div className="mt-1.5 flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            {error ? (
+              <p id={errorId} role="alert" className="text-xs font-medium text-red-600">
+                {error}
+              </p>
+            ) : helperText ? (
+              <p id={helperId} className="text-xs text-zinc-500">
+                {helperText}
+              </p>
+            ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

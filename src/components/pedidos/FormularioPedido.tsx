@@ -74,11 +74,11 @@ function FormularioPedido({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <p className="mb-1.5 block text-sm font-semibold text-zinc-700">
+          <p className="mb-1 block text-xs font-semibold text-zinc-700">
             {t("orders.orderNumber")}
           </p>
 
-          <div className="flex min-h-[42px] items-center rounded-xl border border-zinc-300 bg-zinc-50 px-3.5 py-2.5 text-sm">
+          <div className="flex min-h-[38px] items-center rounded-xl border border-zinc-200/90 bg-zinc-50 px-3 py-2 text-xs sm:text-sm shadow-2xs">
             <span className="font-semibold text-zinc-950">
               {pedido.numeroPedido ? `#${pedido.numeroPedido}` : "—"}
             </span>
@@ -108,20 +108,20 @@ function FormularioPedido({
         />
 
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-zinc-700">
+          <label className="mb-1 block text-xs font-semibold text-zinc-700">
             {t("orders.origin")}
-            <span className="ml-1 text-red-500" aria-hidden="true">
+            <span className="ml-1 text-rose-500" aria-hidden="true">
               *
             </span>
           </label>
 
           <div
-            className={`flex min-h-[42px] items-center rounded-xl border px-3.5 py-2.5 text-sm ${
+            className={`flex min-h-[38px] items-center rounded-xl border px-3 py-2 text-xs sm:text-sm shadow-2xs ${
               errors.origen
-                ? "border-red-400 bg-red-50/50 text-red-700"
+                ? "border-rose-300 bg-rose-50/40 text-rose-700"
                 : pedido.origen
-                  ? "border-zinc-300 bg-zinc-50 font-semibold text-zinc-800"
-                  : "border-zinc-300 bg-zinc-50 text-zinc-400"
+                  ? "border-zinc-200/90 bg-zinc-50 font-semibold text-zinc-800"
+                  : "border-zinc-200/90 bg-zinc-50 text-zinc-400"
             }`}
           >
             {pedido.origen || "—"}

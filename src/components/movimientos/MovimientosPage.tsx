@@ -233,154 +233,170 @@ function MovimientosPage() {
         title={t("movements.history", "Historial de movimientos")}
         description={t("movements.historyDesc", "Los movimientos son registros de auditoría generados por el backend y no pueden editarse.")}
       >
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <InputField
-            label={`ID ${t("products.title", "Producto")}`}
-            type="number"
-            value={filtrosDraft.productoId}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                productoId: value,
-              }))
-            }
-            min={1}
-            step={1}
-          />
+        <div className="mb-6 flex flex-wrap items-end gap-3.5">
+          <div className="w-full sm:w-36">
+            <InputField
+              label={`ID ${t("products.title", "Producto")}`}
+              type="number"
+              value={filtrosDraft.productoId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  productoId: value,
+                }))
+              }
+              min={1}
+              step={1}
+            />
+          </div>
 
-          <InputField
-            label={`ID ${t("lots.title", "Lote")}`}
-            type="number"
-            value={filtrosDraft.loteId}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                loteId: value,
-              }))
-            }
-            min={1}
-            step={1}
-          />
+          <div className="w-full sm:w-36">
+            <InputField
+              label={`ID ${t("lots.title", "Lote")}`}
+              type="number"
+              value={filtrosDraft.loteId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  loteId: value,
+                }))
+              }
+              min={1}
+              step={1}
+            />
+          </div>
 
-          <SelectField
-            label={t("movements.filterType", "Tipo de movimiento")}
-            value={filtrosDraft.tipoMovimiento}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                tipoMovimiento: value as "" | TipoMovimientoInventario,
-              }))
-            }
-            options={[
-              {
-                value: "",
-                label: t("common.all", "Todos"),
-              },
-              {
-                value: "ENTRADA_COMPRA",
-                label: t("statuses.movements.ENTRADA_COMPRA", "Entrada por compra"),
-              },
-              {
-                value: "SALIDA_VENTA",
-                label: t("statuses.movements.SALIDA_VENTA", "Salida por venta"),
-              },
-              {
-                value: "REINGRESO_ANULACION_VENTA",
-                label: t("statuses.movements.REINGRESO_ANULACION_VENTA", "Reingreso por anulación"),
-              },
-            ]}
-          />
+          <div className="w-full sm:w-48">
+            <SelectField
+              label={t("movements.filterType", "Tipo de movimiento")}
+              value={filtrosDraft.tipoMovimiento}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  tipoMovimiento: value as "" | TipoMovimientoInventario,
+                }))
+              }
+              options={[
+                {
+                  value: "",
+                  label: t("common.all", "Todos"),
+                },
+                {
+                  value: "ENTRADA_COMPRA",
+                  label: t("statuses.movements.ENTRADA_COMPRA", "Entrada por compra"),
+                },
+                {
+                  value: "SALIDA_VENTA",
+                  label: t("statuses.movements.SALIDA_VENTA", "Salida por venta"),
+                },
+                {
+                  value: "REINGRESO_ANULACION_VENTA",
+                  label: t("statuses.movements.REINGRESO_ANULACION_VENTA", "Reingreso por anulación"),
+                },
+              ]}
+            />
+          </div>
 
-          <SelectField
-            label={t("movements.referenceType", "Tipo de referencia")}
-            value={filtrosDraft.referenciaTipo}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                referenciaTipo: value as "" | ReferenciaMovimientoInventario,
-              }))
-            }
-            options={[
-              {
-                value: "",
-                label: t("movements.allReferences", "Todas"),
-              },
-              {
-                value: "PEDIDO",
-                label: t("movements.orderRef", "Pedido"),
-              },
-              {
-                value: "VENTA",
-                label: t("movements.saleRef", "Venta"),
-              },
-            ]}
-          />
+          <div className="w-full sm:w-44">
+            <SelectField
+              label={t("movements.referenceType", "Tipo de referencia")}
+              value={filtrosDraft.referenciaTipo}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  referenciaTipo: value as "" | ReferenciaMovimientoInventario,
+                }))
+              }
+              options={[
+                {
+                  value: "",
+                  label: t("movements.allReferences", "Todas"),
+                },
+                {
+                  value: "PEDIDO",
+                  label: t("movements.orderRef", "Pedido"),
+                },
+                {
+                  value: "VENTA",
+                  label: t("movements.saleRef", "Venta"),
+                },
+              ]}
+            />
+          </div>
 
-          <InputField
-            label={t("movements.referenceId", "ID referencia")}
-            type="number"
-            value={filtrosDraft.referenciaId}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                referenciaId: value,
-              }))
-            }
-            min={1}
-            step={1}
-          />
+          <div className="w-full sm:w-36">
+            <InputField
+              label={t("movements.referenceId", "ID referencia")}
+              type="number"
+              value={filtrosDraft.referenciaId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  referenciaId: value,
+                }))
+              }
+              min={1}
+              step={1}
+            />
+          </div>
 
-          <InputField
-            label={t("movements.from", "Desde")}
-            type="date"
-            value={filtrosDraft.desde}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                desde: value,
-              }))
-            }
-          />
+          <div className="w-full sm:w-40">
+            <InputField
+              label={t("movements.from", "Desde")}
+              type="date"
+              value={filtrosDraft.desde}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  desde: value,
+                }))
+              }
+            />
+          </div>
 
-          <InputField
-            label={t("movements.to", "Hasta")}
-            type="date"
-            value={filtrosDraft.hasta}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                hasta: value,
-              }))
-            }
-          />
+          <div className="w-full sm:w-40">
+            <InputField
+              label={t("movements.to", "Hasta")}
+              type="date"
+              value={filtrosDraft.hasta}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  hasta: value,
+                }))
+              }
+            />
+          </div>
 
-          <InputField
-            label={t("movements.userId", "ID usuario")}
-            type="number"
-            value={filtrosDraft.usuarioId}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                usuarioId: value,
-              }))
-            }
-            min={1}
-            step={1}
-          />
-        </div>
+          <div className="w-full sm:w-36">
+            <InputField
+              label={t("movements.userId", "ID usuario")}
+              type="number"
+              value={filtrosDraft.usuarioId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  usuarioId: value,
+                }))
+              }
+              min={1}
+              step={1}
+            />
+          </div>
 
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <PrimaryButton onClick={aplicarFiltros}>
-            {t("common.filter", "Aplicar filtros")}
-          </PrimaryButton>
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <PrimaryButton onClick={aplicarFiltros} className="h-[38px] flex-1 sm:flex-initial">
+              {t("common.filter", "Aplicar filtros")}
+            </PrimaryButton>
 
-          <button
-            type="button"
-            onClick={limpiarFiltros}
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
-          >
-            {t("common.cleanFilters", "Limpiar filtros")}
-          </button>
+            <button
+              type="button"
+              onClick={limpiarFiltros}
+              className="inline-flex h-[38px] flex-1 items-center justify-center rounded-xl border border-zinc-300 bg-white px-3.5 text-xs sm:text-sm font-semibold text-zinc-700 shadow-2xs transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 sm:flex-initial"
+            >
+              {t("common.cleanFilters", "Limpiar filtros")}
+            </button>
+          </div>
         </div>
 
         {loading ? (

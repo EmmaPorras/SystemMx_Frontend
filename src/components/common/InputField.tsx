@@ -70,17 +70,19 @@ function InputField({
 
   return (
     <div className={className}>
-      <label
-        htmlFor={inputId}
-        className="mb-1 block text-xs font-semibold text-zinc-700"
-      >
-        {label}
-        {required ? (
-          <span className="ml-1 text-rose-500" aria-hidden="true">
-            *
-          </span>
-        ) : null}
-      </label>
+      {label ? (
+        <label
+          htmlFor={inputId}
+          className="mb-1 block text-xs font-semibold text-zinc-700"
+        >
+          {label}
+          {required ? (
+            <span className="ml-1 text-rose-500" aria-hidden="true">
+              *
+            </span>
+          ) : null}
+        </label>
+      ) : null}
 
       <div className="relative">
         {hasPrefix ? (
@@ -139,31 +141,33 @@ function InputField({
         ) : null}
       </div>
 
-      <div className="mt-1.5 flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          {error ? (
-            <p id={errorId} role="alert" className="text-xs font-medium text-red-600">
-              {error}
-            </p>
-          ) : helperText ? (
-            <p id={helperId} className="text-xs text-zinc-500">
-              {helperText}
+      {error || helperText || (showCharacterCount && maxLength) ? (
+        <div className="mt-1.5 flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            {error ? (
+              <p id={errorId} role="alert" className="text-xs font-medium text-red-600">
+                {error}
+              </p>
+            ) : helperText ? (
+              <p id={helperId} className="text-xs text-zinc-500">
+                {helperText}
+              </p>
+            ) : null}
+          </div>
+
+          {showCharacterCount && maxLength ? (
+            <p
+              id={countId}
+              aria-live="polite"
+              className={`shrink-0 text-xs font-medium ${
+                valueLength >= maxLength ? "text-red-500" : "text-zinc-400"
+              }`}
+            >
+              {valueLength}/{maxLength}
             </p>
           ) : null}
         </div>
-
-        {showCharacterCount && maxLength ? (
-          <p
-            id={countId}
-            aria-live="polite"
-            className={`shrink-0 text-xs font-medium ${
-              valueLength >= maxLength ? "text-red-500" : "text-zinc-400"
-            }`}
-          >
-            {valueLength}/{maxLength}
-          </p>
-        ) : null}
-      </div>
+      ) : null}
     </div>
   );
 }

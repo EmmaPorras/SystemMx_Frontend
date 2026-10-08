@@ -56,13 +56,13 @@ function ProductoPedidoFilter({
 
   return (
     <div ref={containerRef} className="relative">
-      <label className="mb-2 block text-sm font-semibold text-zinc-800">
+      <label className="mb-1 block text-xs font-semibold text-zinc-700">
         {label}
       </label>
 
       <div className="relative">
         <LuSearch
-          className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
           aria-hidden="true"
         />
 
@@ -76,7 +76,7 @@ function ProductoPedidoFilter({
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
           autoComplete="off"
-          className="h-12 w-full rounded-xl border border-zinc-300 bg-white pl-11 pr-11 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+          className="w-full rounded-xl border border-zinc-200/90 bg-white py-2 pl-9 pr-9 text-xs sm:text-sm text-zinc-900 shadow-2xs outline-none transition hover:border-zinc-300 placeholder:text-zinc-400 focus-visible:border-zinc-950 focus-visible:ring-2 focus-visible:ring-zinc-950/10"
         />
 
         {value ? (
@@ -86,10 +86,10 @@ function ProductoPedidoFilter({
               onChange("");
               setIsOpen(false);
             }}
-            className="absolute right-3 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-900"
+            className="absolute right-2.5 top-1/2 grid h-5 w-5 -translate-y-1/2 place-items-center rounded-full text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-900"
             aria-label="Limpiar filtro de producto"
           >
-            <IoClose className="h-5 w-5" />
+            <IoClose className="h-4 w-4" />
           </button>
         ) : null}
       </div>

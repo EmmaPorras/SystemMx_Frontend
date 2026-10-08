@@ -1143,19 +1143,19 @@ function FormularioVenta({
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div>
-                <p className="mb-1.5 block text-sm font-semibold text-zinc-700">
+                <p className="mb-1 block text-xs font-semibold text-zinc-700">
                   {t("sales.saleNumber", "Número de venta")}
                 </p>
 
-                <div className="flex min-h-[42px] items-center rounded-xl border border-zinc-300 bg-zinc-50 px-3.5 py-2.5 text-sm">
-                  <span className="font-semibold text-zinc-900">
+                <div className="flex min-h-[38px] items-center rounded-xl border border-zinc-200/90 bg-zinc-50 px-3 py-2 text-xs sm:text-sm shadow-2xs">
+                  <span className="font-semibold text-zinc-950">
                     {cabecera.numeroVenta
                       ? `${t("sales.title", "Venta")} #${cabecera.numeroVenta}`
                       : t("common.loading", "Calculando número...")}
                   </span>
                 </div>
 
-                <p className="mt-1.5 text-xs text-zinc-500">
+                <p className="mt-1 text-xs text-zinc-500">
                   {t("sales.autoNumberNotice", "El número se asigna automáticamente al guardar la venta.")}
                 </p>
               </div>

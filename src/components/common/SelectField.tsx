@@ -43,17 +43,19 @@ function SelectField({
 
   return (
     <div className={className}>
-      <label
-        htmlFor={selectId}
-        className="mb-1 block text-xs font-semibold text-zinc-700"
-      >
-        {label}
-        {required ? (
-          <span className="ml-1 text-rose-500" aria-hidden="true">
-            *
-          </span>
-        ) : null}
-      </label>
+      {label ? (
+        <label
+          htmlFor={selectId}
+          className="mb-1 block text-xs font-semibold text-zinc-700"
+        >
+          {label}
+          {required ? (
+            <span className="ml-1 text-rose-500" aria-hidden="true">
+              *
+            </span>
+          ) : null}
+        </label>
+      ) : null}
 
       <select
         id={selectId}

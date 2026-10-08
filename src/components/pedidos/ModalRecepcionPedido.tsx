@@ -314,7 +314,7 @@ function ModalRecepcionPedido({
                   return (
                     <div className="min-w-36">
                       <InputField
-                        label="Cantidad"
+                        label=""
                         type="number"
                         value={cantidades[row.loteId] ?? ""}
                         onChange={(value) =>
@@ -325,6 +325,7 @@ function ModalRecepcionPedido({
                         step={1}
                         error={erroresPorLote[row.loteId]}
                         disabled={isSubmitting}
+                        placeholder="0"
                       />
                     </div>
                   );

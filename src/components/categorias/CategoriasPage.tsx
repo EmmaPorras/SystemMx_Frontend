@@ -283,7 +283,7 @@ function CategoriasPage() {
         title={t("categories.title")}
         description={t("categories.subtitle")}
       >
-        <div className="mb-5">
+        <div className="mb-5 max-w-md">
           <InputField
             label={t("common.search")}
             value={busqueda}

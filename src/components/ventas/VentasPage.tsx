@@ -360,7 +360,7 @@ function VentasPage() {
         title={t("sales.salesList", "Listado de ventas")}
         description={t("sales.salesListDesc", "Gestión oficial de ventas generadas y sus cobros asociados.")}
       >
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-4">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4 border-b border-zinc-200 pb-4">
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
@@ -368,9 +368,9 @@ function VentasPage() {
                 setVista("ACTIVAS");
                 setBusqueda("");
               }}
-              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+              className={`h-[38px] rounded-xl px-4 text-xs sm:text-sm font-semibold transition ${
                 vista === "ACTIVAS"
-                  ? "bg-zinc-950 text-white"
+                  ? "bg-zinc-950 text-white shadow-2xs"
                   : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
               }`}
             >
@@ -383,9 +383,9 @@ function VentasPage() {
                 setVista("DEUDORES");
                 setBusqueda("");
               }}
-              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+              className={`h-[38px] rounded-xl px-4 text-xs sm:text-sm font-semibold transition ${
                 vista === "DEUDORES"
-                  ? "bg-zinc-950 text-white"
+                  ? "bg-zinc-950 text-white shadow-2xs"
                   : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
               }`}
             >
@@ -398,9 +398,9 @@ function VentasPage() {
                 setVista("PAPELERA");
                 setBusqueda("");
               }}
-              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+              className={`h-[38px] rounded-xl px-4 text-xs sm:text-sm font-semibold transition ${
                 vista === "PAPELERA"
-                  ? "bg-zinc-950 text-white"
+                  ? "bg-zinc-950 text-white shadow-2xs"
                   : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
               }`}
             >
