@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import AlertMessage from "../common/AlertMessage";
 import AppModal from "../common/AppModal";
 import InputField from "../common/InputField";
+import MoneyInputField from "../common/MoneyInputField";
 import PrimaryButton from "../common/PrimaryButton";
 import SelectField from "../common/SelectField";
 import { formatCurrency } from "../common/formatters";
@@ -198,15 +199,14 @@ function ModalRegistrarPago({
             />
           ) : null}
 
-          <InputField
+          <MoneyInputField
             label={t("sales.paymentAmount", "Monto")}
-            type="number"
             value={monto}
             onChange={setMonto}
-            min={0.01}
-            step={0.01}
             required
             disabled={submitting}
+            currencySymbol="₡"
+            allowDecimals={true}
           />
 
           <SelectField

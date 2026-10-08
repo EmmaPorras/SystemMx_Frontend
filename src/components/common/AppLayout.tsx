@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../../auth/useAuth";
 import LanguageSelector from "./LanguageSelector";
 import { useNavigation } from "./navigation";
+import { getUserRoleLabel } from "../../i18n/statusMap";
 
 function AppLayout() {
   const { t } = useTranslation();
@@ -67,8 +68,7 @@ function AppLayout() {
     );
   }, [sidebarCollapsed]);
 
-  // Bloquear scroll del fondo cuando
-  // el menú móvil está abierto.
+  // Bloquear scroll del fondo cuando el menú móvil está abierto
   useEffect(() => {
     if (!mobileMenuOpen) {
       return;
@@ -103,6 +103,82 @@ function AppLayout() {
       );
     };
   }, [mobileMenuOpen]);
+
+  // =========================================================================
+  // Control de scroll cuando el panel accesible de UserWay está abierto (12G)
+  // Panel UserWay abierto = fondo bloqueado, scroll dentro del widget preservado
+  // =========================================================================
+  useEffect(() => {
+    let userWayMenuOpen = false;
+
+    function lockBodyScroll() {
+      if (!userWayMenuOpen) {
+        userWayMenuOpen = true;
+        document.body.classList.add("userway-panel-open");
+        document.body.style.overflow = "hidden";
+      }
+    }
+
+    function unlockBodyScroll() {
+      if (userWayMenuOpen) {
+        userWayMenuOpen = false;
+        document.body.classList.remove("userway-panel-open");
+        document.body.style.overflow = "";
+      }
+    }
+
+    // Eventos personalizados emitidos por UserWay Widget
+    function handleUserWayOpen() {
+      lockBodyScroll();
+    }
+
+    function handleUserWayClose() {
+      unlockBodyScroll();
+    }
+
+    window.addEventListener("userway:open", handleUserWayOpen);
+    window.addEventListener("userway:close", handleUserWayClose);
+    document.addEventListener("userway:open", handleUserWayOpen);
+    document.addEventListener("userway:close", handleUserWayClose);
+
+    // Observer para detectar apertura del panel UserWay en el DOM
+    const observer = new MutationObserver(() => {
+      const isWidgetOpen =
+        document.body.classList.contains("uai-open") ||
+        document.body.classList.contains("userway_active") ||
+        document.documentElement.classList.contains("uai-open") ||
+        Boolean(
+          document.querySelector(
+            '.uai-modal:not([style*="display: none"]), #userway-accessibility-menu:not([style*="display: none"]), [id*="userway-accessibility-menu"]',
+          ),
+        );
+
+      if (isWidgetOpen) {
+        lockBodyScroll();
+      } else if (userWayMenuOpen) {
+        unlockBodyScroll();
+      }
+    });
+
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class", "style", "aria-hidden"],
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      window.removeEventListener("userway:open", handleUserWayOpen);
+      window.removeEventListener("userway:close", handleUserWayClose);
+      document.removeEventListener("userway:open", handleUserWayOpen);
+      document.removeEventListener("userway:close", handleUserWayClose);
+      observer.disconnect();
+      document.body.classList.remove("userway-panel-open");
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  const translatedRole = getUserRoleLabel(t, user?.rol ?? "ADMIN");
 
   return (
     <div className="min-h-screen bg-slate-50/60 font-sans text-zinc-900 antialiased">
@@ -230,12 +306,12 @@ function AppLayout() {
               >
                 {(user?.nombre ?? "A").charAt(0)}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 text-left">
                 <p className="truncate text-xs font-semibold text-zinc-900 leading-tight">
                   {user?.nombre ?? t("appLayout.admin")}
                 </p>
-                <p className="truncate text-[10px] font-medium text-zinc-400 leading-tight">
-                  {user?.username ?? "admin"}
+                <p className="truncate text-[10px] font-medium text-zinc-500 leading-tight">
+                  {translatedRole} ({user?.username ?? "admin"})
                 </p>
               </div>
             </div>

@@ -54,7 +54,11 @@
     "deleting": "Eliminando...",
     "errorOccurred": "Ocurrió un error",
     "notice": "Aviso",
-    "success": "Éxito"
+    "success": "Éxito",
+    "code": "Código",
+    "retry": "Reintentar",
+    "next": "Siguiente",
+    "you": "(Tú)"
   },
   "language": {
     "label": "Idioma",
@@ -144,9 +148,11 @@
     "resetSuccess": "¡Contraseña actualizada!",
     "resetSuccessMessage": "Tu contraseña ha sido actualizada. Todas tus sesiones anteriores fueron cerradas por seguridad.",
     "passwordsDoNotMatch": "Las contraseñas no coinciden.",
-    "passwordMinLength": "La contraseña debe tener al menos 12 caracteres.",
+    "passwordMinLength": "La contraseña debe tener al menos 8 caracteres.",
     "invalidTokenTitle": "Enlace inválido o expirado",
-    "invalidTokenMessage": "Este enlace seguro de un solo uso no es válido o ya ha expirado. Si necesitas acceso, solicita un nuevo enlace o consulta con tu administrador."
+    "invalidTokenMessage": "Este enlace seguro de un solo uso no es válido o ya ha expirado. Si necesitas acceso, solicita un nuevo enlace o consulta con tu administrador.",
+    "hidePassword": "Ocultar contraseña",
+    "showPassword": "Mostrar contraseña"
   },
   "appLayout": {
     "admin": "Administrador",
@@ -172,7 +178,8 @@
     "perPage": "{{count}} por página",
     "pageOf": "Página {{current}} de {{total}}",
     "previousPage": "Página anterior",
-    "nextPage": "Página siguiente"
+    "nextPage": "Página siguiente",
+    "recordsCount": "{{count}} registros"
   },
   "dialog": {
     "confirmTitle": "Confirmar acción",
@@ -233,8 +240,10 @@
     },
     "roles": {
       "ADMIN": "Administrador",
-      "OPERADOR": "Operador",
-      "CONSULTA": "Consulta"
+      "VENTAS": "Agente de ventas",
+      "COMPRAS": "Encargado de compras",
+      "CONSULTA": "Consulta",
+      "OPERADOR": "Operador"
     }
   },
   "home": {
@@ -332,7 +341,8 @@
     "noSalesInPeriod": "No existen ventas en este período",
     "changePeriodHint": "Cambiá el período de la gráfica para consultar otros datos.",
     "units": "Unidades",
-    "profitGain": "+ {{amount}} ganancia"
+    "profitGain": "+ {{amount}} ganancia",
+    "unitsCount": "{{count}} unidades"
   },
   "categories": {
     "title": "Categorías",
@@ -356,10 +366,10 @@
     "descMaxLength": "La descripción no puede superar los 255 caracteres."
   },
   "vatRates": {
-    "title": "Tarifas de IVA",
-    "subtitle": "Administre los porcentajes de impuestos aplicables.",
-    "newRate": "Nueva tarifa de IVA",
-    "editRate": "Editar tarifa de IVA",
+    "title": "Tarifas",
+    "subtitle": "Administre los porcentajes de tarifas e impuestos aplicables.",
+    "newRate": "Nueva tarifa",
+    "editRate": "Editar tarifa",
     "percentage": "Porcentaje (%)",
     "percentagePlaceholder": "Ej. 13, 8, 4, 0",
     "description": "Descripción",
@@ -368,14 +378,15 @@
     "createSuccess": "Tarifa creada correctamente.",
     "updateSuccess": "Tarifa actualizada correctamente.",
     "deleteConfirmTitle": "Eliminar tarifa",
-    "deleteConfirmMessage": "¿Desea eliminar esta tarifa de IVA?",
+    "deleteConfirmMessage": "¿Desea eliminar esta tarifa?",
     "deleteSuccess": "Tarifa eliminada correctamente.",
-    "emptyTitle": "No hay tarifas de IVA registradas",
+    "emptyTitle": "No hay tarifas registradas",
     "emptyDesc": "Agregue una tarifa para aplicarla a productos y ventas.",
     "percentageRequired": "El porcentaje es obligatorio.",
     "percentageMin": "El porcentaje no puede ser negativo.",
     "percentageMax": "El porcentaje no puede ser mayor a 100.",
-    "descriptionRequired": "La descripción es obligatoria."
+    "descriptionRequired": "La descripción es obligatoria.",
+    "exempt": "Exento"
   },
   "suppliers": {
     "title": "Proveedores",
@@ -489,7 +500,12 @@
     "supplierRequired": "El proveedor es obligatorio.",
     "currencyRequired": "La moneda es obligatoria.",
     "exchangeRatePositive": "El tipo de cambio debe ser mayor a 0.",
-    "detailsRequired": "Debe agregar al menos un producto al pedido."
+    "detailsRequired": "Debe agregar al menos un producto al pedido.",
+    "addOrder": "Nuevo pedido",
+    "detailTitle": "Detalle del pedido",
+    "cancelConfirmTitle": "Cancelar pedido",
+    "cancelConfirmMessage": "¿Está seguro de cancelar el pedido #{{number}}? Esta acción es definitiva.",
+    "orderSummary": "Resumen del pedido"
   },
   "lots": {
     "title": "Lotes de Inventario",
@@ -630,7 +646,36 @@
     "trashError": "No fue posible enviar la venta a papelera.",
     "restoreError": "No fue posible restaurar la venta.",
     "voidError": "No fue posible anular la venta.",
-    "saveError": "No se pudo guardar la venta."
+    "saveError": "No se pudo guardar la venta.",
+    "addToSale": "Agregar a venta",
+    "updateProduct": "Actualizar producto",
+    "processSale": "Procesar venta",
+    "processingSale": "Procesando venta...",
+    "selectRateRequired": "Debe seleccionar una tarifa válida.",
+    "selectFifo": "Automático FIFO",
+    "selectManual": "Seleccionar lote manualmente",
+    "vatRate": "Tarifa",
+    "specialRate": "Tarifa especial",
+    "discountMode": "Modo de descuento",
+    "lotUnavailable": "El lote seleccionado no existe o ya no tiene stock disponible.",
+    "discountInvalid": "El descuento debe ser un porcentaje entre 0 y 100.",
+    "specialRateRequired": "Debe indicar el porcentaje de la tarifa especial.",
+    "specialRateInvalid": "La tarifa especial debe ser válida.",
+    "dateRequired": "La fecha de venta es obligatoria.",
+    "paymentMethodRequired": "Debe seleccionar un método de pago.",
+    "totalPositive": "El total de la venta debe ser mayor a cero.",
+    "fifoNotice": "Por defecto se descuenta usando FIFO. Lo agregado en esta venta se reserva temporalmente para no vender más stock del disponible.",
+    "discountHint": "Porcentaje de descuento sobre el subtotal de esta línea (0 a 100).",
+    "generalDataDesc": "Registra quién compra y cuánto paga. Si falta dinero, la venta queda automáticamente en deudores.",
+    "autoNumberNotice": "El número se asigna automáticamente al guardar la venta.",
+    "cashPayment": "Paga en efectivo",
+    "sinpePayment": "Paga por SINPE / transferencia",
+    "unpaidHelper": "Si queda en 0, se registra como deuda completa.",
+    "deliveryDate": "Fecha de entrega",
+    "change": "Cambio",
+    "debtWarning": "Esta venta queda con deuda pendiente.",
+    "reviewPayment": "Revisar pago",
+    "changeReturn": "Cambio a devolver"
   },
   "receivables": {
     "title": "Cuentas por Cobrar",
@@ -676,7 +721,10 @@
     "sale": "Venta",
     "noClient": "Sin cliente",
     "date": "Fecha",
-    "balance": "Saldo"
+    "balance": "Saldo",
+    "evaluateDueDateTo": "Evaluar vencimientos al",
+    "evaluationNotice": "Se evalúan los saldos pendientes actuales comparando sus fechas límite de pago contra la fecha seleccionada.",
+    "evaluationHelper": "Clasifica los saldos pendientes actuales según esta fecha límite de referencia."
   },
   "reports": {
     "title": "Reportes y Análisis",
@@ -745,7 +793,11 @@
     "familyCompras": "Compras",
     "familyPagos": "Pagos",
     "familyCuentas": "Cuentas por cobrar",
-    "familyAuditoria": "Auditoría"
+    "familyAuditoria": "Auditoría",
+    "reportsCount": "{{count}} reportes",
+    "familiesCount": "{{count}} familias",
+    "consultReport": "Consultar {{count}} reportes",
+    "readyToExport": "{{count}} reportes listos para exportar"
   },
   "reportExport": {
     "documentTitle": "SystemMx - Reportes",
@@ -779,7 +831,8 @@
     "noRecords": "Sin registros",
     "filter": "Filtro",
     "filters": "Filtros",
-    "allPeriod": "Sin filtros"
+    "allPeriod": "Sin filtros",
+    "recordsCount": "{{count}} registros"
   },
   "audit": {
     "title": "Auditoría del Sistema",
@@ -859,7 +912,8 @@
     "filterAction": "Tipo de acción",
     "allActions": "Todas las acciones",
     "emptyTitle": "No hay registros de auditoría",
-    "emptyDesc": "Las acciones operativas del sistema quedarán registradas aquí."
+    "emptyDesc": "Las acciones operativas del sistema quedarán registradas aquí.",
+    "dateRangeError": "La fecha inicial no puede ser mayor que la fecha final."
   },
   "validation": {
     "required": "Este campo es obligatorio.",
@@ -919,6 +973,16 @@
     "searchPlaceholder": "Buscar por usuario, nombre o correo...",
     "noUsersFound": "No se encontraron usuarios registrados.",
     "filterAllRoles": "Todos los roles",
-    "filterAllStatuses": "Todos los estados"
+    "filterAllStatuses": "Todos los estados",
+    "roleSales": "Agente de ventas",
+    "rolePurchases": "Encargado de compras",
+    "forbiddenTitle": "Acceso no autorizado",
+    "forbiddenDesc": "Tu cuenta (rol {{role}}) no tiene permisos para acceder a esta sección.",
+    "goToAllowedHome": "Ir a mi módulo asignado",
+    "nameMinLength": "El nombre debe tener al menos 2 caracteres.",
+    "usernameLength": "El usuario debe tener entre 3 y 50 caracteres.",
+    "usernameInvalidChars": "El usuario solo puede contener letras, números, puntos, guiones y guiones bajos.",
+    "inviteNotice": "Se enviará un correo seguro con el enlace de activación para que el usuario configure su contraseña.",
+    "noEmail": "Sin correo registrado"
   }
 }

@@ -21,6 +21,7 @@ import {
   AuthContext,
   type AuthContextValue,
 } from "./AuthContext";
+import type { BackendRole } from "./auth.types";
 
 function createAuthValue(
   overrides: Partial<AuthContextValue> = {},
@@ -38,6 +39,7 @@ function createAuthValue(
 
 function renderRoute(
   authValue: AuthContextValue,
+  allowedRoles?: BackendRole[],
 ) {
   render(
     <AuthContext.Provider value={authValue}>
@@ -50,7 +52,7 @@ function renderRoute(
             element={<div>Pantalla Login</div>}
           />
 
-          <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedRoute allowedRoles={allowedRoles} />}>
             <Route
               path="/ventas"
               element={<div>Pantalla Ventas</div>}
@@ -75,7 +77,7 @@ describe("ProtectedRoute", () => {
     ).toBeInTheDocument();
   });
 
-  it("permite acceder cuando existe sesión válida", () => {
+  it("permite acceder cuando existe sesión válida y rol autorizado", () => {
     renderRoute(
       createAuthValue({
         status: "authenticated",
@@ -87,10 +89,37 @@ describe("ProtectedRoute", () => {
           activo: true,
         },
       }),
+      ["ADMIN", "VENTAS"],
     );
 
     expect(
       screen.getByText("Pantalla Ventas"),
+    ).toBeInTheDocument();
+  });
+
+  it("muestra estado 403 de acceso no autorizado cuando el rol no tiene permiso", () => {
+    renderRoute(
+      createAuthValue({
+        status: "authenticated",
+        user: {
+          idUsuario: 2,
+          username: "compras1",
+          nombre: "Encargado Compras",
+          rol: "COMPRAS",
+          activo: true,
+        },
+      }),
+      ["ADMIN", "VENTAS"],
+    );
+
+    expect(
+      screen.getByText(/acceso no autorizado/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Pantalla Ventas"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /ir a mi módulo asignado/i }),
     ).toBeInTheDocument();
   });
 

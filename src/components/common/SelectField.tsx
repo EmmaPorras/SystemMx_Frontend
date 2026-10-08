@@ -34,6 +34,13 @@ function SelectField({
   const selectId = customId || generatedId;
   const errorId = `${selectId}-error`;
 
+  const hasEmptyPlaceholder = Boolean(placeholder);
+  const normalizedOptions = options.filter(
+    (opt, index, self) =>
+      (!hasEmptyPlaceholder || opt.value !== "") &&
+      self.findIndex((o) => o.value === opt.value) === index,
+  );
+
   return (
     <div className={className}>
       <label
@@ -65,7 +72,7 @@ function SelectField({
       >
         {placeholder ? <option value="">{placeholder}</option> : null}
 
-        {options.map((option) => (
+        {normalizedOptions.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>

@@ -67,6 +67,7 @@ function LoginPage() {
   const [errors, setErrors] = useState<LoginErrors>({});
   const [apiError, setApiError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [brandVideoFailed, setBrandVideoFailed] = useState(false);
 
   if (status === "authenticated") {
     return (
@@ -132,16 +133,6 @@ function LoginPage() {
 
   return (
     <div className="relative grid min-h-screen place-items-center overflow-hidden bg-zinc-100 px-4 py-8">
-      <div
-        aria-hidden="true"
-        className="absolute -right-24 -top-24 h-80 w-80 rounded-full border border-zinc-200 bg-white/60"
-      />
-
-      <div
-        aria-hidden="true"
-        className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-zinc-200/70 blur-3xl"
-      />
-
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-3 flex justify-end">
           <LanguageSelector id="login-language-selector" />
@@ -152,9 +143,28 @@ function LoginPage() {
             <div className="flex items-center gap-4">
               <div
                 aria-hidden="true"
-                className="grid h-14 w-14 place-items-center rounded-2xl border border-zinc-700 bg-zinc-900"
+                className="flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-900 sm:w-32"
               >
-                <LockKeyhole className="h-7 w-7" />
+                {brandVideoFailed ? (
+                  <LockKeyhole className="h-7 w-7" />
+                ) : (
+                  <video
+                    data-testid="systemmx-animated-logo"
+                    className="block h-full w-full object-contain"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    disablePictureInPicture
+                    onError={() => setBrandVideoFailed(true)}
+                  >
+                    <source
+                      src="https://res.cloudinary.com/dqqnhxhcp/video/upload/v1791492297/gemini_generated_video_68192616_ogqmlj.mp4"
+                      type="video/mp4"
+                    />
+                  </video>
+                )}
               </div>
 
               <div>

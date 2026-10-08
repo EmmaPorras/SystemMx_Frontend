@@ -6,8 +6,9 @@ import { MemoryRouter } from "react-router";
 import { AuthContext, type AuthContextValue } from "../../auth/AuthContext";
 import UsuariosPage from "./UsuariosPage";
 import * as usuariosApi from "../../services/usuariosApi";
+import type { BackendRole } from "../../auth/auth.types";
 
-function createAuthContextValue(role: "ADMIN" | "OPERADOR" = "ADMIN"): AuthContextValue {
+function createAuthContextValue(role: BackendRole = "ADMIN"): AuthContextValue {
   return {
     user: {
       idUsuario: 1,
@@ -45,7 +46,7 @@ describe("UsuariosPage", () => {
         username: "juanito24",
         nombre: "Juanito Pérez",
         email: "juanito@gmail.com",
-        rol: "OPERADOR",
+        rol: "VENTAS",
         activo: true,
         estadoActivacion: "PENDIENTE_ACTIVACION",
         createdAt: "2026-01-02T00:00:00Z",
@@ -53,7 +54,7 @@ describe("UsuariosPage", () => {
       },
     ];
 
-    vi.spyOn(usuariosApi, "getUsuariosApi").mockResolvedValue(mockUsuarios);
+    vi.spyOn(usuariosApi, "listarUsuariosApi").mockResolvedValue(mockUsuarios);
 
     render(
       <AuthContext.Provider value={createAuthContextValue("ADMIN")}>
@@ -80,10 +81,10 @@ describe("UsuariosPage", () => {
   });
 
   it("bloquea el acceso con advertencia si el usuario no es ADMIN", async () => {
-    vi.spyOn(usuariosApi, "getUsuariosApi").mockResolvedValue([]);
+    vi.spyOn(usuariosApi, "listarUsuariosApi").mockResolvedValue([]);
 
     render(
-      <AuthContext.Provider value={createAuthContextValue("OPERADOR")}>
+      <AuthContext.Provider value={createAuthContextValue("VENTAS")}>
         <MemoryRouter>
           <UsuariosPage />
         </MemoryRouter>
@@ -105,7 +106,7 @@ describe("UsuariosPage", () => {
         username: "juanito24",
         nombre: "Juanito Pérez",
         email: "juanito@gmail.com",
-        rol: "OPERADOR",
+        rol: "VENTAS",
         activo: true,
         estadoActivacion: "PENDIENTE_ACTIVACION",
         createdAt: "2026-01-02T00:00:00Z",
@@ -113,7 +114,7 @@ describe("UsuariosPage", () => {
       },
     ];
 
-    vi.spyOn(usuariosApi, "getUsuariosApi").mockResolvedValue(mockUsuarios);
+    vi.spyOn(usuariosApi, "listarUsuariosApi").mockResolvedValue(mockUsuarios);
     const resendSpy = vi.spyOn(usuariosApi, "reenviarInvitacionApi").mockResolvedValue({
       mensaje: "Invitación reenviada exitosamente.",
     });

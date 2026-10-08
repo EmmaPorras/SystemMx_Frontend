@@ -91,7 +91,7 @@ describe("SYSTEMMX — Paso 2 Cobertura de Internacionalización", () => {
 
     expect(screen.getByRole("heading", { name: /iniciar sesión/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/usuario/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^contraseña/i, { selector: "input" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /ingresar/i })).toBeInTheDocument();
   });
 
@@ -107,7 +107,7 @@ describe("SYSTEMMX — Paso 2 Cobertura de Internacionalización", () => {
 
     expect(screen.getByRole("heading", { name: /log in|sign in/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^password/i, { selector: "input" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
   });
 
@@ -123,7 +123,7 @@ describe("SYSTEMMX — Paso 2 Cobertura de Internacionalización", () => {
 
     expect(screen.getByRole("heading", { name: /iniciar sessão/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/usuário/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/senha/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^senha/i, { selector: "input" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /entrar/i })).toBeInTheDocument();
   });
 

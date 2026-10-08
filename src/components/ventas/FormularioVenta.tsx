@@ -1,12 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import AlertMessage from "../common/AlertMessage";
 import DataTableShell from "../common/DataTableShell";
 import InputField from "../common/InputField";
+import MoneyInputField from "../common/MoneyInputField";
 import PrimaryButton from "../common/PrimaryButton";
 import SelectField from "../common/SelectField";
-import { formatCurrency, getActiveLocale } from "../common/formatters";
+import { formatCurrency } from "../common/formatters";
 import { getPaymentMethodLabel } from "../../i18n/statusMap";
+import { obtenerTarifasIva } from "../../services/tarifasIvaApi";
+import type { TarifaIVA } from "../tarifas-iva/tarifas-iva.types";
 import type {
   CrearVentaPayload,
   InventarioDisponibleVenta,
@@ -19,6 +22,7 @@ import type {
 type FormularioVentaProps = {
   inventarioDisponible: InventarioDisponibleVenta[];
   numeroVentaSugerido: string;
+  tarifasIva?: TarifaIVA[];
   alertMessage?: string | null;
   guardando: boolean;
   onSubmit: (payload: CrearVentaPayload) => void;
@@ -50,6 +54,8 @@ function crearDetalleInicial(): VentaDetalleForm {
     precioUnitario: "",
     porcentajeDescuento: "0",
     tipoTarifa: "EXENTO",
+    idTarifaIva: undefined,
+    tarifaSeleccionada: "",
     porcentajeIva: "0",
     modoDescuentoLote: "FIFO",
     detalle: "",
@@ -60,19 +66,11 @@ function limpiarEntero(value: string, maxDigits: number) {
   return value.replace(/\D/g, "").slice(0, maxDigits);
 }
 
-function limpiarMonto(value: string, maxDigits: number) {
-  const digits = value.replace(/\D/g, "").slice(0, maxDigits);
-
-  if (!digits) return "";
-
-  return new Intl.NumberFormat(getActiveLocale(), {
-    maximumFractionDigits: 0,
-  }).format(Number(digits));
-}
-
-function parseMonto(value: string) {
-  const digits = value.replace(/\D/g, "");
-  const numberValue = Number(digits);
+function parseMonto(value: string | number) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (!value) return 0;
+  const limpio = String(value).replace(/\s/g, "").replace(",", ".");
+  const numberValue = Number(limpio);
 
   return Number.isFinite(numberValue) ? numberValue : 0;
 }
@@ -108,6 +106,9 @@ function getDateValue(date?: string | null) {
 }
 
 function getPorcentajeIva(detalle: VentaDetalleForm) {
+  if (detalle.porcentajeIva !== undefined && detalle.porcentajeIva !== "") {
+    return parsePorcentaje(detalle.porcentajeIva);
+  }
   if (detalle.tipoTarifa === "EXENTO") return 0;
   if (detalle.tipoTarifa === "IVA") return 13;
   return parsePorcentaje(detalle.porcentajeIva);
@@ -206,12 +207,33 @@ function calcularInventarioAjustado(
 function FormularioVenta({
   inventarioDisponible,
   numeroVentaSugerido,
+  tarifasIva,
   alertMessage,
   guardando,
   onSubmit,
   onCancel,
 }: FormularioVentaProps) {
   const { t } = useTranslation();
+
+  const [catalogoTarifas, setCatalogoTarifas] = useState<TarifaIVA[]>(
+    tarifasIva ?? [],
+  );
+
+  useEffect(() => {
+    if (tarifasIva && tarifasIva.length > 0) {
+      setCatalogoTarifas(tarifasIva);
+    } else {
+      obtenerTarifasIva()
+        .then((data) =>
+          setCatalogoTarifas(data.filter((tarifa) => tarifa.estado === "ACTIVA")),
+        )
+        .catch(() => {});
+    }
+  }, [tarifasIva]);
+
+  const tarifasActivas = useMemo(() => {
+    return (catalogoTarifas || []).filter((tarifa) => tarifa.estado === "ACTIVA");
+  }, [catalogoTarifas]);
 
   const metodosPagoOptions = useMemo(
     () => [
@@ -225,19 +247,36 @@ function FormularioVenta({
     [t],
   );
 
-  const tipoTarifaOptions = useMemo(
-    () => [
-      { value: "EXENTO", label: `${t("vatRates.title", "Exento")} 0%` },
+  const tipoTarifaOptions = useMemo(() => {
+    if (tarifasActivas.length > 0) {
+      const dinamicas = tarifasActivas.map((tarifa) => ({
+        value: String(tarifa.id),
+        label: `${tarifa.codigo} — ${tarifa.descripcion || tarifa.codigo} (${tarifa.porcentaje}%)`,
+      }));
+
+      return [
+        ...dinamicas,
+        {
+          value: "ESPECIAL",
+          label: t("sales.specialRate", "Tarifa especial personalizada"),
+        },
+      ];
+    }
+
+    return [
+      {
+        value: "EXENTO",
+        label: `${t("vatRates.title", "Tarifa")} ${t("vatRates.exempt", "Exento")} 0%`,
+      },
       { value: "IVA", label: `${t("sales.tax", "IVA")} 13%` },
-      { value: "ESPECIAL", label: t("vatRates.title", "Tarifa especial") },
-    ],
-    [t],
-  );
+      { value: "ESPECIAL", label: t("sales.specialRate", "Tarifa especial") },
+    ];
+  }, [tarifasActivas, t]);
 
   const modoDescuentoOptions = useMemo(
     () => [
-      { value: "FIFO", label: t("sales.title", "Automático FIFO") },
-      { value: "MANUAL", label: t("sales.title", "Seleccionar lote manualmente") },
+      { value: "FIFO", label: t("sales.selectFifo", "Automático FIFO") },
+      { value: "MANUAL", label: t("sales.selectManual", "Seleccionar lote manualmente") },
     ],
     [t],
   );
@@ -378,7 +417,7 @@ function FormularioVenta({
       ) {
         return {
           ...prev,
-          [field]: limpiarMonto(value, 8),
+          [field]: value,
         };
       }
 
@@ -421,7 +460,7 @@ function FormularioVenta({
           loteId: "",
           loteDescripcion: "",
           precioUnitario: primerLote?.precioVentaRecomendado
-            ? limpiarMonto(String(primerLote.precioVentaRecomendado), 8)
+            ? String(primerLote.precioVentaRecomendado)
             : prev.precioUnitario,
         };
       }
@@ -438,7 +477,7 @@ function FormularioVenta({
             ? `Pedido ${lote.numeroPedido}  ${lote.loteCodigo}`
             : "",
           precioUnitario: lote?.precioVentaRecomendado
-            ? limpiarMonto(String(lote.precioVentaRecomendado), 8)
+            ? String(lote.precioVentaRecomendado)
             : prev.precioUnitario,
         };
       }
@@ -453,7 +492,7 @@ function FormularioVenta({
       if (field === "precioUnitario") {
         return {
           ...prev,
-          precioUnitario: limpiarMonto(value, 8),
+          precioUnitario: value,
         };
       }
 
@@ -464,18 +503,61 @@ function FormularioVenta({
         };
       }
 
-      if (field === "tipoTarifa") {
-        const tipoTarifa = value as TipoTarifaVenta;
+      if (field === "tarifaSeleccionada" || field === "tipoTarifa") {
+        if (value === "ESPECIAL") {
+          return {
+            ...prev,
+            tarifaSeleccionada: "ESPECIAL",
+            tipoTarifa: "ESPECIAL",
+            idTarifaIva: undefined,
+            porcentajeIva: "",
+          };
+        }
+
+        if (value === "EXENTO") {
+          return {
+            ...prev,
+            tarifaSeleccionada: "EXENTO",
+            tipoTarifa: "EXENTO",
+            idTarifaIva: undefined,
+            porcentajeIva: "0",
+          };
+        }
+
+        if (value === "IVA") {
+          return {
+            ...prev,
+            tarifaSeleccionada: "IVA",
+            tipoTarifa: "IVA",
+            idTarifaIva: undefined,
+            porcentajeIva: "13",
+          };
+        }
+
+        const tarifaEncontrada = tarifasActivas.find(
+          (tarifa) => String(tarifa.id) === value,
+        );
+
+        if (tarifaEncontrada) {
+          const tipo: TipoTarifaVenta =
+            tarifaEncontrada.porcentaje === 0
+              ? "EXENTO"
+              : tarifaEncontrada.porcentaje === 13
+                ? "IVA"
+                : "ESPECIAL";
+
+          return {
+            ...prev,
+            tarifaSeleccionada: value,
+            tipoTarifa: tipo,
+            idTarifaIva: tarifaEncontrada.id,
+            porcentajeIva: String(tarifaEncontrada.porcentaje),
+          };
+        }
 
         return {
           ...prev,
-          tipoTarifa,
-          porcentajeIva:
-            tipoTarifa === "EXENTO"
-              ? "0"
-              : tipoTarifa === "IVA"
-                ? "13"
-                : "",
+          tarifaSeleccionada: value,
         };
       }
 
@@ -513,6 +595,15 @@ function FormularioVenta({
 
     if (!detalleForm.productoId) {
       return "Debe seleccionar un producto.";
+    }
+
+    // Exigir una selección real: el catálogo dinámico puede diferir del valor
+    // EXENTO/IVA predeterminado y el select nativo mostrar otro visualmente.
+    if (
+      !detalleForm.tarifaSeleccionada ||
+      !tipoTarifaOptions.some((option) => option.value === detalleForm.tarifaSeleccionada)
+    ) {
+      return t("sales.selectRateRequired", "Debe seleccionar una tarifa válida.");
     }
 
     if (cantidad <= 0) {
@@ -555,7 +646,10 @@ function FormularioVenta({
       return t("sales.discountInvalid", "El descuento debe ser un porcentaje entre 0 y 100.");
     }
 
-    if (detalleForm.tipoTarifa === "ESPECIAL") {
+    if (
+      detalleForm.tarifaSeleccionada === "ESPECIAL" ||
+      (!detalleForm.idTarifaIva && detalleForm.tipoTarifa === "ESPECIAL")
+    ) {
       if (!detalleForm.porcentajeIva.trim()) {
         return t("sales.specialRateRequired", "Debe indicar el porcentaje de la tarifa especial.");
       }
@@ -598,7 +692,12 @@ function FormularioVenta({
   }
 
   function editarDetalle(detalle: VentaDetalleForm) {
-    setDetalleForm({ ...detalle });
+    setDetalleForm({
+      ...detalle,
+      tarifaSeleccionada:
+        detalle.tarifaSeleccionada ||
+        (detalle.idTarifaIva ? String(detalle.idTarifaIva) : detalle.tipoTarifa),
+    });
     setDetalleEditandoId(detalle.idTemporal);
     setFormError(null);
     setConfirmarDeuda(false);
@@ -675,6 +774,7 @@ function FormularioVenta({
           detalle.porcentajeDescuento,
         ),
         tipoTarifa: detalle.tipoTarifa,
+        idTarifaIva: detalle.idTarifaIva,
         porcentajeIva: getPorcentajeIva(detalle),
         modoDescuentoLote: detalle.modoDescuentoLote,
         detalle: detalle.detalle.trim() || undefined,
@@ -808,7 +908,7 @@ function FormularioVenta({
               />
 
               <SelectField
-                label={t("sales.title", "Modo de descuento")}
+                label={t("sales.discountMode", "Modo de descuento")}
                 value={detalleForm.modoDescuentoLote}
                 onChange={(value) =>
                   actualizarDetalle("modoDescuentoLote", value)
@@ -849,13 +949,14 @@ function FormularioVenta({
                 showCharacterCount
               />
 
-              <InputField
+              <MoneyInputField
                 label={t("lots.salePrice", "Precio unitario")}
                 value={detalleForm.precioUnitario}
                 onChange={(value) => actualizarDetalle("precioUnitario", value)}
                 placeholder="0"
                 required
-                prefix="₡"
+                currencySymbol="₡"
+                allowDecimals={true}
               />
 
               <InputField
@@ -870,14 +971,16 @@ function FormularioVenta({
               />
 
               <SelectField
-                label={t("vatRates.title", "Tarifa")}
-                value={detalleForm.tipoTarifa}
-                onChange={(value) => actualizarDetalle("tipoTarifa", value)}
+                label={t("sales.vatRate", "Tarifa")}
+                value={detalleForm.tarifaSeleccionada ?? ""}
+                onChange={(value) => actualizarDetalle("tarifaSeleccionada", value)}
                 options={tipoTarifaOptions}
+                placeholder={t("common.selectOption", "Seleccione una tarifa")}
                 required
               />
 
-              {detalleForm.tipoTarifa === "ESPECIAL" ? (
+              {detalleForm.tarifaSeleccionada === "ESPECIAL" ||
+              (!detalleForm.idTarifaIva && detalleForm.tipoTarifa === "ESPECIAL") ? (
                 <InputField
                   label={t("vatRates.percentage", "Porcentaje tarifa especial")}
                   value={detalleForm.porcentajeIva}
@@ -899,7 +1002,7 @@ function FormularioVenta({
 
             <div className="mt-5 flex flex-wrap gap-3">
               <PrimaryButton onClick={agregarOActualizarDetalle}>
-                {detalleEditandoId ? t("common.saveChanges", "Actualizar línea") : `+ ${t("sales.newSale", "Agregar a venta")}`}
+                {detalleEditandoId ? t("sales.updateProduct", "Actualizar producto") : `+ ${t("sales.addToSale", "Agregar a venta")}`}
               </PrimaryButton>
 
               {detalleEditandoId ? (
@@ -976,7 +1079,7 @@ function FormularioVenta({
                   key: "iva",
                   header: t("sales.tax", "IVA"),
                   render: (row: VentaDetalleForm) =>
-                    `${row.tipoTarifa} ${getPorcentajeIva(row)}%`,
+                    `${row.tipoTarifa} (${getPorcentajeIva(row)}%)`,
                 },
                 {
                   key: "total",
@@ -1083,34 +1186,37 @@ function FormularioVenta({
 
               {cabecera.metodoPago === "MIXTO" ? (
                 <>
-                  <InputField
+                  <MoneyInputField
                     label={t("sales.cashPayment", "Paga en efectivo")}
                     value={cabecera.montoEfectivo}
                     onChange={(value) =>
                       actualizarCabecera("montoEfectivo", value)
                     }
                     placeholder="0"
-                    prefix="₡"
+                    currencySymbol="₡"
+                    allowDecimals={false}
                   />
 
-                  <InputField
+                  <MoneyInputField
                     label={t("sales.sinpePayment", "Paga por SINPE / transferencia")}
                     value={cabecera.montoSinpeTransferencia}
                     onChange={(value) =>
                       actualizarCabecera("montoSinpeTransferencia", value)
                     }
                     placeholder="0"
-                    prefix="₡"
+                    currencySymbol="₡"
+                    allowDecimals={false}
                   />
                 </>
               ) : (
-                <InputField
+                <MoneyInputField
                   label={t("sales.paid", "Monto recibido")}
                   value={cabecera.montoPagado}
                   onChange={(value) => actualizarCabecera("montoPagado", value)}
                   placeholder="0"
                   helperText={t("sales.unpaidHelper", "Si queda en 0, se registra como deuda completa.")}
-                  prefix="₡"
+                  currencySymbol="₡"
+                  allowDecimals={false}
                 />
               )}
 
@@ -1246,10 +1352,10 @@ function FormularioVenta({
               <PrimaryButton
                 onClick={() => guardarVenta()}
                 loading={guardando}
-                loadingText={t("common.processing", "Procesando venta...")}
+                loadingText={t("sales.processingSale", "Procesando venta...")}
                 disabled={guardando}
               >
-                {t("sales.newSale", "Procesar venta")}
+                {t("sales.processSale", "Procesar venta")}
               </PrimaryButton>
             </div>
           </div>

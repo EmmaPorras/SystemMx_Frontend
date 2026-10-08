@@ -129,4 +129,36 @@ describe("AppLayout", () => {
 
     expect(authValue.logout).toHaveBeenCalledTimes(1);
   });
+
+  it("bloquea el scroll del body al abrir UserWay y lo restaura al cerrar", () => {
+    const { unmount } = render(
+      <AuthContext.Provider value={createAuthValue()}>
+        <MemoryRouter initialEntries={["/"]}>
+          <Routes>
+            <Route element={<AppLayout />}>
+              <Route
+                path="/"
+                element={<div>Dashboard</div>}
+              />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    );
+
+    expect(document.body.style.overflow).toBe("");
+
+    // Simular apertura via evento UserWay
+    window.dispatchEvent(new Event("userway:open"));
+    expect(document.body.style.overflow).toBe("hidden");
+    expect(document.body.classList.contains("userway-panel-open")).toBe(true);
+
+    // Simular cierre via evento UserWay
+    window.dispatchEvent(new Event("userway:close"));
+    expect(document.body.style.overflow).toBe("");
+    expect(document.body.classList.contains("userway-panel-open")).toBe(false);
+
+    unmount();
+    expect(document.body.style.overflow).toBe("");
+  });
 });

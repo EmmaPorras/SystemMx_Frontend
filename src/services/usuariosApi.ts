@@ -32,6 +32,8 @@ export function getUsuariosApi(): Promise<UsuarioItem[]> {
   return apiClient.get<UsuarioItem[]>("/usuarios");
 }
 
+export const listarUsuariosApi = getUsuariosApi;
+
 export function invitarUsuarioApi(
   data: InvitarUsuarioRequest,
 ): Promise<InvitarUsuarioResponse> {

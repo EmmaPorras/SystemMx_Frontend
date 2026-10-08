@@ -1,6 +1,7 @@
 export type BackendRole =
   | "ADMIN"
-  | "OPERADOR"
+  | "VENTAS"
+  | "COMPRAS"
   | "CONSULTA";
 
 export type LoginRequest = {

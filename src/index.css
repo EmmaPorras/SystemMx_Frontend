@@ -58,39 +58,11 @@ table {
   background: #94a3b8;
 }
 
-/* ========================================================================= */
-/* USERWAY ACCESSIBILITY WIDGET POSITIONING & SAFETY                         */
-/* Enforce bottom-right placement to prevent covering header/navbar buttons  */
-/* ========================================================================= */
-#userwayAccessibilityIcon,
-.uai,
-.userway_p1,
-.userway_p2,
-.userway_p3,
-.userway_p4,
-[id*="userwayAccessibilityIcon"],
-[id*="userway_"] {
-  top: auto !important;
-  bottom: 1.25rem !important;
-  right: 1.25rem !important;
-  left: auto !important;
-  z-index: 45 !important;
-  opacity: 0.9 !important;
-  transition: opacity 0.2s ease, transform 0.2s ease !important;
-}
+/* UserWay gestiona la posición de su propio icono y panel mediante data-position="3"
+   en index.html. Evitar estilos globales sobre .uai o IDs internos del proveedor,
+   ya que podrían mover también el panel accesible y sus overlays. */
 
-#userwayAccessibilityIcon:hover,
-.uai:hover {
-  opacity: 1 !important;
-  transform: scale(1.05) !important;
+/* El scroll lock se activa mediante AppLayout al detectar un estado compatible. */
+body.userway-panel-open {
+  overflow: hidden;
 }
-
-@media (max-width: 640px) {
-  #userwayAccessibilityIcon,
-  .uai {
-    bottom: 1rem !important;
-    right: 1rem !important;
-    transform: scale(0.85) !important;
-  }
-}
-

@@ -8,6 +8,7 @@ import {
 
 import { ApiError } from "../api/ApiError";
 import {
+  actualizarPedidoApi,
   cancelarPedidoApi,
   crearPedidoApi,
   obtenerPedidoApi,
@@ -290,5 +291,61 @@ describe("pedidosApi", () => {
       message:
         "La cantidad recibida supera la cantidad pendiente del lote.",
     });
+  });
+
+  it("actualiza un pedido enviando cabecera y detalles completos al backend", async () => {
+    fetchMock.mockResolvedValue(
+      createResponse(200, {
+        id: 10,
+        numeroPedido: 25,
+        estado: "REGISTRADO",
+        detalles: [],
+      }),
+    );
+
+    await actualizarPedidoApi(10, {
+      id: 10,
+      numeroPedido: "25",
+      fecha: "2026-09-15",
+      origen: "Estados Unidos",
+      proveedorId: 2,
+      proveedorNombre: "USA Parts",
+      monedaCompra: "USD",
+      tipoCambio: "520.50",
+      inversionTotal: 104100,
+      observaciones: "Actualización de pedido",
+      estado: "REGISTRADO",
+      detalles: [
+        {
+          idTemporal: "tmp-1",
+          productoId: 5,
+          productoNombre: "Bujía Platino",
+          categoriaId: 3,
+          marca: "NGK",
+          loteCodigo: "L1",
+          cantidad: 10,
+          cantidadRecibida: 0,
+          costoUnitarioOrigen: 20,
+          costoUnitarioReal: 10410,
+          precioVentaRecomendado: 15000,
+          estadoLote: "EN_PROCESO",
+        },
+      ],
+    });
+
+    const [url, requestInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+
+    expect(new URL(url).pathname).toBe("/api/pedidos/10");
+    expect(requestInit.method).toBe("PATCH");
+
+    const body = JSON.parse(String(requestInit.body));
+    expect(body.fecha).toBe("2026-09-15");
+    expect(body.monedaCompra).toBe("USD");
+    expect(body.tipoCambio).toBe(520.5);
+    expect(body.detalles).toHaveLength(1);
+    expect(body.detalles[0].productoNombre).toBe("Bujía Platino");
+    expect(body.detalles[0].cantidad).toBe(10);
+    expect(body.detalles[0].costoUnitarioOrigen).toBe(20);
+    expect(body.detalles[0].estadoLote).toBe("EN_PROCESO");
   });
 });
