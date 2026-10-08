@@ -651,6 +651,7 @@
     "updateProduct": "Atualizar produto",
     "processSale": "Processar venda",
     "processingSale": "Processando venda...",
+    "selectRateRequired": "Selecione uma tarifa válida.",
     "selectFifo": "Automático FIFO",
     "selectManual": "Selecionar lote manualmente",
     "vatRate": "Tarifa",
