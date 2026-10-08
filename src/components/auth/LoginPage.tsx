@@ -143,14 +143,14 @@ function LoginPage() {
             <div className="flex items-center gap-4">
               <div
                 aria-hidden="true"
-                className="flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-900 sm:w-32"
+                className="flex aspect-video w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-white/20 sm:w-32"
               >
                 {brandVideoFailed ? (
-                  <LockKeyhole className="h-7 w-7" />
+                  <LockKeyhole className="h-7 w-7 text-zinc-900" />
                 ) : (
                   <video
                     data-testid="systemmx-animated-logo"
-                    className="block h-full w-full object-contain"
+                    className="block h-full w-full scale-[1.08] object-cover"
                     autoPlay
                     muted
                     loop
