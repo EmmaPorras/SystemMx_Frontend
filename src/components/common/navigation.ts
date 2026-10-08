@@ -1,5 +1,6 @@
-import type { ElementType } from "react";
-
+import { useMemo, type ElementType } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "../../i18n";
 import {
   Boxes,
   FileBarChart,
@@ -12,6 +13,7 @@ import {
   ShoppingCart,
   Tags,
   Truck,
+  Users,
   WalletCards,
 } from "lucide-react";
 
@@ -27,110 +29,194 @@ export type NavigationGroup = {
   items: NavigationItem[];
 };
 
-export const navigationGroups: NavigationGroup[] = [
+export type NavigationItemConfig = {
+  labelKey: string;
+  defaultLabel: string;
+  path: string;
+  descriptionKey: string;
+  defaultDescription: string;
+  icon: ElementType;
+};
+
+export type NavigationGroupConfig = {
+  labelKey: string;
+  defaultLabel: string;
+  items: NavigationItemConfig[];
+};
+
+export const navigationGroupConfigs: NavigationGroupConfig[] = [
   {
-    label: "General",
+    labelKey: "navigation.general",
+    defaultLabel: "General",
     items: [
       {
-        label: "Inicio",
+        labelKey: "navigation.home",
+        defaultLabel: "Inicio",
         path: "/",
-        description: "Resumen general del sistema",
+        descriptionKey: "navigation.homeDesc",
+        defaultDescription: "Resumen general del sistema",
         icon: House,
       },
     ],
   },
   {
-    label: "Compras",
+    labelKey: "navigation.purchases",
+    defaultLabel: "Compras",
     items: [
       {
-        label: "Proveedores",
+        labelKey: "navigation.suppliers",
+        defaultLabel: "Proveedores",
         path: "/proveedores",
-        description: "Catálogo de proveedores",
+        descriptionKey: "navigation.suppliersDesc",
+        defaultDescription: "Catálogo de proveedores",
         icon: Truck,
       },
       {
-        label: "Pedidos",
+        labelKey: "navigation.orders",
+        defaultLabel: "Pedidos",
         path: "/pedidos",
-        description: "Compras y recepción de inventario",
+        descriptionKey: "navigation.ordersDesc",
+        defaultDescription: "Compras y recepción de inventario",
         icon: ReceiptText,
       },
     ],
   },
   {
-    label: "Inventario",
+    labelKey: "navigation.inventory",
+    defaultLabel: "Inventario",
     items: [
       {
-        label: "Productos",
+        labelKey: "navigation.products",
+        defaultLabel: "Productos",
         path: "/productos",
-        description: "Consulta de productos",
+        descriptionKey: "navigation.productsDesc",
+        defaultDescription: "Consulta de productos",
         icon: PackageSearch,
       },
       {
-        label: "Lotes",
+        labelKey: "navigation.batches",
+        defaultLabel: "Lotes",
         path: "/lotes",
-        description: "Trazabilidad de inventario",
+        descriptionKey: "navigation.batchesDesc",
+        defaultDescription: "Trazabilidad de inventario",
         icon: Boxes,
       },
       {
-        label: "Movimientos",
+        labelKey: "navigation.movements",
+        defaultLabel: "Movimientos",
         path: "/inventario/movimientos",
-        description: "Historial de entradas y salidas",
+        descriptionKey: "navigation.movementsDesc",
+        defaultDescription: "Historial de entradas y salidas",
         icon: History,
       },
     ],
   },
   {
-    label: "Configuración",
+    labelKey: "navigation.settings",
+    defaultLabel: "Configuración",
     items: [
       {
-        label: "Categorías",
+        labelKey: "navigation.categories",
+        defaultLabel: "Categorías",
         path: "/categorias",
-        description: "Clasificación de productos",
+        descriptionKey: "navigation.categoriesDesc",
+        defaultDescription: "Clasificación de productos",
         icon: Tags,
       },
       {
-        label: "Tarifas IVA",
+        labelKey: "navigation.vatRates",
+        defaultLabel: "Tarifas IVA",
         path: "/tarifas-iva",
-        description: "Catálogo de impuestos",
+        descriptionKey: "navigation.vatRatesDesc",
+        defaultDescription: "Catálogo de impuestos",
         icon: Percent,
+      },
+      {
+        labelKey: "navigation.users",
+        defaultLabel: "Usuarios",
+        path: "/usuarios",
+        descriptionKey: "navigation.usersDesc",
+        defaultDescription: "Gestión de cuentas e invitaciones",
+        icon: Users,
       },
     ],
   },
   {
-    label: "Ventas",
+    labelKey: "navigation.sales",
+    defaultLabel: "Ventas",
     items: [
       {
-        label: "Ventas",
+        labelKey: "navigation.sales",
+        defaultLabel: "Ventas",
         path: "/ventas",
-        description: "Ventas, pagos y anulaciones",
+        descriptionKey: "navigation.salesDesc",
+        defaultDescription: "Ventas, pagos y anulaciones",
         icon: ShoppingCart,
       },
       {
-        label: "Cuentas por cobrar",
+        labelKey: "navigation.accountsReceivable",
+        defaultLabel: "Cuentas por cobrar",
         path: "/cuentas-por-cobrar",
-        description: "Saldos pendientes y vencimientos",
+        descriptionKey: "navigation.accountsReceivableDesc",
+        defaultDescription: "Saldos pendientes y vencimientos",
         icon: WalletCards,
       },
     ],
   },
   {
-    label: "Análisis",
+    labelKey: "navigation.analytics",
+    defaultLabel: "Análisis",
     items: [
       {
-        label: "Reportes",
+        labelKey: "navigation.reports",
+        defaultLabel: "Reportes",
         path: "/reportes",
-        description: "Indicadores y análisis",
+        descriptionKey: "navigation.reportsDesc",
+        defaultDescription: "Indicadores y análisis",
         icon: FileBarChart,
       },
       {
-        label: "Auditoría",
+        labelKey: "navigation.audit",
+        defaultLabel: "Auditoría",
         path: "/auditoria",
-        description: "Trazabilidad administrativa",
+        descriptionKey: "navigation.auditDesc",
+        defaultDescription: "Trazabilidad administrativa",
         icon: ShieldCheck,
       },
     ],
   },
 ];
 
-export const navigationItems =
-  navigationGroups.flatMap((group) => group.items);
+export function getNavigationGroups(
+  translateFn: (key: string, defaultValue?: string) => string = (k, d) => i18n.t(k, d ?? ""),
+): NavigationGroup[] {
+  return navigationGroupConfigs.map((group) => ({
+    label: translateFn(group.labelKey, group.defaultLabel),
+    items: group.items.map((item) => ({
+      label: translateFn(item.labelKey, item.defaultLabel),
+      path: item.path,
+      description: translateFn(item.descriptionKey, item.defaultDescription),
+      icon: item.icon,
+    })),
+  }));
+}
+
+export function useNavigation() {
+  const { t } = useTranslation();
+
+  const groups = useMemo(() => {
+    return getNavigationGroups((k, d) => t(k, d ?? ""));
+  }, [t]);
+
+  const items = useMemo(() => {
+    return groups.flatMap((group) => group.items);
+  }, [groups]);
+
+  return {
+    navigationGroups: groups,
+    navigationItems: items,
+  };
+}
+
+export const navigationGroups: NavigationGroup[] = getNavigationGroups();
+export const navigationItems: NavigationItem[] = navigationGroups.flatMap((group) => group.items);
