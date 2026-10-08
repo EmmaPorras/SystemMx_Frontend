@@ -67,6 +67,7 @@ function LoginPage() {
   const [errors, setErrors] = useState<LoginErrors>({});
   const [apiError, setApiError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [brandVideoFailed, setBrandVideoFailed] = useState(false);
 
   if (status === "authenticated") {
     return (
@@ -142,9 +143,28 @@ function LoginPage() {
             <div className="flex items-center gap-4">
               <div
                 aria-hidden="true"
-                className="grid h-14 w-14 place-items-center rounded-2xl border border-zinc-700 bg-zinc-900"
+                className="flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-900 sm:w-32"
               >
-                <LockKeyhole className="h-7 w-7" />
+                {brandVideoFailed ? (
+                  <LockKeyhole className="h-7 w-7" />
+                ) : (
+                  <video
+                    data-testid="systemmx-animated-logo"
+                    className="block h-full w-full object-contain"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    disablePictureInPicture
+                    onError={() => setBrandVideoFailed(true)}
+                  >
+                    <source
+                      src="https://res.cloudinary.com/dqqnhxhcp/video/upload/v1791492297/gemini_generated_video_68192616_ogqmlj.mp4"
+                      type="video/mp4"
+                    />
+                  </video>
+                )}
               </div>
 
               <div>
