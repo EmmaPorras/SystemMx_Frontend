@@ -108,7 +108,7 @@
     "password": "Contraseña",
     "loginTitle": "Iniciar sesión",
     "loginSubtitle": "Acceso administrativo al sistema.",
-    "loginAdminAccess": "Acceso reservado al administrador de SystemMx.",
+    "loginAdminAccess": "Acceso exclusivo para usuarios autorizados de SystemMx.",
     "submitting": "Ingresando...",
     "enter": "Ingresar",
     "invalidCredentials": "Usuario o contraseña incorrectos.",
