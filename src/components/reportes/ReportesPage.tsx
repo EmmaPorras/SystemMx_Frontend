@@ -2,6 +2,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   BarChart3,
@@ -98,6 +99,29 @@ const TODAS_FAMILIAS =
     ReportFamily[];
 
 function ReportesPage() {
+  const { t } = useTranslation();
+
+  const getFamilyLabel = (family: ReportFamily) => {
+    switch (family) {
+      case "resumen":
+        return t("reports.familyResumen");
+      case "ventas":
+        return t("reports.familyVentas");
+      case "inventario":
+        return t("reports.familyInventario");
+      case "compras":
+        return t("reports.familyCompras");
+      case "pagos":
+        return t("reports.familyPagos");
+      case "cuentas":
+        return t("reports.familyCuentas");
+      case "auditoria":
+        return t("reports.familyAuditoria");
+      default:
+        return reportFamilyLabels[family];
+    }
+  };
+
   /*
    * ==========================================
    * SELECCIÓN
@@ -532,14 +556,14 @@ function ReportesPage() {
       filters.fechaDesde >
         filters.fechaHasta
     ) {
-      return "La fecha desde no puede ser posterior a la fecha hasta.";
+      return t("audit.dateRangeError");
     }
 
     if (
       requiereFechaCorte &&
       !filters.fechaCorte
     ) {
-      return "Seleccione una fecha de corte.";
+      return t("common.selectOption");
     }
 
     return null;
@@ -557,7 +581,7 @@ function ReportesPage() {
       0
     ) {
       setError(
-        "Seleccione al menos un reporte.",
+        t("reports.selectReport"),
       );
 
       return;
@@ -620,7 +644,7 @@ function ReportesPage() {
                     requestError instanceof
                       Error
                       ? requestError.message
-                      : "No fue posible consultar este reporte.",
+                      : t("reports.loadReportError"),
                 };
               }
             },
@@ -645,7 +669,7 @@ function ReportesPage() {
         results.length
       ) {
         setError(
-          "No fue posible consultar ninguno de los reportes seleccionados.",
+          t("reports.noReportsSelectedSuccessError"),
         );
       }
     } finally {
@@ -674,9 +698,9 @@ function ReportesPage() {
           execution.report.family,
 
         familyLabel:
-          reportFamilyLabels[
-            execution.report.family
-          ],
+          getFamilyLabel(
+            execution.report.family,
+          ),
 
         label:
           execution.report.label,
@@ -699,7 +723,7 @@ function ReportesPage() {
       0
     ) {
       setError(
-        "Primero consulte al menos un reporte correctamente.",
+        t("reports.noReportsQueriedError"),
       );
 
       return;
@@ -720,7 +744,7 @@ function ReportesPage() {
       0
     ) {
       setError(
-        "Primero consulte al menos un reporte correctamente.",
+        t("reports.noReportsQueriedError"),
       );
 
       return;
@@ -741,8 +765,8 @@ function ReportesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Reportes"
-        description="Centro analítico de ventas, inventario, compras, pagos y auditoría."
+        title={t("navigation.reports")}
+        description={t("reports.pageDesc")}
         icon={
           BarChart3
         }
@@ -753,8 +777,8 @@ function ReportesPage() {
       {/* ====================================== */}
 
       <SectionCard
-        title="Construir reporte"
-        description="Combiná varias familias y reportes en una misma consulta."
+        title={t("reports.buildReport")}
+        description={t("reports.buildReportDesc")}
       >
         {/* FAMILIAS */}
 
@@ -762,11 +786,11 @@ function ReportesPage() {
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-zinc-950">
-                Familias
+                {t("reports.families")}
               </p>
 
               <p className="mt-0.5 text-xs text-zinc-500">
-                Podés seleccionar más de una familia.
+                {t("reports.familiesDesc")}
               </p>
             </div>
 
@@ -779,8 +803,8 @@ function ReportesPage() {
             >
               {selectedFamilies.length ===
               TODAS_FAMILIAS.length
-                ? "Quitar todas"
-                : "Seleccionar todas"}
+                ? t("reports.clearAll")
+                : t("reports.selectAll")}
             </button>
           </div>
 
@@ -865,9 +889,9 @@ function ReportesPage() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold">
                         {
-                          reportFamilyLabels[
-                            family
-                          ]
+                          getFamilyLabel(
+                            family,
+                          )
                         }
                       </p>
 
@@ -883,11 +907,7 @@ function ReportesPage() {
                           }
                         `}
                       >
-                        {count} reporte
-                        {count ===
-                        1
-                          ? ""
-                          : "s"}
+                        {t("reports.reportsCount", { count })}
                       </p>
                     </div>
                   </button>
@@ -903,11 +923,11 @@ function ReportesPage() {
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-zinc-950">
-                Reportes
+                {t("navigation.reports")}
               </p>
 
               <p className="mt-0.5 text-xs text-zinc-500">
-                Seleccioná uno o varios reportes de las familias activas.
+                {t("reports.selectReportsDesc")}
               </p>
             </div>
 
@@ -928,8 +948,8 @@ function ReportesPage() {
                       report.id,
                     ),
                 )
-                  ? "Quitar visibles"
-                  : "Seleccionar visibles"}
+                  ? t("reports.clearVisible")
+                  : t("reports.selectVisible")}
               </button>
             ) : null}
           </div>
@@ -938,7 +958,7 @@ function ReportesPage() {
           0 ? (
             <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 px-5 py-8 text-center">
               <p className="text-sm font-semibold text-zinc-500">
-                Seleccioná al menos una familia.
+                {t("reports.selectAtLeastOneFamily")}
               </p>
             </div>
           ) : (
@@ -1038,25 +1058,11 @@ function ReportesPage() {
 
         <div className="mt-6 flex flex-wrap gap-2">
           <span className="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-600">
-            {
-              selectedFamilies.length
-            }{" "}
-            familia
-            {selectedFamilies.length ===
-            1
-              ? ""
-              : "s"}
+            {t("reports.familiesCount", { count: selectedFamilies.length })}
           </span>
 
           <span className="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-600">
-            {
-              selectedReports.length
-            }{" "}
-            reporte
-            {selectedReports.length ===
-            1
-              ? ""
-              : "s"}
+            {t("reports.reportsCount", { count: selectedReports.length })}
           </span>
         </div>
 
@@ -1067,11 +1073,11 @@ function ReportesPage() {
           <div className="mt-7 border-t border-zinc-200 pt-6">
             <div className="mb-4">
               <p className="text-sm font-bold text-zinc-950">
-                Filtros combinados
+                {t("reports.combinedFilters")}
               </p>
 
               <p className="mt-1 text-xs text-zinc-500">
-                Se muestran únicamente los filtros requeridos por los reportes seleccionados.
+                {t("reports.combinedFiltersDesc")}
               </p>
             </div>
 
@@ -1099,22 +1105,14 @@ function ReportesPage() {
             loading={
               loading
             }
-            loadingText="Consultando reportes..."
+            loadingText={t("reports.consultingReports")}
             disabled={
               loading ||
               selectedReports.length ===
                 0
             }
           >
-            Consultar{" "}
-            {
-              selectedReports.length
-            }{" "}
-            reporte
-            {selectedReports.length ===
-            1
-              ? ""
-              : "s"}
+            {t("reports.consultReport", { count: selectedReports.length })}
           </PrimaryButton>
         </div>
       </SectionCard>
@@ -1126,7 +1124,7 @@ function ReportesPage() {
       {error ? (
         <AlertMessage
           variant="error"
-          title="No fue posible completar la operación"
+          title={t("reports.operationErrorTitle")}
           message={
             error
           }
@@ -1145,8 +1143,8 @@ function ReportesPage() {
       {successfulExecutions.length >
       0 ? (
         <SectionCard
-          title="Guardar reporte"
-          description="Exportá todos los resultados consultados en un único archivo."
+          title={t("reports.saveReport")}
+          description={t("reports.saveReportDesc")}
         >
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
@@ -1180,7 +1178,7 @@ function ReportesPage() {
                 }
               />
 
-              Descargar PDF
+              {t("reports.exportPdf")}
             </button>
 
             <button
@@ -1214,7 +1212,7 @@ function ReportesPage() {
                 }
               />
 
-              Descargar Excel
+              {t("reports.exportExcel")}
             </button>
 
             <div className="flex items-center gap-2 px-2 text-xs text-zinc-500">
@@ -1224,20 +1222,7 @@ function ReportesPage() {
                 }
               />
 
-              {
-                successfulExecutions.length
-              }{" "}
-              reporte
-              {successfulExecutions.length ===
-              1
-                ? ""
-                : "s"}{" "}
-              listo
-              {successfulExecutions.length ===
-              1
-                ? ""
-                : "s"}{" "}
-              para exportar
+              {t("reports.readyToExport", { count: successfulExecutions.length })}
             </div>
           </div>
         </SectionCard>
@@ -1249,10 +1234,10 @@ function ReportesPage() {
 
       {loading ? (
         <SectionCard
-          title="Resultados"
-          description="Consultando información oficial de SystemMx."
+          title={t("reports.results")}
+          description={t("reports.resultsConsultingDesc")}
         >
-          <LoadingState message="Consultando reportes seleccionados..." />
+          <LoadingState message={t("reports.loadingReports")} />
         </SectionCard>
       ) : executions.length >
         0 ? (
@@ -1269,10 +1254,10 @@ function ReportesPage() {
                   execution.report.label
                 }
                 description={`${
-                  reportFamilyLabels[
+                  getFamilyLabel(
                     execution.report
-                      .family
-                  ]
+                      .family,
+                  )
                 } · ${
                   execution.report
                     .description
@@ -1281,7 +1266,7 @@ function ReportesPage() {
                 {execution.error ? (
                   <AlertMessage
                     variant="error"
-                    title="No fue posible cargar este reporte"
+                    title={t("reports.loadReportError")}
                     message={
                       execution.error
                     }
@@ -1299,8 +1284,8 @@ function ReportesPage() {
         </div>
       ) : (
         <SectionCard
-          title="Resultados"
-          description="Información oficial devuelta por SystemMx."
+          title={t("reports.results")}
+          description={t("reports.resultsOfficialDesc")}
         >
           <div className="py-12 text-center">
             <BarChart3
@@ -1308,7 +1293,7 @@ function ReportesPage() {
             />
 
             <p className="mt-3 text-sm font-semibold text-zinc-500">
-              Seleccioná las familias, los reportes y los filtros que querés consultar.
+              {t("reports.selectPrompt")}
             </p>
           </div>
         </SectionCard>

@@ -1,4 +1,5 @@
 import { AlertTriangle, AlertCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import AppModal from "./AppModal";
 
 type ConfirmDialogVariant = "danger" | "warning";
@@ -41,13 +42,16 @@ function ConfirmDialog({
   isOpen,
   title,
   message,
-  confirmLabel = "Confirmar",
-  cancelLabel = "Cancelar",
+  confirmLabel,
+  cancelLabel,
   variant = "danger",
   isLoading = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation();
+  const resolvedConfirmLabel = confirmLabel ?? t("dialog.confirmButton");
+  const resolvedCancelLabel = cancelLabel ?? t("dialog.cancelButton");
   const styles = variantStyles[variant];
   const IconComponent = styles.icon;
 
@@ -80,7 +84,7 @@ function ConfirmDialog({
             disabled={isLoading}
             className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
 
           <button
@@ -95,10 +99,10 @@ function ConfirmDialog({
                   aria-hidden="true"
                   className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
                 />
-                Procesando...
+                {t("common.processing")}
               </span>
             ) : (
-              confirmLabel
+              resolvedConfirmLabel
             )}
           </button>
         </div>

@@ -62,7 +62,7 @@ describe("TablaMovimientos", () => {
 
     expect(
       screen.getByText(
-        "ENTRADA COMPRA",
+        /entrada por compra/i,
       ),
     ).toBeInTheDocument();
 

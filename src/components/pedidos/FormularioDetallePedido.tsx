@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import AlertMessage from "../common/AlertMessage";
 import DataTableShell from "../common/DataTableShell";
 import InputField from "../common/InputField";
 import PrimaryButton from "../common/PrimaryButton";
 import SelectField from "../common/SelectField";
 import TableActionButton from "../common/TableActionButton";
-import { formatCurrency } from "../common/formatters";
+import { formatCurrency, getActiveLocale } from "../common/formatters";
 import { buscarProductosSugeridosApi } from "../../services/pedidosApi";
 import type {
   CategoriaPedidoOption,
@@ -63,7 +64,7 @@ function formatMoneyByMoneda(value: number, moneda: MonedaCompra) {
   const safeValue = Number.isFinite(numericValue) ? numericValue : 0;
   const decimals = moneda === "CRC" || moneda === "COP" ? 0 : 2;
 
-  const formattedValue = new Intl.NumberFormat("es-CR", {
+  const formattedValue = new Intl.NumberFormat(getActiveLocale(), {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(safeValue);
@@ -110,6 +111,7 @@ function FormularioDetallePedido({
   onSave,
   onCancel,
 }: FormularioDetallePedidoProps) {
+  const { t } = useTranslation();
   const simboloMoneda = getMonedaSymbol(pedido.monedaCompra);
 
   const [sugerencias, setSugerencias] = useState<ProductoSugerido[]>([]);
@@ -125,7 +127,7 @@ function FormularioDetallePedido({
       ? [
           {
             value: "__CREAR_CATEGORIA__",
-            label: "+ Crear nueva categoría",
+            label: `+ ${t("categories.newCategory")}`,
           },
         ]
       : []),
@@ -183,17 +185,17 @@ function FormularioDetallePedido({
       {alertMessage ? (
         <AlertMessage
           variant="error"
-          title="Revisar la información"
+          title={t("common.errorOccurred")}
           message={alertMessage}
         />
       ) : null}
 
       <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
         <p className="text-sm font-semibold text-zinc-900">
-          {pedido.numeroPedido ? `Pedido #${pedido.numeroPedido}` : "Nuevo pedido"}
+          {pedido.numeroPedido ? `#${pedido.numeroPedido}` : t("orders.newOrder")}
         </p>
         <p className="mt-1 text-sm text-zinc-600">
-          {pedido.proveedorNombre || "Proveedor no seleccionado"} · {pedido.fecha} · {pedido.monedaCompra}
+          {pedido.proveedorNombre || "—"} · {pedido.fecha} · {pedido.monedaCompra}
         </p>
       </div>
 
@@ -201,12 +203,9 @@ function FormularioDetallePedido({
         <div className="mb-4">
           <h3 className="text-base font-bold text-zinc-950">
             {isEditingDetail
-              ? "Editar artículo del pedido"
-              : "Agregar artículo al pedido"}
+              ? t("orders.editOrder")
+              : t("orders.addDetail")}
           </h3>
-          <p className="text-sm text-zinc-600">
-            Cada línea representa un artículo asociado a un lote específico.
-          </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -215,7 +214,7 @@ function FormularioDetallePedido({
               htmlFor="articulo-nombre-input"
               className="mb-1.5 block text-sm font-semibold text-zinc-700"
             >
-              Nombre del artículo
+              {t("products.name")}
               <span className="ml-1 text-red-500" aria-hidden="true">*</span>
             </label>
 
@@ -233,7 +232,7 @@ function FormularioDetallePedido({
                   setMostrarSugerencias(false);
                 }, 150);
               }}
-              placeholder="Careta blanca, led blanco/amarillo..."
+              placeholder={t("orders.productPlaceholder")}
               maxLength={150}
               aria-invalid={Boolean(errors.productoNombre)}
               className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition ${
@@ -249,15 +248,7 @@ function FormularioDetallePedido({
                   <p role="alert" className="text-xs font-medium text-red-600">
                     {errors.productoNombre}
                   </p>
-                ) : detalleForm.productoId ? (
-                  <p className="text-xs font-medium text-emerald-700">
-                    Producto existente seleccionado · ID {detalleForm.productoId}
-                  </p>
-                ) : (
-                  <p className="text-xs text-zinc-500">
-                    Escribí al menos 2 letras para buscar productos ya registrados.
-                  </p>
-                )}
+                ) : null}
               </div>
 
               <p
@@ -275,7 +266,7 @@ function FormularioDetallePedido({
               <div className="absolute left-0 right-0 z-30 mt-1.5 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl">
                 {cargandoSugerencias ? (
                   <p className="px-3.5 py-3 text-sm text-zinc-500">
-                    Buscando productos...
+                    {t("common.loading")}
                   </p>
                 ) : null}
 
@@ -302,11 +293,6 @@ function FormularioDetallePedido({
                           {producto.marca
                             ? ` · ${producto.marca}`
                             : ""}
-                          {producto.precioVentaSugerido > 0
-                            ? `  Precio sugerido ${formatCurrency(
-                                producto.precioVentaSugerido,
-                              )}`
-                            : ""}
                         </p>
                       </button>
                     ))}
@@ -317,7 +303,7 @@ function FormularioDetallePedido({
           </div>
 
           <SelectField
-            label="Categoría"
+            label={t("products.category")}
             value={detalleForm.categoriaId}
             onChange={(value) => {
               if (value === "__CREAR_CATEGORIA__") {
@@ -327,36 +313,35 @@ function FormularioDetallePedido({
 
               onDetalleChange("categoriaId", value);
             }}
-            placeholder="Seleccione categoría"
+            placeholder={t("products.categoryPlaceholder")}
             required
             error={errors.categoriaId}
             options={categoriaOptions}
           />
 
           <InputField
-            label="Marca"
+            label={t("products.brand")}
             type="text"
             value={detalleForm.marca}
             onChange={(value) => onDetalleChange("marca", value)}
-            placeholder="Ej. Acerbis, Renthal, Genérica..."
+            placeholder={t("products.brandPlaceholder")}
             error={errors.marca}
             maxLength={100}
             showCharacterCount
-            helperText="Opcional si el artículo no tiene una marca definida."
           />
 
           <SelectField
-            label="Lote"
+            label={t("orders.lotCode")}
             value={detalleForm.loteCodigo}
             onChange={(value) => onDetalleChange("loteCodigo", value)}
-            placeholder="Seleccione lote"
+            placeholder={t("orders.lotCode")}
             required
             error={errors.loteCodigo}
             options={loteOptions}
           />
 
           <InputField
-            label="Cantidad"
+            label={t("orders.quantity")}
             type="text"
             value={detalleForm.cantidad}
             onChange={(value) => onDetalleChange("cantidad", value)}
@@ -367,11 +352,11 @@ function FormularioDetallePedido({
           />
 
           <InputField
-            label="Precio de costo"
+            label={t("orders.costOrigin")}
             type="text"
             value={detalleForm.costoUnitarioOrigen}
             onChange={(value) => onDetalleChange("costoUnitarioOrigen", value)}
-            placeholder="  0.00"
+            placeholder="0.00"
             required
             error={errors.costoUnitarioOrigen}
             maxLength={8}
@@ -380,13 +365,13 @@ function FormularioDetallePedido({
           />
 
           <InputField
-            label="Precio de venta recomendado"
+            label={t("orders.recommendedPrice")}
             type="text"
             value={detalleForm.precioVentaRecomendado}
             onChange={(value) =>
               onDetalleChange("precioVentaRecomendado", value)
             }
-            placeholder="  0"
+            placeholder="0"
             required
             error={errors.precioVentaRecomendado}
             maxLength={8}
@@ -397,7 +382,7 @@ function FormularioDetallePedido({
           {isEditingDetail && Number(detalleForm.cantidadRecibidaPrevia) > 0 ? (
             <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Cantidad recibida
+                {t("orders.quantityReceived")}
               </p>
               <p className="mt-1 text-sm font-bold text-zinc-900">
                 {detalleForm.cantidadRecibidaPrevia}
@@ -409,8 +394,8 @@ function FormularioDetallePedido({
         <div className="mt-5 flex flex-wrap gap-3">
           <PrimaryButton onClick={onAgregarDetalle}>
             {isEditingDetail
-              ? "Actualizar artículo/lote"
-              : "+ Agregar artículo/lote"}
+              ? t("common.saveChanges")
+              : `+ ${t("orders.addDetail")}`}
           </PrimaryButton>
 
           {isEditingDetail ? (
@@ -419,7 +404,7 @@ function FormularioDetallePedido({
               onClick={onCancelarEdicionDetalle}
               className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
             >
-              Cancelar edición
+              {t("common.cancel")}
             </button>
           ) : null}
         </div>
@@ -427,17 +412,18 @@ function FormularioDetallePedido({
 
       <div>
         <h3 className="mb-3 text-base font-bold text-zinc-950">
-          Artículos agregados
+          {t("orders.details")}
         </h3>
 
         <DataTableShell
           data={pedido.detalles}
-          emptyMessage="Todavía no has agregado artículos a este pedido."
+          emptyMessage={t("orders.emptyTitle")}
+          emptyDescription={t("orders.emptyDesc")}
           getRowKey={(row) => row.idTemporal}
           columns={[
             {
               key: "producto",
-              header: "Artículo",
+              header: t("products.title"),
               render: (row: PedidoDetalle) => (
                 <div>
                   <p className="font-semibold text-zinc-900">
@@ -445,7 +431,7 @@ function FormularioDetallePedido({
                   </p>
                   {row.productoId ? (
                     <p className="text-xs text-zinc-500">
-                      ID producto: {row.productoId}
+                      ID: {row.productoId}
                     </p>
                   ) : null}
                 </div>
@@ -453,43 +439,43 @@ function FormularioDetallePedido({
             },
             {
               key: "categoria",
-              header: "Categoría",
+              header: t("products.category"),
               render: (row: PedidoDetalle) =>
-                row.categoriaNombre || "Sin categoría",
+                row.categoriaNombre || "—",
             },
             {
               key: "marca",
-              header: "Marca",
+              header: t("products.brand"),
               render: (row: PedidoDetalle) => row.marca || "—",
             },
             {
               key: "lote",
-              header: "Lote",
+              header: t("orders.lotCode"),
               render: (row: PedidoDetalle) => row.loteCodigo,
             },
             {
               key: "cantidad",
-              header: "Pedida",
+              header: t("orders.quantity"),
               render: (row: PedidoDetalle) => row.cantidad,
             },
             {
               key: "recibida",
-              header: "Recibida",
+              header: t("orders.quantityReceived"),
               render: (row: PedidoDetalle) => getCantidadRecibidaTotal(row),
             },
             {
               key: "pendiente",
-              header: "Pendiente",
+              header: t("orders.pending"),
               render: (row: PedidoDetalle) => getCantidadPendiente(row),
             },
             {
               key: "stock",
-              header: "Stock",
+              header: t("products.stock"),
               render: (row: PedidoDetalle) => row.cantidadDisponible,
             },
             {
               key: "costo",
-              header: "Costo",
+              header: t("orders.costOrigin"),
               render: (row: PedidoDetalle) =>
                 formatMoneyByMoneda(
                   row.costoUnitarioOrigen,
@@ -498,7 +484,7 @@ function FormularioDetallePedido({
             },
             {
               key: "precio",
-              header: "Precio venta",
+              header: t("orders.recommendedPrice"),
               render: (row: PedidoDetalle) =>
                 formatCurrency(row.precioVentaRecomendado),
             },
@@ -506,14 +492,14 @@ function FormularioDetallePedido({
           actions={(row) => (
             <>
               <TableActionButton
-                label="Editar artículo"
+                label={t("common.edit")}
                 variant="edit"
                 icon={<Pencil size={16} />}
                 onClick={() => onEditarDetalle(row)}
               />
 
               <TableActionButton
-                label="Eliminar artículo"
+                label={t("common.delete")}
                 variant="delete"
                 icon={<Trash2 size={16} />}
                 onClick={() => onEliminarDetalle(row.idTemporal)}
@@ -529,7 +515,7 @@ function FormularioDetallePedido({
           onClick={onBack}
           className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
         >
-          Atrás
+          {t("common.back")}
         </button>
 
         <div className="flex flex-col-reverse gap-3 sm:flex-row">
@@ -538,10 +524,10 @@ function FormularioDetallePedido({
             onClick={onCancel}
             className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
           >
-            Cancelar
+            {t("common.cancel")}
           </button>
 
-          <PrimaryButton onClick={onSave}>Guardar pedido</PrimaryButton>
+          <PrimaryButton onClick={onSave}>{t("common.save")}</PrimaryButton>
         </div>
       </div>
     </div>

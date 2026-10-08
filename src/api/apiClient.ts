@@ -7,6 +7,7 @@ import {
   clearAccessToken,
   getAccessToken,
 } from "../auth/tokenStorage";
+import i18n from "../i18n";
 
 export const AUTH_UNAUTHORIZED_EVENT = "systemmx:unauthorized";
 
@@ -94,31 +95,61 @@ function getBackendMessage(
 }
 
 function getDefaultErrorMessage(status: number): string {
+  const translate = (key: string, defaultValue: string): string => {
+    return i18n.isInitialized
+      ? i18n.t(key, { defaultValue })
+      : defaultValue;
+  };
+
   switch (status) {
     case 400:
-      return "Los datos enviados no son válidos.";
+      return translate(
+        "errors.badRequest",
+        "Los datos enviados no son válidos.",
+      );
 
     case 401:
-      return "La sesión no es válida o ha expirado.";
+      return translate(
+        "errors.unauthorized",
+        "La sesión no es válida o ha expirado.",
+      );
 
     case 403:
-      return "No tiene permiso para realizar esta acción.";
+      return translate(
+        "errors.forbidden",
+        "No tiene permiso para realizar esta acción.",
+      );
 
     case 404:
-      return "El recurso solicitado no fue encontrado.";
+      return translate(
+        "errors.notFound",
+        "El recurso solicitado no fue encontrado.",
+      );
 
     case 409:
-      return "La operación no pudo completarse por un conflicto.";
+      return translate(
+        "errors.conflict",
+        "La operación no pudo completarse por un conflicto.",
+      );
 
     case 429:
-      return "Se realizaron demasiadas solicitudes. Intente nuevamente más tarde.";
+      return translate(
+        "errors.tooManyRequests",
+        "Se realizaron demasiadas solicitudes. Intente nuevamente más tarde.",
+      );
 
     default:
       if (status >= 500) {
-        return "Ocurrió un error en el servidor.";
+        return translate(
+          "errors.serverError",
+          "Ocurrió un error en el servidor.",
+        );
       }
 
-      return "Ocurrió un error inesperado.";
+      return translate(
+        "errors.generic",
+        "Ocurrió un error inesperado.",
+      );
   }
 }
 

@@ -4,6 +4,7 @@ import { HashRouter } from "react-router";
 
 import App from "./App";
 import AuthProvider from "./auth/AuthProvider";
+import "./i18n";
 
 import "./index.css";
 

@@ -3,10 +3,12 @@ import {
   FaRegEdit,
 } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
+import { useTranslation } from "react-i18next";
 
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
 import TableActionButton from "../common/TableActionButton";
+import { getCatalogStatusLabel } from "../../i18n/statusMap";
 
 import {
   getMonedaPreferidaCorta,
@@ -32,10 +34,13 @@ function TablaProveedores({
   onEdit,
   onDelete,
 }: TablaProveedoresProps) {
+  const { t } = useTranslation();
+
   return (
     <DataTableShell
       data={proveedores}
-      emptyMessage="No hay proveedores que coincidan con los filtros seleccionados."
+      emptyMessage={t("suppliers.emptyTitle")}
+      emptyDescription={t("suppliers.emptyDesc")}
       getRowKey={(row) => row.id}
       columns={[
         {
@@ -47,7 +52,7 @@ function TablaProveedores({
         },
         {
           key: "nombre",
-          header: "Nombre",
+          header: t("common.name"),
           render: (row) => (
             <span className="font-semibold text-zinc-950">
               {row.nombre}
@@ -56,28 +61,27 @@ function TablaProveedores({
         },
         {
           key: "telefono",
-          header: "Teléfono",
+          header: t("suppliers.phone"),
           render: (row) =>
             row.telefono,
         },
         {
           key: "correo",
-          header: "Correo",
+          header: t("suppliers.email"),
           render: (row) =>
             row.correo,
         },
         {
           key: "pais",
-          header: "País",
+          header: t("suppliers.country"),
           render: (row) =>
-            row.pais ||
-            "Sin registrar",
+            row.pais || "—",
           className:
             "whitespace-nowrap",
         },
         {
           key: "monedaPreferida",
-          header: "Mon/Pref.",
+          header: t("suppliers.currency"),
           render: (row) => (
             <span
               className="
@@ -102,10 +106,10 @@ function TablaProveedores({
         },
         {
           key: "estado",
-          header: "Estado",
+          header: t("common.status"),
           render: (row) => (
             <StatusBadge
-              label={row.estado}
+              label={getCatalogStatusLabel(t, row.estado)}
               variant={
                 row.estado === "ACTIVO"
                   ? "success"
@@ -115,11 +119,11 @@ function TablaProveedores({
           ),
         },
       ]}
-      actionsHeader="Acciones"
+      actionsHeader={t("dataTable.actions")}
       actions={(row) => (
         <>
           <TableActionButton
-            label="Ver detalle del proveedor"
+            label={t("suppliers.details")}
             variant="view"
             icon={
               <FaEye className="h-4 w-4" />
@@ -130,7 +134,7 @@ function TablaProveedores({
           />
 
           <TableActionButton
-            label="Editar proveedor"
+            label={t("suppliers.editSupplier")}
             variant="edit"
             icon={
               <FaRegEdit className="h-4 w-4" />
@@ -142,7 +146,7 @@ function TablaProveedores({
 
           {row.estado === "ACTIVO" ? (
             <TableActionButton
-              label="Desactivar proveedor"
+              label={t("common.delete")}
               variant="delete"
               icon={
                 <MdDelete className="h-5 w-5" />

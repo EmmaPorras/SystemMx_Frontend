@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import AlertMessage from "../common/AlertMessage";
 import InputField from "../common/InputField";
 import PrimaryButton from "../common/PrimaryButton";
@@ -49,6 +50,7 @@ function FormularioPedido({
   onSubmit,
   onCancel,
 }: FormularioPedidoProps) {
+  const { t } = useTranslation();
   const proveedorSeleccionado = proveedores.find(
     (item) => item.id === pedido.proveedorId,
   );
@@ -62,7 +64,7 @@ function FormularioPedido({
       {alertMessage ? (
         <AlertMessage
           variant="error"
-          title="Revisá la información"
+          title={t("common.errorOccurred")}
           message={alertMessage}
         />
       ) : null}
@@ -70,24 +72,20 @@ function FormularioPedido({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <p className="mb-1.5 block text-sm font-semibold text-zinc-700">
-            Número de pedido
+            {t("orders.orderNumber")}
           </p>
 
           <div className="flex min-h-[42px] items-center rounded-xl border border-zinc-300 bg-zinc-50 px-3.5 py-2.5 text-sm">
-            <span className="font-semibold text-zinc-900">
+            <span className="font-semibold text-zinc-950">
               {pedido.numeroPedido
-                ? `Pedido #${pedido.numeroPedido}`
-                : "Calculando número..."}
+                ? `#${pedido.numeroPedido}`
+                : "—"}
             </span>
           </div>
-
-          <p className="mt-1.5 text-xs text-zinc-500">
-            El número se asigna automáticamente y no se puede editar.
-          </p>
         </div>
 
         <InputField
-          label="Fecha"
+          label={t("orders.date")}
           type="date"
           value={pedido.fecha}
           onChange={(value) => onChange("fecha", value)}
@@ -96,10 +94,10 @@ function FormularioPedido({
         />
 
         <SelectField
-          label="Proveedor"
+          label={t("orders.supplier")}
           value={pedido.proveedorId ? String(pedido.proveedorId) : ""}
           onChange={(value) => onChange("proveedorId", value)}
-          placeholder="Seleccione un proveedor"
+          placeholder={t("orders.supplierPlaceholder")}
           required
           error={errors.proveedorId}
           options={proveedores.map((item) => ({
@@ -110,7 +108,7 @@ function FormularioPedido({
 
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-zinc-700">
-            País de origen<span className="ml-1 text-red-500" aria-hidden="true">*</span>
+            {t("orders.origin")}<span className="ml-1 text-red-500" aria-hidden="true">*</span>
           </label>
 
           <div
@@ -122,22 +120,18 @@ function FormularioPedido({
                   : "border-zinc-300 bg-zinc-50 text-zinc-400"
             }`}
           >
-            {pedido.origen || "Se completará al seleccionar el proveedor"}
+            {pedido.origen || "—"}
           </div>
 
           {errors.origen ? (
             <p role="alert" className="mt-1.5 text-xs font-medium text-red-600">
               {errors.origen}
             </p>
-          ) : (
-            <p className="mt-1.5 text-xs text-zinc-400">
-              Este dato se toma automáticamente del proveedor.
-            </p>
-          )}
+          ) : null}
         </div>
 
         <SelectField
-          label="Moneda"
+          label={t("orders.currency")}
           value={pedido.monedaCompra}
           onChange={(value) => onChange("monedaCompra", value)}
           required
@@ -147,43 +141,36 @@ function FormularioPedido({
         />
 
         <InputField
-          label="Tipo de cambio"
+          label={t("orders.exchangeRate")}
           type="text"
           value={pedido.tipoCambio}
           onChange={(value) => onChange("tipoCambio", value)}
-          placeholder={compraLocal ? "1.00" : "Ejemplo: 445.00"}
+          placeholder={compraLocal ? "1.00" : "445.00"}
           required={!compraLocal && Boolean(pedido.proveedorId)}
           disabled={!pedido.proveedorId || compraLocal}
           error={errors.tipoCambio}
           maxLength={6}
-          helperText={
-            !pedido.proveedorId
-              ? "Seleccioná un proveedor para definir el tipo de cambio."
-              : compraLocal
-                ? "Compra nacional: se utiliza automáticamente 1 CRC = 1 CRC."
-                : "Obligatorio para proveedores fuera de Costa Rica."
-          }
           showCharacterCount={!compraLocal && Boolean(pedido.proveedorId)}
         />
 
         <SelectField
-          label="Estado"
+          label={t("common.status")}
           value={pedido.estado}
           onChange={(value) => onChange("estado", value)}
           required
           error={errors.estado}
           options={[
-            { value: "REGISTRADO", label: "Registrado" },
-            { value: "EN_TRANSITO", label: "En tránsito" },
+            { value: "REGISTRADO", label: t("statuses.orders.REGISTRADO") },
+            { value: "EN_TRANSITO", label: t("statuses.orders.EN_TRANSITO") },
           ]}
         />
 
         <div className="sm:col-span-2">
           <InputField
-            label="Observaciones"
+            label={t("orders.observations")}
             value={pedido.observaciones}
             onChange={(value) => onChange("observaciones", value)}
-            placeholder="Notas del pedido"
+            placeholder={t("orders.observationsPlaceholder")}
             error={errors.observaciones}
             maxLength={150}
             showCharacterCount
@@ -197,10 +184,10 @@ function FormularioPedido({
           onClick={onCancel}
           className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
         >
-          Cancelar
+          {t("common.cancel")}
         </button>
 
-        <PrimaryButton onClick={onSubmit}>Siguiente</PrimaryButton>
+        <PrimaryButton onClick={onSubmit}>{t("common.confirm")}</PrimaryButton>
       </div>
     </div>
   );

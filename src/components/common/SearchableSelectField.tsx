@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { ChevronDown, Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type SearchableSelectOption = {
   value: string;
@@ -31,12 +32,14 @@ function SearchableSelectField({
   onChange,
   options,
   id: customId,
-  placeholder = "Seleccione una opción",
+  placeholder,
   required = false,
   disabled = false,
   error,
   className = "",
 }: SearchableSelectFieldProps) {
+  const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder ?? t("common.selectOption");
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -129,7 +132,7 @@ function SearchableSelectField({
         }`}
       >
         <span className={`truncate ${selectedOption ? "font-medium text-zinc-900" : "text-zinc-400"}`}>
-          {selectedOption?.label ?? placeholder}
+          {selectedOption?.label ?? resolvedPlaceholder}
         </span>
         <ChevronDown
           size={16}
@@ -153,8 +156,8 @@ function SearchableSelectField({
                 ref={searchInputRef}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Buscar..."
-                aria-label={`Buscar en ${label}`}
+                placeholder={t("common.searchPlaceholder")}
+                aria-label={t("common.searchIn", { field: label })}
                 className="w-full rounded-lg border border-zinc-200 py-1.5 pl-8 pr-3 text-sm outline-none focus-visible:border-zinc-950 focus-visible:ring-2 focus-visible:ring-zinc-100"
               />
             </div>
@@ -185,7 +188,7 @@ function SearchableSelectField({
               ))
             ) : (
               <p className="px-3.5 py-3 text-center text-xs text-zinc-500">
-                No se encontraron opciones.
+                {t("common.noOptionsFound")}
               </p>
             )}
           </div>

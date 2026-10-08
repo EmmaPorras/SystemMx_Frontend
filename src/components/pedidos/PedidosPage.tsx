@@ -14,6 +14,7 @@ import SectionCard from "../common/SectionCard";
 import SelectField from "../common/SelectField";
 import StatCard from "../common/StatCard";
 import { formatCurrency } from "../common/formatters";
+import { useTranslation } from "react-i18next";
 import FormularioCategoria from "../categorias/FormularioCategoria";
 import { useAuth } from "../../auth/useAuth";
 import {
@@ -133,6 +134,7 @@ function esCostaRica(pais: string) {
 }
 
 function PedidosPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
 
   const [filtroProducto, setFiltroProducto] = useState("");
@@ -1013,14 +1015,14 @@ function PedidosPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Pedidos"
-        description="Registra y consulta compras completas. Cada pedido puede contener artículos divididos en diferentes lotes para mantener costos reales."
+        title={t("orders.title")}
+        description={t("orders.subtitle")}
         icon={PiAirplaneTiltFill}
         iconTo="/"
-        iconAriaLabel="Volver al inicio"
+        iconAriaLabel={t("common.goHome")}
         action={
           <PrimaryButton onClick={abrirModalNuevoPedido}>
-            + Nuevo pedido
+            + {t("orders.addOrder")}
           </PrimaryButton>
         }
       />
@@ -1036,53 +1038,53 @@ function PedidosPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Pedidos registrados"
+          label={t("orders.title")}
           value={String(pedidos.length)}
-          hint="Compras registradas en el sistema"
+          hint={t("common.total")}
           icon={TbClipboardList}
           variant="info"
         />
 
         <StatCard
-          label="Lotes registrados"
+          label={t("navigation.batches")}
           value={String(totalLotes)}
-          hint="Lotes generados desde pedidos"
+          hint={t("navigation.batches")}
           icon={TbPackages}
           variant="info"
         />
 
         <StatCard
-          label="En tránsito"
+          label={t("statuses.orders.EN_TRANSITO")}
           value={String(totalEnTransito)}
-          hint="Pedidos pendientes de recepción"
+          hint={t("statuses.orders.EN_TRANSITO")}
           icon={TbTruckDelivery}
           variant="warning"
         />
 
         <StatCard
-          label="Recibidos"
+          label={t("statuses.orders.RECIBIDO")}
           value={String(totalRecibidos)}
-          hint="Pedidos recibidos y disponibles"
+          hint={t("statuses.orders.RECIBIDO")}
           icon={LuPackageCheck}
           variant="success"
         />
       </div>
 
       <SectionCard
-        title="Listado de pedidos"
-        description="Filtrá por producto, número de pedido o proveedor y abrí el detalle en una ventana independiente."
+        title={t("orders.title")}
+        description={t("orders.subtitle")}
       >
         <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <ProductoPedidoFilter
-            label="Filtrar por producto"
+            label={t("products.title")}
             value={filtroProducto}
             options={productosFiltroOptions}
             onChange={setFiltroProducto}
-            placeholder="Barra led, careta negra..."
+            placeholder={t("orders.productPlaceholder")}
           />
 
           <InputField
-            label="Número de pedido"
+            label={t("orders.orderNumber")}
             type="text"
             value={filtroNumeroPedido}
             onChange={actualizarFiltroNumeroPedido}
@@ -1091,16 +1093,16 @@ function PedidosPage() {
           />
 
           <SelectField
-            label="Filtrar por proveedor"
+            label={t("orders.supplier")}
             value={filtroProveedorId}
             onChange={setFiltroProveedorId}
-            placeholder="Todos los proveedores"
+            placeholder={t("orders.supplierPlaceholder")}
             options={proveedoresFiltroOptions}
           />
         </div>
 
         {cargando ? (
-          <LoadingState message="Cargando pedidos..." />
+          <LoadingState message={t("common.loading")} />
         ) : (
           <TablaPedidos
             pedidos={pedidosFiltrados}
@@ -1119,10 +1121,10 @@ function PedidosPage() {
         onClose={cerrarDetallePedido}
         title={
           pedidoDetalle
-            ? `Detalle del Pedido ${pedidoDetalle.numeroPedido}`
-            : "Detalle del pedido"
+            ? t("orders.detailTitle", { number: pedidoDetalle.numeroPedido })
+            : t("orders.details")
         }
-        description="Información general, artículos y lotes asociados al pedido."
+        description={t("orders.subtitle")}
         maxWidthClassName="max-w-7xl"
       >
         {pedidoDetalle ? (
@@ -1270,14 +1272,14 @@ function PedidosPage() {
 
       <ConfirmDialog
         isOpen={Boolean(pedidoACancelar)}
-        title="Cancelar pedido"
+        title={t("orders.cancelConfirmTitle")}
         message={
           pedidoACancelar
-            ? `¿Seguro que querés cancelar el pedido #${pedidoACancelar.numeroPedido}? El pedido conservará su historial y quedará marcado como CANCELADO.`
+            ? t("orders.cancelConfirmMessage", { number: pedidoACancelar.numeroPedido })
             : ""
         }
-        confirmLabel="Cancelar pedido"
-        cancelLabel="Volver"
+        confirmLabel={t("orders.cancelOrder")}
+        cancelLabel={t("common.cancel")}
         variant="warning"
         isLoading={cancelando}
         onConfirm={confirmarCancelacionPedido}

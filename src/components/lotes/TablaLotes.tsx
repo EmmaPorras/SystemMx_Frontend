@@ -1,11 +1,13 @@
 import {
   Eye,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
 import TableActionButton from "../common/TableActionButton";
 import { formatCurrency } from "../common/formatters";
+import { getLotStatusLabel } from "../../i18n/statusMap";
 
 import type {
   EstadoLoteInventario,
@@ -41,32 +43,16 @@ function getEstadoVariant(
   }
 }
 
-function getEstadoLabel(
-  estado: EstadoLoteInventario,
-): string {
-  switch (estado) {
-    case "EN_PROCESO":
-      return "EN PROCESO";
-
-    case "EN_STOCK":
-      return "EN STOCK";
-
-    case "VENDIDO_PARCIAL":
-      return "VENDIDO PARCIAL";
-
-    case "AGOTADO":
-      return "AGOTADO";
-  }
-}
-
 function TablaLotes({
   lotes,
   onView,
 }: TablaLotesProps) {
+  const { t } = useTranslation();
+
   return (
     <DataTableShell
       data={lotes}
-      emptyMessage="No hay lotes que coincidan con los filtros."
+      emptyMessage={t("lots.emptyTitle", "No hay lotes que coincidan con los filtros.")}
       getRowKey={(
         row,
       ) =>
@@ -75,7 +61,7 @@ function TablaLotes({
       columns={[
         {
           key: "lote",
-          header: "Lote",
+          header: t("lots.lotCode", "Lote"),
           render: (
             row,
           ) => (
@@ -98,7 +84,7 @@ function TablaLotes({
 
         {
           key: "producto",
-          header: "Producto",
+          header: t("lots.product", "Producto"),
           render: (
             row,
           ) =>
@@ -109,7 +95,7 @@ function TablaLotes({
 
         {
           key: "pedido",
-          header: "Pedido",
+          header: t("navigation.orders", "Pedido"),
           render: (
             row,
           ) =>
@@ -120,13 +106,13 @@ function TablaLotes({
 
         {
           key: "cantidades",
-          header: "Inventario",
+          header: t("navigation.inventory", "Inventario"),
           render: (
             row,
           ) => (
             <div className="space-y-0.5 text-sm">
               <p>
-                Disponible:{" "}
+                {t("lots.availableQuantity", "Disponible")}:{" "}
                 <span className="font-semibold">
                   {
                     row.cantidadDisponible
@@ -135,14 +121,14 @@ function TablaLotes({
               </p>
 
               <p className="text-xs text-zinc-500">
-                Recibida:{" "}
+                {t("lots.receivedQuantity", "Recibida")}:{" "}
                 {
                   row.cantidadRecibida
                 }
               </p>
 
               <p className="text-xs text-zinc-500">
-                Vendida:{" "}
+                {t("sales.title", "Vendida")}:{" "}
                 {
                   row.cantidadVendida
                 }
@@ -153,8 +139,7 @@ function TablaLotes({
 
         {
           key: "pendiente",
-          header:
-            "Pendiente recepción",
+          header: t("orders.pending", "Pendiente recepción"),
           render: (
             row,
           ) =>
@@ -165,8 +150,7 @@ function TablaLotes({
 
         {
           key: "costo",
-          header:
-            "Costo unitario",
+          header: t("lots.costReal", "Costo unitario"),
           render: (
             row,
           ) =>
@@ -177,8 +161,7 @@ function TablaLotes({
 
         {
           key: "precio",
-          header:
-            "Precio recomendado",
+          header: t("lots.salePrice", "Precio recomendado"),
           render: (
             row,
           ) =>
@@ -189,12 +172,13 @@ function TablaLotes({
 
         {
           key: "estado",
-          header: "Estado",
+          header: t("lots.status", "Estado"),
           render: (
             row,
           ) => (
             <StatusBadge
-              label={getEstadoLabel(
+              label={getLotStatusLabel(
+                t,
                 row.estadoLote,
               )}
               variant={getEstadoVariant(
@@ -208,7 +192,7 @@ function TablaLotes({
         row,
       ) => (
         <TableActionButton
-          label="Ver detalle"
+          label={t("lots.details")}
           variant="view"
           icon={
             <Eye

@@ -8,6 +8,7 @@ import {
   PackageSearch,
 } from "lucide-react";
 import { RiResetLeftFill } from "react-icons/ri";
+import { useTranslation } from "react-i18next";
 
 import AlertMessage from "../common/AlertMessage";
 import InputField from "../common/InputField";
@@ -28,6 +29,7 @@ import TablaProductos from "./TablaProductos";
 import type { Producto } from "./productos.types";
 
 function ProductosPage() {
+  const { t } = useTranslation();
   const [productos, setProductos] = useState<Producto[]>([]);
 
   const [busqueda, setBusqueda] = useState("");
@@ -50,7 +52,7 @@ function ProductosPage() {
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "No fue posible cargar los productos.",
+          : t("errors.generic"),
       );
     } finally {
       setLoading(false);
@@ -179,63 +181,63 @@ function ProductosPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Productos"
-        description="Consultá el catálogo de productos generado a partir de los pedidos."
+        title={t("products.title")}
+        description={t("products.subtitle")}
         icon={PackageSearch}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          label="Productos"
+          label={t("products.title")}
           value={String(productos.length)}
-          hint="Total registrado en catálogo"
+          hint={t("common.total")}
           icon={PackageSearch}
           variant="info"
         />
 
         <StatCard
-          label="Activos"
+          label={t("common.active")}
           value={String(productosActivos)}
-          hint="Productos activos"
+          hint={t("common.active")}
           icon={PackageSearch}
           variant="success"
         />
 
         <StatCard
-          label="Unidades disponibles"
+          label={t("products.stock")}
           value={String(unidadesDisponibles)}
-          hint="Stock agregado del catálogo"
+          hint={t("products.stock")}
           icon={Boxes}
           variant="neutral"
         />
       </div>
 
       <SectionCard
-        title="Catálogo de productos"
-        description="Buscá por nombre y filtrá el catálogo por categoría o marca."
+        title={t("products.title")}
+        description={t("products.subtitle")}
       >
         <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <InputField
-            label="Nombre del producto"
+            label={t("common.name")}
             value={busqueda}
             onChange={setBusqueda}
-            placeholder="Careta negra, LED, pads..."
+            placeholder={t("products.searchPlaceholder")}
             maxLength={150}
           />
 
           <SelectField
-            label="Categoría"
+            label={t("products.category")}
             value={filtroCategoria}
             onChange={setFiltroCategoria}
-            placeholder="Todas las categorías"
+            placeholder={t("products.allCategories")}
             options={categoriasOptions}
           />
 
           <SelectField
-            label="Marca"
+            label={t("products.brand")}
             value={filtroMarca}
             onChange={setFiltroMarca}
-            placeholder="Todas las marcas"
+            placeholder={t("products.allBrands")}
             options={marcasOptions}
           />
 
@@ -244,26 +246,26 @@ function ProductosPage() {
               type="button"
               onClick={limpiarFiltros}
               disabled={!hayFiltros}
-              aria-label="Restablecer filtros"
-              title="Restablecer filtros"
+              aria-label={t("common.cleanFilters")}
+              title={t("common.cleanFilters")}
               className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-700 transition hover:border-zinc-900 hover:bg-zinc-900 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400"
             >
               <RiResetLeftFill
                 className="h-5 w-5"
                 aria-hidden="true"
               />
-              <span>Limpiar filtros</span>
+              <span>{t("common.cleanFilters")}</span>
             </button>
           </div>
         </div>
 
         {loading ? (
-          <LoadingState message="Cargando productos..." />
+          <LoadingState message={t("common.loading")} />
         ) : error ? (
           <div className="space-y-4">
             <AlertMessage
               variant="error"
-              title="No fue posible cargar los productos"
+              title={t("common.errorOccurred")}
               message={error}
             />
 
@@ -272,7 +274,7 @@ function ProductosPage() {
                 void cargarProductos();
               }}
             >
-              Reintentar
+              {t("common.reload")}
             </PrimaryButton>
           </div>
         ) : (

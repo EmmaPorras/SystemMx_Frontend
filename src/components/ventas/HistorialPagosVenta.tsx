@@ -3,12 +3,14 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import AlertMessage from "../common/AlertMessage";
 import DataTableShell from "../common/DataTableShell";
 import LoadingState from "../common/LoadingState";
 import PrimaryButton from "../common/PrimaryButton";
 import { formatCurrency, formatDateTime } from "../common/formatters";
+import { getPaymentMethodLabel } from "../../i18n/statusMap";
 
 import {
   obtenerPagosVentaApi,
@@ -27,6 +29,7 @@ function HistorialPagosVenta({
   ventaId,
   refreshKey = 0,
 }: HistorialPagosVentaProps) {
+  const { t } = useTranslation();
   const [pagos, setPagos] =
     useState<PagoVenta[]>([]);
 
@@ -51,12 +54,12 @@ function HistorialPagosVenta({
         setError(
           requestError instanceof Error
             ? requestError.message
-            : "No fue posible cargar los pagos.",
+            : t("common.errorOccurred", "No fue posible cargar los pagos."),
         );
       } finally {
         setLoading(false);
       }
-    }, [ventaId]);
+    }, [ventaId, t]);
 
   useEffect(() => {
     void cargarPagos();
@@ -66,7 +69,7 @@ function HistorialPagosVenta({
   ]);
 
   if (loading) {
-    return <LoadingState message="Cargando pagos..." />;
+    return <LoadingState message={t("common.loading", "Cargando pagos...")} />;
   }
 
   if (error) {
@@ -74,7 +77,7 @@ function HistorialPagosVenta({
       <div className="space-y-3">
         <AlertMessage
           variant="error"
-          title="No fue posible cargar los pagos"
+          title={t("common.errorOccurred", "No fue posible cargar los pagos")}
           message={error}
         />
 
@@ -83,7 +86,7 @@ function HistorialPagosVenta({
             void cargarPagos();
           }}
         >
-          Reintentar
+          {t("common.reload", "Reintentar")}
         </PrimaryButton>
       </div>
     );
@@ -92,26 +95,26 @@ function HistorialPagosVenta({
   return (
     <DataTableShell
       data={pagos}
-      emptyMessage="Esta venta todavía no registra pagos."
+      emptyMessage={t("sales.emptyDesc", "Esta venta todavía no registra pagos.")}
       getRowKey={(row) =>
         row.idPagoVenta
       }
       columns={[
         {
           key: "fecha",
-          header: "Fecha",
+          header: t("sales.date", "Fecha"),
           render: (row) =>
             formatDateTime(row.createdAt),
         },
         {
           key: "metodo",
-          header: "Método",
+          header: t("sales.paymentMethod", "Método"),
           render: (row) =>
-            row.metodoPago,
+            getPaymentMethodLabel(t, row.metodoPago),
         },
         {
           key: "monto",
-          header: "Monto",
+          header: t("sales.paid", "Monto"),
           render: (row) =>
             formatCurrency(
               row.monto,
@@ -119,22 +122,22 @@ function HistorialPagosVenta({
         },
         {
           key: "referencia",
-          header: "Referencia",
+          header: t("movements.reference", "Referencia"),
           render: (row) =>
             row.referencia ?? "—",
         },
         {
           key: "usuario",
-          header: "Usuario",
+          header: t("movements.user", "Usuario"),
           render: (row) =>
             row.usuario ??
             (row.idUsuario
-              ? `Usuario #${row.idUsuario}`
-              : "Sistema"),
+              ? `${t("movements.user", "Usuario")} #${row.idUsuario}`
+              : t("movements.system", "Sistema")),
         },
         {
           key: "observaciones",
-          header: "Observaciones",
+          header: t("orders.observations", "Observaciones"),
           render: (row) =>
             row.observaciones ??
             "—",

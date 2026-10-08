@@ -1,3 +1,6 @@
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+
 const codigosPaises = [
   "AF", "AL", "DZ", "AD", "AO", "AG", "AR", "AM", "AU", "AT", "AZ",
   "BS", "BH", "BD", "BB", "BY", "BE", "BZ", "BJ", "BT", "BO", "BA",
@@ -19,15 +22,26 @@ const codigosPaises = [
   "VE", "VN", "YE", "ZM", "ZW",
 ];
 
-const displayNames = new Intl.DisplayNames(["es"], { type: "region" });
+const displayNamesEs = new Intl.DisplayNames(["es"], { type: "region" });
 
-export const paisesOptions = codigosPaises
-  .map((codigo) => {
-    const nombre = displayNames.of(codigo) ?? codigo;
+export function getPaisesOptions(locale = "es") {
+  const displayNames = new Intl.DisplayNames([locale], { type: "region" });
+  return codigosPaises
+    .map((codigo) => {
+      const stableValue = displayNamesEs.of(codigo) ?? codigo;
+      const localizedLabel = displayNames.of(codigo) ?? stableValue;
 
-    return {
-      value: nombre,
-      label: nombre,
-    };
-  })
-  .sort((a, b) => a.label.localeCompare(b.label, "es"));
+      return {
+        value: stableValue,
+        label: localizedLabel,
+      };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label, locale));
+}
+
+export function usePaisesOptions() {
+  const { i18n } = useTranslation();
+  return useMemo(() => getPaisesOptions(i18n.language), [i18n.language]);
+}
+
+export const paisesOptions = getPaisesOptions("es");

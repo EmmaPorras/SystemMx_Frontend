@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AiOutlinePercentage } from "react-icons/ai";
+import { useTranslation } from "react-i18next";
 
 import PageHeader from "../common/PageHeader";
 import SectionCard from "../common/SectionCard";
@@ -38,46 +39,8 @@ const tarifaInicial: TarifaIVA = {
   estado: "ACTIVA",
 };
 
-function validarTarifa(tarifa: TarifaIVA): TarifaIVAFormErrors {
-  const errors: TarifaIVAFormErrors = {};
-
-  const codigo = tarifa.codigo.trim();
-  const descripcion = tarifa.descripcion.trim();
-  const porcentaje = Number(tarifa.porcentaje);
-
-  if (!codigo) {
-    errors.codigo = "El código es obligatorio.";
-  } else if (codigo.length > 20) {
-    errors.codigo = "El código no puede superar los 20 caracteres.";
-  }
-
-  if (tarifa.porcentaje === null || tarifa.porcentaje === undefined) {
-    errors.porcentaje = "El porcentaje es obligatorio.";
-  } else if (Number.isNaN(porcentaje)) {
-    errors.porcentaje = "El porcentaje debe ser un número válido.";
-  } else if (porcentaje < 0) {
-    errors.porcentaje = "El porcentaje no puede ser menor a 0.";
-  } else if (porcentaje > 100) {
-    errors.porcentaje = "El porcentaje no puede ser mayor a 100.";
-  }
-
-  if (!descripcion) {
-    errors.descripcion = "La descripción es obligatoria.";
-  } else if (descripcion.length > 45) {
-    errors.descripcion =
-      "La descripción no puede superar los 45 caracteres.";
-  }
-
-  if (!tarifa.estado) {
-    errors.estado = "Seleccioná un estado.";
-  } else if (!["ACTIVA", "INACTIVA"].includes(tarifa.estado)) {
-    errors.estado = "El estado seleccionado no es válido.";
-  }
-
-  return errors;
-}
-
 function TarifasIVAPage() {
+  const { t } = useTranslation();
   const [tarifas, setTarifas] = useState<TarifaIVA[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -94,6 +57,41 @@ function TarifasIVAPage() {
     title: string;
     message: string;
   } | null>(null);
+
+  function validarTarifaLocal(item: TarifaIVA): TarifaIVAFormErrors {
+    const errs: TarifaIVAFormErrors = {};
+    const codigo = item.codigo.trim();
+    const descripcion = item.descripcion.trim();
+    const porcentaje = Number(item.porcentaje);
+
+    if (!codigo) {
+      errs.codigo = t("common.required");
+    } else if (codigo.length > 20) {
+      errs.codigo = t("validation.maxLength", { count: 20 });
+    }
+
+    if (item.porcentaje === null || item.porcentaje === undefined) {
+      errs.porcentaje = t("vatRates.percentageRequired");
+    } else if (Number.isNaN(porcentaje)) {
+      errs.porcentaje = t("common.required");
+    } else if (porcentaje < 0) {
+      errs.porcentaje = t("vatRates.percentageMin");
+    } else if (porcentaje > 100) {
+      errs.porcentaje = t("vatRates.percentageMax");
+    }
+
+    if (!descripcion) {
+      errs.descripcion = t("vatRates.descriptionRequired");
+    } else if (descripcion.length > 45) {
+      errs.descripcion = t("validation.maxLength", { count: 45 });
+    }
+
+    if (!item.estado) {
+      errs.estado = t("common.required");
+    }
+
+    return errs;
+  }
 
   useEffect(() => {
     void cargarTarifas();
@@ -128,7 +126,7 @@ function TarifasIVAPage() {
 
     return tarifaEncontrada
       ? `${tarifaEncontrada.porcentaje}%`
-      : "No definida";
+      : "—";
   }, [tarifas]);
 
   const tarifaMasAlta = useMemo(() => {
@@ -138,7 +136,7 @@ function TarifasIVAPage() {
       .filter((porcentaje) => Number.isFinite(porcentaje));
 
     if (porcentajesActivos.length === 0) {
-      return "No definida";
+      return "—";
     }
 
     const porcentajeMayor = Math.max(...porcentajesActivos);
@@ -153,11 +151,11 @@ function TarifasIVAPage() {
     } catch (error) {
       setAlert({
         variant: "error",
-        title: "Error al cargar tarifas",
+        title: t("common.errorOccurred"),
         message:
           error instanceof Error
             ? error.message
-            : "No se pudieron cargar las tarifas IVA.",
+            : t("errors.generic"),
       });
     } finally {
       setIsLoading(false);
@@ -209,7 +207,7 @@ function TarifasIVAPage() {
   }
 
   async function guardarTarifa() {
-    const validationErrors = validarTarifa(tarifa);
+    const validationErrors = validarTarifaLocal(tarifa);
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -230,8 +228,8 @@ function TarifasIVAPage() {
         setTarifas((prev) => [nuevaTarifa, ...prev]);
         setAlert({
           variant: "success",
-          title: "Tarifa creada",
-          message: "La tarifa IVA se registró correctamente.",
+          title: t("common.success"),
+          message: t("vatRates.createSuccess"),
         });
       } else {
         const tarifaActualizada = await actualizarTarifaIvaApi(
@@ -249,8 +247,8 @@ function TarifasIVAPage() {
 
         setAlert({
           variant: "success",
-          title: "Tarifa actualizada",
-          message: "La tarifa IVA se actualizó correctamente.",
+          title: t("common.success"),
+          message: t("vatRates.updateSuccess"),
         });
       }
 
@@ -261,14 +259,11 @@ function TarifasIVAPage() {
     } catch (error) {
       setAlert({
         variant: "error",
-        title:
-          modalMode === "create"
-            ? "Error al crear tarifa"
-            : "Error al actualizar tarifa",
+        title: t("common.errorOccurred"),
         message:
           error instanceof Error
             ? error.message
-            : "Ocurrió un error al guardar la tarifa IVA.",
+            : t("errors.generic"),
       });
     } finally {
       setIsSaving(false);
@@ -288,18 +283,18 @@ function TarifasIVAPage() {
       await cargarTarifas();
       setAlert({
         variant: "success",
-        title: "Tarifa desactivada",
-        message: "La tarifa IVA quedó inactiva correctamente.",
+        title: t("common.success"),
+        message: t("vatRates.deleteSuccess"),
       });
       setTarifaAEliminar(null);
     } catch (error) {
       setAlert({
         variant: "error",
-        title: "No se pudo desactivar la tarifa",
+        title: t("common.errorOccurred"),
         message:
           error instanceof Error
             ? error.message
-            : "No se pudo desactivar la tarifa IVA.",
+            : t("errors.generic"),
       });
     } finally {
       setIsDeleting(false);
@@ -309,11 +304,11 @@ function TarifasIVAPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Tarifas IVA"
-        description="Catálogo de impuestos listo para ser consumido por productos, pedidos y ventas."
+        title={t("vatRates.title")}
+        description={t("vatRates.subtitle")}
         icon={AiOutlinePercentage}
         iconTo="/"
-        iconAriaLabel="Volver al inicio"
+        iconAriaLabel={t("common.goHome")}
         action={
           <BotonAgregarTarifa
             onClick={abrirModalCrear}
@@ -332,45 +327,45 @@ function TarifasIVAPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          label="Tarifas registradas"
+          label={t("vatRates.title")}
           value={String(tarifas.length)}
-          hint="Cantidad total de tarifas registradas"
+          hint={t("common.total")}
           icon={AiOutlinePercentage}
           variant="info"
         />
 
         <StatCard
-          label="Tarifa general"
+          label={t("common.active")}
           value={tarifaGeneral}
-          hint="Tarifa activa identificada con el código IVA"
+          hint={t("common.active")}
           icon={AiOutlinePercentage}
           variant="success"
         />
 
         <StatCard
-          label="Tarifa más alta"
+          label={t("vatRates.percentage")}
           value={tarifaMasAlta}
-          hint="Mayor porcentaje activo registrado"
+          hint={t("vatRates.title")}
           icon={AiOutlinePercentage}
           variant="danger"
         />
       </div>
 
       <SectionCard
-        title="Listado de tarifas"
-        description="Administrá las tarifas disponibles para productos, pedidos y ventas."
+        title={t("vatRates.title")}
+        description={t("vatRates.subtitle")}
       >
         <div className="mb-4">
           <InputField
-            label="Buscar tarifa"
+            label={t("common.search")}
             value={busqueda}
             onChange={setBusqueda}
-            placeholder="Código, porcentaje, descripción o estado"
+            placeholder={t("common.searchPlaceholder")}
           />
         </div>
 
         {isLoading ? (
-          <LoadingState message="Cargando tarifas IVA..." />
+          <LoadingState message={t("common.loading")} />
         ) : (
           <TablaTarifas
             tarifas={tarifasFiltradas}
@@ -384,14 +379,10 @@ function TarifasIVAPage() {
         isOpen={isModalOpen}
         title={
           modalMode === "create"
-            ? "Agregar tarifa IVA"
-            : "Editar tarifa IVA"
+            ? t("vatRates.newRate")
+            : t("vatRates.editRate")
         }
-        description={
-          modalMode === "create"
-            ? "Registrá una nueva tarifa para usarla en productos, pedidos y ventas."
-            : "Actualizá los datos de la tarifa seleccionada."
-        }
+        description={t("vatRates.subtitle")}
         onClose={cerrarModal}
         isSubmitting={isSaving}
         maxWidthClassName="max-w-2xl"
@@ -402,8 +393,8 @@ function TarifasIVAPage() {
           isSubmitting={isSaving}
           submitLabel={
             modalMode === "create"
-              ? "Guardar tarifa"
-              : "Actualizar tarifa"
+              ? t("vatRates.newRate")
+              : t("common.saveChanges")
           }
           onChange={actualizarTarifa}
           onSubmit={guardarTarifa}
@@ -413,14 +404,14 @@ function TarifasIVAPage() {
 
       <ConfirmDialog
         isOpen={Boolean(tarifaAEliminar)}
-        title="Desactivar tarifa IVA"
+        title={t("vatRates.deleteConfirmTitle")}
         message={
           tarifaAEliminar
-            ? `¿Seguro que querés desactivar la tarifa "${tarifaAEliminar.codigo}"? Dejará de estar disponible para nuevas operaciones, pero conservará su historial.`
+            ? t("vatRates.deleteConfirmMessage", { code: tarifaAEliminar.codigo })
             : ""
         }
-        confirmLabel="Desactivar"
-        cancelLabel="Cancelar"
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
         variant="warning"
         isLoading={isDeleting}
         onConfirm={confirmarEliminarTarifa}

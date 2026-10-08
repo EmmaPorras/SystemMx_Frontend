@@ -3,6 +3,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   Boxes,
@@ -308,6 +309,8 @@ function LotesPage() {
       0,
     );
 
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-6">
       {/* ====================================== */}
@@ -315,8 +318,8 @@ function LotesPage() {
       {/* ====================================== */}
 
       <PageHeader
-        title="Lotes"
-        description="Consultá la trazabilidad y disponibilidad del inventario por lote."
+        title={t("lots.title", "Lotes")}
+        description={t("lots.subtitle", "Consultá la trazabilidad y disponibilidad del inventario por lote.")}
         icon={
           Boxes
         }
@@ -328,11 +331,11 @@ function LotesPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          label="Resultados"
+          label={t("common.details", "Resultados")}
           value={String(
             total,
           )}
-          hint="Lotes según filtros actuales"
+          hint={t("lots.subtitle", "Lotes según filtros actuales")}
           icon={
             Boxes
           }
@@ -340,11 +343,11 @@ function LotesPage() {
         />
 
         <StatCard
-          label="Con stock en página"
+          label={t("lots.availableQuantity", "Con stock en página")}
           value={String(
             lotesConStock,
           )}
-          hint="Lotes visibles con disponibilidad"
+          hint={t("home.lotsWithStockHint", "{{count}} lotes con stock", { count: lotesConStock })}
           icon={
             PackageCheck
           }
@@ -352,11 +355,11 @@ function LotesPage() {
         />
 
         <StatCard
-          label="Unidades en página"
+          label={t("navigation.inventory", "Unidades en página")}
           value={String(
             unidadesPagina,
           )}
-          hint="Suma disponible de los resultados visibles"
+          hint={t("lots.availableQuantity", "Suma disponible de los resultados visibles")}
           icon={
             PackageOpen
           }
@@ -369,14 +372,14 @@ function LotesPage() {
       {/* ====================================== */}
 
       <SectionCard
-        title="Inventario por lote"
-        description="Los lotes son generados por Pedidos y su stock es administrado exclusivamente por las operaciones del backend."
+        title={t("lots.title", "Inventario por lote")}
+        description={t("lots.subtitle", "Los lotes son generados por Pedidos y su stock es administrado exclusivamente por las operaciones del backend.")}
       >
         {/* FILTROS */}
 
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <InputField
-            label="ID de producto"
+            label={`ID ${t("products.title", "Producto")}`}
             type="number"
             value={
               filtrosDraft.productoId
@@ -405,7 +408,7 @@ function LotesPage() {
           />
 
           <InputField
-            label="ID de pedido"
+            label={`ID ${t("navigation.orders", "Pedido")}`}
             type="number"
             value={
               filtrosDraft.pedidoId
@@ -434,7 +437,7 @@ function LotesPage() {
           />
 
           <SelectField
-            label="Estado del lote"
+            label={t("lots.filterStatus", "Estado del lote")}
             value={
               filtrosDraft.estadoLote
             }
@@ -459,35 +462,35 @@ function LotesPage() {
                 value:
                   "",
                 label:
-                  "Todos",
+                  t("common.all", "Todos"),
               },
 
               {
                 value:
                   "EN_PROCESO",
                 label:
-                  "En proceso",
+                  t("statuses.lots.EN_PROCESO", "En proceso"),
               },
 
               {
                 value:
                   "EN_STOCK",
                 label:
-                  "En stock",
+                  t("statuses.lots.EN_STOCK", "En stock"),
               },
 
               {
                 value:
                   "VENDIDO_PARCIAL",
                 label:
-                  "Vendido parcial",
+                  t("statuses.lots.VENDIDO_PARCIAL", "Vendido parcial"),
               },
 
               {
                 value:
                   "AGOTADO",
                 label:
-                  "Agotado",
+                  t("statuses.lots.AGOTADO", "Agotado"),
               },
             ]}
           />
@@ -501,7 +504,7 @@ function LotesPage() {
               aplicarFiltros
             }
           >
-            Aplicar filtros
+            {t("common.filter", "Aplicar filtros")}
           </PrimaryButton>
 
           <button
@@ -529,7 +532,7 @@ function LotesPage() {
               focus-visible:ring-zinc-950
             "
           >
-            Limpiar filtros
+            {t("common.cleanFilters", "Limpiar filtros")}
           </button>
         </div>
 
@@ -538,12 +541,12 @@ function LotesPage() {
         {/* ====================================== */}
 
         {loading ? (
-          <LoadingState message="Cargando lotes..." />
+          <LoadingState message={t("common.loading", "Cargando lotes...")} />
         ) : error ? (
           <div className="space-y-4">
             <AlertMessage
               variant="error"
-              title="No fue posible cargar los lotes"
+              title={t("common.errorOccurred", "No fue posible cargar los lotes")}
               message={
                 error
               }
@@ -554,7 +557,7 @@ function LotesPage() {
                 void cargarLotes();
               }}
             >
-              Reintentar
+              {t("common.reload", "Reintentar")}
             </PrimaryButton>
           </div>
         ) : (

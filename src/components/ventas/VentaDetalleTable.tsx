@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
 import { formatCurrency } from "../common/formatters";
@@ -7,58 +9,60 @@ type VentaDetalleTableProps = {
   detalles: VentaDetalle[];
 };
 
-function getTarifaLabel(row: VentaDetalle) {
-  if (row.tipoTarifa === "EXENTO") return "Exento 0%";
-  if (row.tipoTarifa === "ESPECIAL") return `Especial ${row.porcentajeIva}%`;
-  return `IVA ${row.porcentajeIva}%`;
-}
-
 function VentaDetalleTable({ detalles }: VentaDetalleTableProps) {
+  const { t } = useTranslation();
+
+  function getTarifaLabel(row: VentaDetalle) {
+    if (row.tipoTarifa === "EXENTO") return `${t("vatRates.title", "Exento")} 0%`;
+    if (row.tipoTarifa === "ESPECIAL") return `${t("vatRates.title", "Especial")} ${row.porcentajeIva}%`;
+    return `${t("sales.tax", "IVA")} ${row.porcentajeIva}%`;
+  }
+
   return (
     <DataTableShell
       data={detalles}
-      emptyMessage="Esta venta no tiene detalles registrados."
+      emptyMessage={t("sales.emptyDesc", "Esta venta no tiene detalles registrados.")}
       getRowKey={(row) => String(row.id)}
       columns={[
         {
           key: "producto",
-          header: "Producto",
+          header: t("products.title", "Producto"),
           render: (row) => (
             <div>
               <p className="font-semibold text-slate-900">
                 {row.productoNombre}
               </p>
               <p className="text-xs text-slate-500">
-                ID producto: {row.productoId}
+                ID {t("products.title", "producto")}: {row.productoId}
               </p>
             </div>
           ),
         },
         {
           key: "lote",
-          header: "Lote",
+          header: t("lots.title", "Lote"),
           render: (row) => (
             <div>
               <p className="font-semibold text-slate-900">{row.loteCodigo}</p>
               <p className="text-xs text-slate-500">
-                Pedido {row.pedidoId ?? "-"} · {row.modoDescuentoLote}
+                {t("navigation.orders", "Pedido")} {row.pedidoId ?? "-"} · {row.modoDescuentoLote}
               </p>
             </div>
           ),
         },
         {
           key: "cantidad",
-          header: "Cant.",
+          header: t("common.quantity", "Cant."),
           render: (row) => row.cantidad,
         },
         {
           key: "precio",
-          header: "Precio",
+          header: t("common.price", "Precio"),
           render: (row) => formatCurrency(row.precioUnitario),
         },
         {
           key: "descuento",
-          header: "Desc.",
+          header: t("sales.discount", "Desc."),
           render: (row) => (
             <div>
               <p className="font-semibold text-slate-900">
@@ -72,7 +76,7 @@ function VentaDetalleTable({ detalles }: VentaDetalleTableProps) {
         },
         {
           key: "tarifa",
-          header: "Tarifa",
+          header: t("vatRates.title", "Tarifa"),
           render: (row) => (
             <StatusBadge
               label={getTarifaLabel(row)}
@@ -82,22 +86,22 @@ function VentaDetalleTable({ detalles }: VentaDetalleTableProps) {
         },
         {
           key: "iva",
-          header: "IVA",
+          header: t("sales.tax", "IVA"),
           render: (row) => formatCurrency(row.iva),
         },
         {
           key: "total",
-          header: "Total línea",
+          header: t("common.total", "Total línea"),
           render: (row) => formatCurrency(row.totalLinea),
         },
         {
           key: "costo",
-          header: "Costo",
+          header: t("common.cost", "Costo"),
           render: (row) => formatCurrency(row.costoTotal),
         },
         {
           key: "ganancia",
-          header: "Ganancia",
+          header: t("home.grossProfit", "Ganancia"),
           render: (row) => formatCurrency(row.gananciaBruta),
         },
       ]}

@@ -1,6 +1,7 @@
 import type { ElementType, ReactNode } from "react";
 import { Link } from "react-router";
 import { TbLayoutDashboard } from "react-icons/tb";
+import { useTranslation } from "react-i18next";
 
 type PageHeaderProps = {
   title: string;
@@ -25,13 +26,16 @@ function PageHeader({
   icon: Icon = TbLayoutDashboard,
   action,
   iconTo,
-  iconAriaLabel = "Ir al inicio",
+  iconAriaLabel,
 }: PageHeaderProps) {
+  const { t } = useTranslation();
+  const resolvedIconAriaLabel = iconAriaLabel ?? t("common.goHome");
+
   const iconBox = iconTo ? (
     <Link
       to={iconTo}
-      aria-label={iconAriaLabel}
-      title={iconAriaLabel}
+      aria-label={resolvedIconAriaLabel}
+      title={resolvedIconAriaLabel}
       className="
         group
         block

@@ -18,10 +18,14 @@ import {
   useNavigate,
 } from "react-router";
 
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../auth/useAuth";
-import { navigationGroups } from "./navigation";
+import LanguageSelector from "./LanguageSelector";
+import { useNavigation } from "./navigation";
 
 function AppLayout() {
+  const { t } = useTranslation();
+  const { navigationGroups } = useNavigation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -157,8 +161,8 @@ function AppLayout() {
               "
               aria-label={
                 mobileMenuOpen
-                  ? "Cerrar menú de navegación"
-                  : "Abrir navegación"
+                  ? t("appLayout.closeNav")
+                  : t("appLayout.openNav")
               }
               aria-expanded={
                 mobileMenuOpen
@@ -203,18 +207,20 @@ function AppLayout() {
               </p>
 
               <p className="hidden truncate text-xs text-zinc-500 sm:block">
-                Panel administrativo
+                {t("appLayout.adminPanel")}
               </p>
             </div>
           </div>
 
-          {/* USUARIO */}
+          {/* USUARIO & IDIOMA */}
 
           <div className="flex min-w-0 items-center gap-3">
+            <LanguageSelector id="header-language-selector" />
+
             <div className="hidden min-w-0 text-right sm:block">
               <p className="truncate text-sm font-bold text-zinc-950">
                 {user?.nombre ??
-                  "Administrador"}
+                  t("appLayout.admin")}
               </p>
 
               <p className="truncate text-xs text-zinc-500">
@@ -248,8 +254,8 @@ function AppLayout() {
                 focus-visible:ring-2
                 focus-visible:ring-zinc-950
               "
-              aria-label="Cerrar sesión"
-              title="Cerrar sesión"
+              aria-label={t("auth.logout")}
+              title={t("auth.logout")}
             >
               <LogOut
                 size={17}
@@ -257,7 +263,7 @@ function AppLayout() {
               />
 
               <span className="hidden sm:inline">
-                Cerrar sesión
+                {t("auth.logout")}
               </span>
             </button>
           </div>
@@ -275,7 +281,7 @@ function AppLayout() {
 
         <aside
           id="mobile-navigation"
-          aria-label="Navegación principal"
+          aria-label={t("appLayout.mainNavAria")}
           className={`
             fixed
             bottom-0
@@ -351,13 +357,13 @@ function AppLayout() {
               `}
               title={
                 sidebarCollapsed
-                  ? "Expandir menú"
-                  : "Contraer menú"
+                  ? t("appLayout.expandMenu")
+                  : t("appLayout.collapseMenu")
               }
             >
               {!sidebarCollapsed ? (
                 <span className="text-xs font-bold uppercase tracking-[0.12em]">
-                  Menú
+                  {t("appLayout.menu")}
                 </span>
               ) : null}
 
