@@ -38,14 +38,14 @@ function PaginationControls({
           title={t("pagination.previousPage")}
           disabled={pagina <= 1}
           onClick={() => onPageChange(pagina - 1)}
-          className="grid h-10 w-10 place-items-center rounded-xl border border-zinc-200 bg-white text-zinc-700 transition hover:border-zinc-900 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-40"
+          className="grid h-8.5 w-8.5 place-items-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-2xs transition hover:border-zinc-950 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <ChevronLeft size={18} aria-hidden="true" />
+          <ChevronLeft size={16} aria-hidden="true" />
         </button>
 
         <div
           aria-current="page"
-          className="min-w-28 text-center text-xs sm:text-sm font-semibold text-zinc-800"
+          className="min-w-24 text-center text-xs font-semibold text-zinc-700"
         >
           {t("pagination.pageOf", { current: pagina, total: paginas })}
         </div>
@@ -56,9 +56,9 @@ function PaginationControls({
           title={t("pagination.nextPage")}
           disabled={totalPaginas === 0 || pagina >= totalPaginas}
           onClick={() => onPageChange(pagina + 1)}
-          className="grid h-10 w-10 place-items-center rounded-xl border border-zinc-200 bg-white text-zinc-700 transition hover:border-zinc-900 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-40"
+          className="grid h-8.5 w-8.5 place-items-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-2xs transition hover:border-zinc-950 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <ChevronRight size={18} aria-hidden="true" />
+          <ChevronRight size={16} aria-hidden="true" />
         </button>
       </div>
     </nav>

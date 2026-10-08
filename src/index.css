@@ -1,29 +1,96 @@
 @import "tailwindcss";
 
 :root {
-  font-family: Inter, Arial, Helvetica, sans-serif;
-  color: #1f2937;
-  background: #f3f4f6;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #09090b;
+  background: #f8fafc;
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
 html,
 body,
 #root {
   min-height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #f8fafc;
 }
 
 body {
-  margin: 0;
-  background: #f3f4f6;
+  font-size: 0.875rem; /* 14px standard SaaS body font size */
+  line-height: 1.5;
+  color: #18181b;
+  overflow-x: hidden;
 }
 
 button,
 input,
 select,
 textarea {
-  font: inherit;
+  font-family: inherit;
+  font-size: inherit;
 }
 
 table {
   border-collapse: collapse;
 }
+
+/* Custom modern thin scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ========================================================================= */
+/* USERWAY ACCESSIBILITY WIDGET POSITIONING & SAFETY                         */
+/* Enforce bottom-right placement to prevent covering header/navbar buttons  */
+/* ========================================================================= */
+#userwayAccessibilityIcon,
+.uai,
+.userway_p1,
+.userway_p2,
+.userway_p3,
+.userway_p4,
+[id*="userwayAccessibilityIcon"],
+[id*="userway_"] {
+  top: auto !important;
+  bottom: 1.25rem !important;
+  right: 1.25rem !important;
+  left: auto !important;
+  z-index: 45 !important;
+  opacity: 0.9 !important;
+  transition: opacity 0.2s ease, transform 0.2s ease !important;
+}
+
+#userwayAccessibilityIcon:hover,
+.uai:hover {
+  opacity: 1 !important;
+  transform: scale(1.05) !important;
+}
+
+@media (max-width: 640px) {
+  #userwayAccessibilityIcon,
+  .uai {
+    bottom: 1rem !important;
+    right: 1rem !important;
+    transform: scale(0.85) !important;
+  }
+}
+

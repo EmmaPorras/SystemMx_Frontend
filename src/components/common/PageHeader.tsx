@@ -40,56 +40,53 @@ function PageHeader({
         group
         block
         shrink-0
-        rounded-2xl
+        rounded-xl
         outline-none
         focus-visible:ring-2
         focus-visible:ring-black
-        focus-visible:ring-offset-4
+        focus-visible:ring-offset-2
       "
     >
       <div
         className="
           grid
-          h-16
-          w-16
+          h-11
+          w-11
           place-items-center
-          rounded-2xl
-          bg-black
+          rounded-xl
+          bg-zinc-950
           text-white
-          shadow-lg
-          shadow-black/20
+          shadow-xs
           transition-all
-          duration-300
+          duration-200
           ease-out
           group-hover:scale-105
-          group-hover:shadow-xl
-          group-hover:shadow-black/25
+          group-hover:shadow-sm
           group-active:scale-95
-          sm:h-20
-          sm:w-20
+          sm:h-12
+          sm:w-12
         "
       >
-        <Icon className="h-9 w-9 sm:h-11 sm:w-11" />
+        <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
       </div>
     </Link>
   ) : (
     <div
       className="
         grid
-        h-16
-        w-16
+        h-11
+        w-11
         shrink-0
         place-items-center
-        rounded-2xl
-        bg-black
+        rounded-xl
+        bg-zinc-950
         text-white
-        shadow-lg
-        shadow-black/20
-        sm:h-20
-        sm:w-20
+        shadow-xs
+        sm:h-12
+        sm:w-12
       "
     >
-      <Icon className="h-9 w-9 sm:h-11 sm:w-11" />
+      <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
     </div>
   );
 
@@ -100,15 +97,15 @@ function PageHeader({
         overflow-hidden
         rounded-2xl
         border
-        border-zinc-200
+        border-zinc-200/90
         bg-gradient-to-br
         from-white
         via-white
-        to-zinc-100
-        p-5
-        shadow-sm
-        sm:p-6
-        lg:p-8
+        to-zinc-50/70
+        p-4
+        shadow-2xs
+        sm:p-5
+        lg:p-6
       "
     >
       {/* Decoración circular superior */}
@@ -116,29 +113,14 @@ function PageHeader({
         aria-hidden="true"
         className="
           absolute
-          -right-20
-          -top-24
-          h-60
-          w-60
-          rounded-full
-          border
-          border-zinc-200
-          bg-white/50
-        "
-      />
-
-      {/* Decoración inferior */}
-      <div
-        aria-hidden="true"
-        className="
-          absolute
-          -bottom-24
-          right-20
+          -right-16
+          -top-16
           h-44
           w-44
           rounded-full
-          bg-zinc-200/50
-          blur-2xl
+          border
+          border-zinc-100
+          bg-white/40
         "
       />
 
@@ -148,30 +130,30 @@ function PageHeader({
           z-10
           flex
           flex-col
-          gap-6
+          gap-4
           lg:flex-row
           lg:items-center
           lg:justify-between
         "
       >
-        <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-col gap-3.5 sm:flex-row sm:items-center">
           {iconBox}
 
           <div className="min-w-0">
-            <div className="mb-2 flex items-center gap-3">
-              <span className="h-px w-9 bg-black" />
+            <div className="mb-1 flex items-center gap-2">
+              <span className="h-px w-6 bg-zinc-400" />
 
-              <span className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-500">
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-400">
                 Panel administrativo
               </span>
             </div>
 
-            <h1 className="break-words text-3xl font-bold tracking-tight text-zinc-950 sm:text-4xl lg:text-5xl">
+            <h1 className="break-words text-lg font-bold tracking-tight text-zinc-950 sm:text-xl lg:text-2xl">
               {title}
             </h1>
 
             {description ? (
-              <p className="mt-3 max-w-4xl text-sm leading-relaxed text-zinc-600 sm:text-base lg:text-lg">
+              <p className="mt-1 max-w-3xl text-xs sm:text-[13px] leading-relaxed text-zinc-500">
                 {description}
               </p>
             ) : null}

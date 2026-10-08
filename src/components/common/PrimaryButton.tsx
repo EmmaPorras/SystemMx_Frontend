@@ -48,13 +48,13 @@ function PrimaryButton({
       aria-busy={loading}
       aria-label={ariaLabel}
       title={title}
-      className={`inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold shadow-xs transition duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${className}`}
+      className={`inline-flex min-h-[36px] items-center justify-center gap-2 rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-semibold shadow-2xs transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${className}`}
     >
       {loading ? (
         <>
           <span
             aria-hidden="true"
-            className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"
           />
           <span>{loadingText || children}</span>
         </>
