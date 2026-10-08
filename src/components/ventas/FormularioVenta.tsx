@@ -55,7 +55,7 @@ function crearDetalleInicial(): VentaDetalleForm {
     porcentajeDescuento: "0",
     tipoTarifa: "EXENTO",
     idTarifaIva: undefined,
-    tarifaSeleccionada: "EXENTO",
+    tarifaSeleccionada: "",
     porcentajeIva: "0",
     modoDescuentoLote: "FIFO",
     detalle: "",
@@ -597,6 +597,15 @@ function FormularioVenta({
       return "Debe seleccionar un producto.";
     }
 
+    // Exigir una selección real: el catálogo dinámico puede diferir del valor
+    // EXENTO/IVA predeterminado y el select nativo mostrar otro visualmente.
+    if (
+      !detalleForm.tarifaSeleccionada ||
+      !tipoTarifaOptions.some((option) => option.value === detalleForm.tarifaSeleccionada)
+    ) {
+      return t("sales.selectRateRequired", "Debe seleccionar una tarifa válida.");
+    }
+
     if (cantidad <= 0) {
       return "La cantidad debe ser mayor a cero.";
     }
@@ -963,9 +972,10 @@ function FormularioVenta({
 
               <SelectField
                 label={t("sales.vatRate", "Tarifa")}
-                value={detalleForm.tarifaSeleccionada || detalleForm.tipoTarifa}
+                value={detalleForm.tarifaSeleccionada ?? ""}
                 onChange={(value) => actualizarDetalle("tarifaSeleccionada", value)}
                 options={tipoTarifaOptions}
+                placeholder={t("common.selectOption", "Seleccione una tarifa")}
                 required
               />
 
