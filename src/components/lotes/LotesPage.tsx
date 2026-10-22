@@ -3,6 +3,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   Boxes,
@@ -308,6 +309,8 @@ function LotesPage() {
       0,
     );
 
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-6">
       {/* ====================================== */}
@@ -315,8 +318,8 @@ function LotesPage() {
       {/* ====================================== */}
 
       <PageHeader
-        title="Lotes"
-        description="Consultá la trazabilidad y disponibilidad del inventario por lote."
+        title={t("lots.title", "Lotes")}
+        description={t("lots.subtitle", "Consultá la trazabilidad y disponibilidad del inventario por lote.")}
         icon={
           Boxes
         }
@@ -328,11 +331,11 @@ function LotesPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          label="Resultados"
+          label={t("common.details", "Resultados")}
           value={String(
             total,
           )}
-          hint="Lotes según filtros actuales"
+          hint={t("lots.subtitle", "Lotes según filtros actuales")}
           icon={
             Boxes
           }
@@ -340,11 +343,11 @@ function LotesPage() {
         />
 
         <StatCard
-          label="Con stock en página"
+          label={t("lots.availableQuantity", "Con stock en página")}
           value={String(
             lotesConStock,
           )}
-          hint="Lotes visibles con disponibilidad"
+          hint={t("home.lotsWithStockHint", "{{count}} lotes con stock", { count: lotesConStock })}
           icon={
             PackageCheck
           }
@@ -352,11 +355,11 @@ function LotesPage() {
         />
 
         <StatCard
-          label="Unidades en página"
+          label={t("navigation.inventory", "Unidades en página")}
           value={String(
             unidadesPagina,
           )}
-          hint="Suma disponible de los resultados visibles"
+          hint={t("lots.availableQuantity", "Suma disponible de los resultados visibles")}
           icon={
             PackageOpen
           }
@@ -369,168 +372,97 @@ function LotesPage() {
       {/* ====================================== */}
 
       <SectionCard
-        title="Inventario por lote"
-        description="Los lotes son generados por Pedidos y su stock es administrado exclusivamente por las operaciones del backend."
+        title={t("lots.title", "Inventario por lote")}
+        description={t("lots.subtitle", "Los lotes son generados por Pedidos y su stock es administrado exclusivamente por las operaciones del backend.")}
       >
-        {/* FILTROS */}
+        {/* FILTROS Y ACCIONES */}
 
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <InputField
-            label="ID de producto"
-            type="number"
-            value={
-              filtrosDraft.productoId
-            }
-            onChange={(
-              value,
-            ) =>
-              setFiltrosDraft(
-                (
-                  current,
-                ) => ({
+        <div className="mb-6 flex flex-wrap items-end gap-3.5">
+          <div className="w-full sm:w-40">
+            <InputField
+              label={`ID ${t("products.title", "Producto")}`}
+              type="number"
+              value={filtrosDraft.productoId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
                   ...current,
+                  productoId: value,
+                }))
+              }
+              min={1}
+              step={1}
+              placeholder="Ej. 10"
+            />
+          </div>
 
-                  productoId:
-                    value,
-                }),
-              )
-            }
-            min={
-              1
-            }
-            step={
-              1
-            }
-            placeholder="Ej. 10"
-          />
-
-          <InputField
-            label="ID de pedido"
-            type="number"
-            value={
-              filtrosDraft.pedidoId
-            }
-            onChange={(
-              value,
-            ) =>
-              setFiltrosDraft(
-                (
-                  current,
-                ) => ({
+          <div className="w-full sm:w-40">
+            <InputField
+              label={`ID ${t("navigation.orders", "Pedido")}`}
+              type="number"
+              value={filtrosDraft.pedidoId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
                   ...current,
+                  pedidoId: value,
+                }))
+              }
+              min={1}
+              step={1}
+              placeholder="Ej. 5"
+            />
+          </div>
 
-                  pedidoId:
-                    value,
-                }),
-              )
-            }
-            min={
-              1
-            }
-            step={
-              1
-            }
-            placeholder="Ej. 5"
-          />
-
-          <SelectField
-            label="Estado del lote"
-            value={
-              filtrosDraft.estadoLote
-            }
-            onChange={(
-              value,
-            ) =>
-              setFiltrosDraft(
-                (
-                  current,
-                ) => ({
+          <div className="w-full sm:w-52">
+            <SelectField
+              label={t("lots.filterStatus", "Estado del lote")}
+              value={filtrosDraft.estadoLote}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
                   ...current,
+                  estadoLote: value as "" | EstadoLoteInventario,
+                }))
+              }
+              options={[
+                {
+                  value: "",
+                  label: t("common.all", "Todos"),
+                },
+                {
+                  value: "EN_PROCESO",
+                  label: t("statuses.lots.EN_PROCESO", "En proceso"),
+                },
+                {
+                  value: "EN_STOCK",
+                  label: t("statuses.lots.EN_STOCK", "En stock"),
+                },
+                {
+                  value: "VENDIDO_PARCIAL",
+                  label: t("statuses.lots.VENDIDO_PARCIAL", "Vendido parcial"),
+                },
+                {
+                  value: "AGOTADO",
+                  label: t("statuses.lots.AGOTADO", "Agotado"),
+                },
+              ]}
+            />
+          </div>
 
-                  estadoLote:
-                    value as
-                      | ""
-                      | EstadoLoteInventario,
-                }),
-              )
-            }
-            options={[
-              {
-                value:
-                  "",
-                label:
-                  "Todos",
-              },
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <PrimaryButton
+              onClick={aplicarFiltros}
+              className="h-[38px] flex-1 sm:flex-initial"
+            >
+              {t("common.filter", "Aplicar filtros")}
+            </PrimaryButton>
 
-              {
-                value:
-                  "EN_PROCESO",
-                label:
-                  "En proceso",
-              },
-
-              {
-                value:
-                  "EN_STOCK",
-                label:
-                  "En stock",
-              },
-
-              {
-                value:
-                  "VENDIDO_PARCIAL",
-                label:
-                  "Vendido parcial",
-              },
-
-              {
-                value:
-                  "AGOTADO",
-                label:
-                  "Agotado",
-              },
-            ]}
-          />
-        </div>
-
-        {/* BOTONES DE FILTRO */}
-
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <PrimaryButton
-            onClick={
-              aplicarFiltros
-            }
-          >
-            Aplicar filtros
-          </PrimaryButton>
-
-          <button
-            type="button"
-            onClick={
-              limpiarFiltros
-            }
-            className="
-              inline-flex
-              h-10
-              items-center
-              justify-center
-              rounded-xl
-              border
-              border-zinc-300
-              bg-white
-              px-4
-              text-sm
-              font-semibold
-              text-zinc-700
-              transition
-              hover:bg-zinc-50
-              focus-visible:outline-none
-              focus-visible:ring-2
-              focus-visible:ring-zinc-950
-            "
-          >
-            Limpiar filtros
-          </button>
+            <button
+              type="button"
+              onClick={limpiarFiltros}
+              className="inline-flex h-[38px] flex-1 items-center justify-center rounded-xl border border-zinc-300 bg-white px-3.5 text-xs sm:text-sm font-semibold text-zinc-700 shadow-2xs transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 sm:flex-initial"
+            >
+              {t("common.cleanFilters", "Limpiar filtros")}
+            </button>
+          </div>
         </div>
 
         {/* ====================================== */}
@@ -538,12 +470,12 @@ function LotesPage() {
         {/* ====================================== */}
 
         {loading ? (
-          <LoadingState message="Cargando lotes..." />
+          <LoadingState message={t("common.loading", "Cargando lotes...")} />
         ) : error ? (
           <div className="space-y-4">
             <AlertMessage
               variant="error"
-              title="No fue posible cargar los lotes"
+              title={t("common.errorOccurred", "No fue posible cargar los lotes")}
               message={
                 error
               }
@@ -554,7 +486,7 @@ function LotesPage() {
                 void cargarLotes();
               }}
             >
-              Reintentar
+              {t("common.reload", "Reintentar")}
             </PrimaryButton>
           </div>
         ) : (

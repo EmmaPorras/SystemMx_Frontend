@@ -8,6 +8,14 @@ export type TarifaIVA = {
   estado: EstadoTarifaIVA;
 };
 
-export type TarifaIVAFormField = keyof Omit<TarifaIVA, "id">;
+export type TarifaIVAFormState = {
+  id: number;
+  codigo: string;
+  porcentaje: string;
+  descripcion: string;
+  estado: EstadoTarifaIVA;
+};
+
+export type TarifaIVAFormField = keyof Omit<TarifaIVAFormState, "id">;
 
 export type TarifaIVAFormErrors = Partial<Record<TarifaIVAFormField, string>>;

@@ -3,6 +3,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -192,201 +193,219 @@ function MovimientosPage() {
     (movimiento) => movimiento.tipoMovimiento === "SALIDA_VENTA",
   ).length;
 
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Movimientos de inventario"
-        description="Consultá el historial generado automáticamente por compras, ventas y anulaciones."
+        title={t("movements.title", "Movimientos")}
+        description={t("movements.subtitle", "Registro histórico y bitácora de entradas y salidas de stock.")}
         icon={History}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          label="Resultados"
+          label={t("common.details", "Resultados")}
           value={String(total)}
-          hint="Movimientos según filtros actuales"
+          hint={t("movements.subtitle", "Movimientos según filtros actuales")}
           icon={History}
           variant="info"
         />
 
         <StatCard
-          label="Entradas en página"
+          label={t("movements.inbound", "Entradas en página")}
           value={String(entradasPagina)}
-          hint="Compras y reingresos visibles"
+          hint={t("movements.inboundHint", "Compras y reingresos visibles")}
           icon={ArrowDownToLine}
           variant="success"
         />
 
         <StatCard
-          label="Salidas en página"
+          label={t("movements.outbound", "Salidas en página")}
           value={String(salidasPagina)}
-          hint="Ventas visibles"
+          hint={t("movements.outboundHint", "Ventas visibles")}
           icon={ArrowUpFromLine}
           variant="warning"
         />
       </div>
 
       <SectionCard
-        title="Historial de movimientos"
-        description="Los movimientos son registros de auditoría generados por el backend y no pueden editarse."
+        title={t("movements.history", "Historial de movimientos")}
+        description={t("movements.historyDesc", "Los movimientos son registros de auditoría generados por el backend y no pueden editarse.")}
       >
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <InputField
-            label="ID producto"
-            type="number"
-            value={filtrosDraft.productoId}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                productoId: value,
-              }))
-            }
-            min={1}
-            step={1}
-          />
+        <div className="mb-6 flex flex-wrap items-end gap-3.5">
+          <div className="w-full sm:w-36">
+            <InputField
+              label={`ID ${t("products.title", "Producto")}`}
+              type="number"
+              value={filtrosDraft.productoId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  productoId: value,
+                }))
+              }
+              min={1}
+              step={1}
+            />
+          </div>
 
-          <InputField
-            label="ID lote"
-            type="number"
-            value={filtrosDraft.loteId}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                loteId: value,
-              }))
-            }
-            min={1}
-            step={1}
-          />
+          <div className="w-full sm:w-36">
+            <InputField
+              label={`ID ${t("lots.title", "Lote")}`}
+              type="number"
+              value={filtrosDraft.loteId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  loteId: value,
+                }))
+              }
+              min={1}
+              step={1}
+            />
+          </div>
 
-          <SelectField
-            label="Tipo de movimiento"
-            value={filtrosDraft.tipoMovimiento}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                tipoMovimiento: value as "" | TipoMovimientoInventario,
-              }))
-            }
-            options={[
-              {
-                value: "",
-                label: "Todos",
-              },
-              {
-                value: "ENTRADA_COMPRA",
-                label: "Entrada por compra",
-              },
-              {
-                value: "SALIDA_VENTA",
-                label: "Salida por venta",
-              },
-              {
-                value: "REINGRESO_ANULACION_VENTA",
-                label: "Reingreso por anulación",
-              },
-            ]}
-          />
+          <div className="w-full sm:w-48">
+            <SelectField
+              label={t("movements.filterType", "Tipo de movimiento")}
+              value={filtrosDraft.tipoMovimiento}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  tipoMovimiento: value as "" | TipoMovimientoInventario,
+                }))
+              }
+              options={[
+                {
+                  value: "",
+                  label: t("common.all", "Todos"),
+                },
+                {
+                  value: "ENTRADA_COMPRA",
+                  label: t("statuses.movements.ENTRADA_COMPRA", "Entrada por compra"),
+                },
+                {
+                  value: "SALIDA_VENTA",
+                  label: t("statuses.movements.SALIDA_VENTA", "Salida por venta"),
+                },
+                {
+                  value: "REINGRESO_ANULACION_VENTA",
+                  label: t("statuses.movements.REINGRESO_ANULACION_VENTA", "Reingreso por anulación"),
+                },
+              ]}
+            />
+          </div>
 
-          <SelectField
-            label="Tipo de referencia"
-            value={filtrosDraft.referenciaTipo}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                referenciaTipo: value as "" | ReferenciaMovimientoInventario,
-              }))
-            }
-            options={[
-              {
-                value: "",
-                label: "Todas",
-              },
-              {
-                value: "PEDIDO",
-                label: "Pedido",
-              },
-              {
-                value: "VENTA",
-                label: "Venta",
-              },
-            ]}
-          />
+          <div className="w-full sm:w-44">
+            <SelectField
+              label={t("movements.referenceType", "Tipo de referencia")}
+              value={filtrosDraft.referenciaTipo}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  referenciaTipo: value as "" | ReferenciaMovimientoInventario,
+                }))
+              }
+              options={[
+                {
+                  value: "",
+                  label: t("movements.allReferences", "Todas"),
+                },
+                {
+                  value: "PEDIDO",
+                  label: t("movements.orderRef", "Pedido"),
+                },
+                {
+                  value: "VENTA",
+                  label: t("movements.saleRef", "Venta"),
+                },
+              ]}
+            />
+          </div>
 
-          <InputField
-            label="ID referencia"
-            type="number"
-            value={filtrosDraft.referenciaId}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                referenciaId: value,
-              }))
-            }
-            min={1}
-            step={1}
-          />
+          <div className="w-full sm:w-36">
+            <InputField
+              label={t("movements.referenceId", "ID referencia")}
+              type="number"
+              value={filtrosDraft.referenciaId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  referenciaId: value,
+                }))
+              }
+              min={1}
+              step={1}
+            />
+          </div>
 
-          <InputField
-            label="Desde"
-            type="date"
-            value={filtrosDraft.desde}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                desde: value,
-              }))
-            }
-          />
+          <div className="w-full sm:w-40">
+            <InputField
+              label={t("movements.from", "Desde")}
+              type="date"
+              value={filtrosDraft.desde}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  desde: value,
+                }))
+              }
+            />
+          </div>
 
-          <InputField
-            label="Hasta"
-            type="date"
-            value={filtrosDraft.hasta}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                hasta: value,
-              }))
-            }
-          />
+          <div className="w-full sm:w-40">
+            <InputField
+              label={t("movements.to", "Hasta")}
+              type="date"
+              value={filtrosDraft.hasta}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  hasta: value,
+                }))
+              }
+            />
+          </div>
 
-          <InputField
-            label="ID usuario"
-            type="number"
-            value={filtrosDraft.usuarioId}
-            onChange={(value) =>
-              setFiltrosDraft((current) => ({
-                ...current,
-                usuarioId: value,
-              }))
-            }
-            min={1}
-            step={1}
-          />
-        </div>
+          <div className="w-full sm:w-36">
+            <InputField
+              label={t("movements.userId", "ID usuario")}
+              type="number"
+              value={filtrosDraft.usuarioId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
+                  ...current,
+                  usuarioId: value,
+                }))
+              }
+              min={1}
+              step={1}
+            />
+          </div>
 
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <PrimaryButton onClick={aplicarFiltros}>
-            Aplicar filtros
-          </PrimaryButton>
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <PrimaryButton onClick={aplicarFiltros} className="h-[38px] flex-1 sm:flex-initial">
+              {t("common.filter", "Aplicar filtros")}
+            </PrimaryButton>
 
-          <button
-            type="button"
-            onClick={limpiarFiltros}
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
-          >
-            Limpiar filtros
-          </button>
+            <button
+              type="button"
+              onClick={limpiarFiltros}
+              className="inline-flex h-[38px] flex-1 items-center justify-center rounded-xl border border-zinc-300 bg-white px-3.5 text-xs sm:text-sm font-semibold text-zinc-700 shadow-2xs transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 sm:flex-initial"
+            >
+              {t("common.cleanFilters", "Limpiar filtros")}
+            </button>
+          </div>
         </div>
 
         {loading ? (
-          <LoadingState message="Cargando movimientos..." />
+          <LoadingState message={t("common.loading", "Cargando movimientos...")} />
         ) : error ? (
           <div className="space-y-4">
             <AlertMessage
               variant="error"
-              title="No fue posible cargar los movimientos"
+              title={t("common.errorOccurred", "No fue posible cargar los movimientos")}
               message={error}
             />
 
@@ -395,7 +414,7 @@ function MovimientosPage() {
                 void cargarMovimientos();
               }}
             >
-              Reintentar
+              {t("common.reload", "Reintentar")}
             </PrimaryButton>
           </div>
         ) : (

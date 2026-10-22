@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import InputField from "../common/InputField";
 import PrimaryButton from "../common/PrimaryButton";
 import SelectField from "../common/SelectField";
@@ -29,6 +30,8 @@ function FormularioCategoria({
   onSubmit,
   onCancel,
 }: FormularioCategoriaProps) {
+  const { t } = useTranslation();
+
   return (
     <form
       className="space-y-5"
@@ -40,12 +43,12 @@ function FormularioCategoria({
       }}
     >
       <InputField
-        label="Nombre"
+        label={t("categories.name")}
         value={value.nombre}
         onChange={(nextValue) =>
           onChange("nombre", nextValue)
         }
-        placeholder="Ej. Repuestos, Accesorios, Llantas"
+        placeholder={t("categories.namePlaceholder")}
         required
         maxLength={100}
         showCharacterCount
@@ -53,19 +56,19 @@ function FormularioCategoria({
       />
 
       <InputField
-        label="Descripción"
+        label={t("categories.description")}
         value={value.descripcion}
         onChange={(nextValue) =>
           onChange("descripcion", nextValue)
         }
-        placeholder="Descripción opcional de la categoría"
+        placeholder={t("categories.descriptionPlaceholder")}
         maxLength={255}
         showCharacterCount
         error={errors.descripcion}
       />
 
       <SelectField
-        label="Estado"
+        label={t("categories.status")}
         value={value.activo ? "ACTIVO" : "INACTIVO"}
         onChange={(nextValue) =>
           onChange("activo", nextValue === "ACTIVO")
@@ -73,11 +76,11 @@ function FormularioCategoria({
         options={[
           {
             value: "ACTIVO",
-            label: "Activa",
+            label: t("common.active"),
           },
           {
             value: "INACTIVO",
-            label: "Inactiva",
+            label: t("common.inactive"),
           },
         ]}
       />
@@ -89,13 +92,13 @@ function FormularioCategoria({
           disabled={isSubmitting}
           className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Cancelar
+          {t("common.cancel")}
         </button>
 
         <PrimaryButton
           type="submit"
           loading={isSubmitting}
-          loadingText="Guardando..."
+          loadingText={t("common.processing")}
         >
           {submitLabel}
         </PrimaryButton>

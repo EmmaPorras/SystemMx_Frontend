@@ -2,9 +2,11 @@ import type { ReactNode } from "react";
 import { ImAddressBook } from "react-icons/im";
 import { MdEmail, MdLocationOn, MdPhone } from "react-icons/md";
 import { TbCurrencyDollar } from "react-icons/tb";
+import { useTranslation } from "react-i18next";
 
 import AppModal from "../common/AppModal";
 import StatusBadge from "../common/StatusBadge";
+import { getCatalogStatusLabel } from "../../i18n/statusMap";
 import {
   getMonedaPreferidaLabel,
   type Proveedor,
@@ -49,12 +51,14 @@ function ProveedorDetalleModal({
   isOpen,
   onClose,
 }: ProveedorDetalleModalProps) {
+  const { t } = useTranslation();
+
   return (
     <AppModal
       isOpen={isOpen}
       onClose={onClose}
-      title={proveedor ? proveedor.nombre : "Detalle del proveedor"}
-      description="Información completa registrada para este proveedor."
+      title={proveedor ? proveedor.nombre : t("suppliers.details")}
+      description={t("suppliers.subtitle")}
       maxWidthClassName="max-w-4xl"
     >
       {proveedor ? (
@@ -67,7 +71,7 @@ function ProveedorDetalleModal({
 
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
-                  Proveedor #{proveedor.id}
+                  {t("suppliers.title")} #{proveedor.id}
                 </p>
                 <h3 className="mt-1 text-xl font-bold text-zinc-950">
                   {proveedor.nombre}
@@ -76,39 +80,39 @@ function ProveedorDetalleModal({
             </div>
 
             <StatusBadge
-              label={proveedor.estado}
+              label={getCatalogStatusLabel(t, proveedor.estado)}
               variant={proveedor.estado === "ACTIVO" ? "success" : "warning"}
             />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <DetalleItem
-              label="Teléfono"
-              value={proveedor.telefono || "No registrado"}
+              label={t("suppliers.phone")}
+              value={proveedor.telefono || "—"}
               icon={<MdPhone size={20} />}
             />
 
             <DetalleItem
-              label="Correo"
-              value={proveedor.correo || "No registrado"}
+              label={t("suppliers.email")}
+              value={proveedor.correo || "—"}
               icon={<MdEmail size={20} />}
             />
 
             <DetalleItem
-              label="País de origen"
-              value={proveedor.pais || "No registrado"}
+              label={t("suppliers.country")}
+              value={proveedor.pais || "—"}
               icon={<MdLocationOn size={20} />}
             />
 
             <DetalleItem
-              label="Moneda preferida"
+              label={t("suppliers.currency")}
               value={getMonedaPreferidaLabel(proveedor.monedaPreferida)}
-              icon={<TbCurrencyDollar size={21} />}
+              icon={<TbCurrencyDollar size={20} />}
             />
 
             <DetalleItem
-              label="Dirección exacta"
-              value={proveedor.direccion || "No se registró una dirección exacta."}
+              label={t("suppliers.address")}
+              value={proveedor.direccion || "—"}
               icon={<MdLocationOn size={20} />}
               className="md:col-span-2"
             />

@@ -4,6 +4,7 @@ import {
   useState,
 } from "react";
 import { Tags } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import AlertMessage from "../common/AlertMessage";
 import AppModal from "../common/AppModal";
@@ -44,6 +45,7 @@ const INITIAL_FORM: CategoriaFormData = {
 };
 
 function CategoriasPage() {
+  const { t } = useTranslation();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [loading, setLoading] = useState(true);
@@ -68,7 +70,7 @@ function CategoriasPage() {
       setErrorCarga(
         error instanceof Error
           ? error.message
-          : "No fue posible cargar las categorías.",
+          : t("errors.generic"),
       );
     } finally {
       setLoading(false);
@@ -144,13 +146,13 @@ function CategoriasPage() {
     const descripcion = form.descripcion.trim();
 
     if (!nombre) {
-      errors.nombre = "El nombre de la categoría es obligatorio.";
+      errors.nombre = t("categories.nameRequired");
     } else if (nombre.length > 100) {
-      errors.nombre = "El nombre no puede superar 100 caracteres.";
+      errors.nombre = t("categories.nameMaxLength");
     }
 
     if (descripcion.length > 255) {
-      errors.descripcion = "La descripción no puede superar 255 caracteres.";
+      errors.descripcion = t("categories.descMaxLength");
     }
 
     setFormErrors(errors);
@@ -168,15 +170,15 @@ function CategoriasPage() {
         await actualizarCategoriaApi(categoriaEditando.idCategoria, form);
         setAlert({
           variant: "success",
-          title: "Categoría actualizada",
-          message: "La categoría se actualizó correctamente.",
+          title: t("common.success"),
+          message: t("categories.updateSuccess"),
         });
       } else {
         await crearCategoriaApi(form);
         setAlert({
           variant: "success",
-          title: "Categoría creada",
-          message: "La categoría se registró correctamente.",
+          title: t("common.success"),
+          message: t("categories.createSuccess"),
         });
       }
 
@@ -188,13 +190,11 @@ function CategoriasPage() {
     } catch (error) {
       setAlert({
         variant: "error",
-        title: categoriaEditando
-          ? "No se pudo actualizar la categoría"
-          : "No se pudo crear la categoría",
+        title: t("common.errorOccurred"),
         message:
           error instanceof Error
             ? error.message
-            : "Ocurrió un error al guardar la categoría.",
+            : t("errors.generic"),
       });
     } finally {
       setIsSubmitting(false);
@@ -210,18 +210,18 @@ function CategoriasPage() {
       await cargarCategorias();
       setAlert({
         variant: "success",
-        title: "Categoría desactivada",
-        message: `La categoría "${categoriaDesactivar.nombre}" quedó inactiva correctamente.`,
+        title: t("common.success"),
+        message: t("categories.deleteSuccess"),
       });
       setCategoriaDesactivar(null);
     } catch (error) {
       setAlert({
         variant: "error",
-        title: "No se pudo desactivar la categoría",
+        title: t("common.errorOccurred"),
         message:
           error instanceof Error
             ? error.message
-            : "No fue posible desactivar la categoría.",
+            : t("errors.generic"),
       });
     } finally {
       setIsDeactivating(false);
@@ -234,12 +234,12 @@ function CategoriasPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Categorías"
-        description="Administrá la clasificación utilizada por los productos del sistema."
+        title={t("categories.title")}
+        description={t("categories.subtitle")}
         icon={Tags}
         action={
           <PrimaryButton onClick={abrirNuevaCategoria}>
-            Nueva categoría
+            {t("categories.newCategory")}
           </PrimaryButton>
         }
       />
@@ -255,50 +255,50 @@ function CategoriasPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          label="Categorías"
+          label={t("categories.title")}
           value={String(categorias.length)}
-          hint="Total de categorías registradas"
+          hint={t("common.total")}
           icon={Tags}
           variant="info"
         />
 
         <StatCard
-          label="Activas"
+          label={t("common.active")}
           value={String(activas)}
-          hint="Disponibles para clasificación"
+          hint={t("common.active")}
           icon={Tags}
           variant="success"
         />
 
         <StatCard
-          label="Inactivas"
+          label={t("common.inactive")}
           value={String(inactivas)}
-          hint="Conservadas por historial"
+          hint={t("common.inactive")}
           icon={Tags}
           variant="neutral"
         />
       </div>
 
       <SectionCard
-        title="Listado de categorías"
-        description="Las categorías inactivas conservan su historial y pueden editarse nuevamente."
+        title={t("categories.title")}
+        description={t("categories.subtitle")}
       >
-        <div className="mb-5">
+        <div className="mb-5 max-w-md">
           <InputField
-            label="Buscar categoría"
+            label={t("common.search")}
             value={busqueda}
             onChange={setBusqueda}
-            placeholder="Nombre, descripción o estado"
+            placeholder={t("common.searchPlaceholder")}
           />
         </div>
 
         {loading ? (
-          <LoadingState message="Cargando categorías..." />
+          <LoadingState message={t("common.loading")} />
         ) : errorCarga ? (
           <div className="space-y-4">
             <AlertMessage
               variant="error"
-              title="No fue posible cargar las categorías"
+              title={t("common.errorOccurred")}
               message={errorCarga}
             />
 
@@ -307,7 +307,7 @@ function CategoriasPage() {
                 void cargarCategorias();
               }}
             >
-              Reintentar
+              {t("common.reload")}
             </PrimaryButton>
           </div>
         ) : (
@@ -323,13 +323,13 @@ function CategoriasPage() {
         isOpen={modalOpen}
         title={
           categoriaEditando
-            ? "Editar categoría"
-            : "Nueva categoría"
+            ? t("categories.editCategory")
+            : t("categories.newCategory")
         }
         description={
           categoriaEditando
-            ? "Actualizá la información de la categoría."
-            : "Registrá una nueva categoría para clasificar productos."
+            ? t("categories.subtitle")
+            : t("categories.subtitle")
         }
         onClose={cerrarModal}
         maxWidthClassName="max-w-xl"
@@ -341,8 +341,8 @@ function CategoriasPage() {
           isSubmitting={isSubmitting}
           submitLabel={
             categoriaEditando
-              ? "Guardar cambios"
-              : "Crear categoría"
+              ? t("common.saveChanges")
+              : t("categories.newCategory")
           }
           onChange={handleFormChange}
           onSubmit={guardarCategoria}
@@ -352,14 +352,14 @@ function CategoriasPage() {
 
       <ConfirmDialog
         isOpen={Boolean(categoriaDesactivar)}
-        title="Desactivar categoría"
+        title={t("categories.deleteConfirmTitle")}
         message={
           categoriaDesactivar
-            ? `¿Seguro que querés desactivar la categoría "${categoriaDesactivar.nombre}"? Conservará su historial, pero dejará de estar disponible como categoría activa.`
+            ? t("categories.deleteConfirmMessage", { name: categoriaDesactivar.nombre })
             : ""
         }
-        confirmLabel="Desactivar"
-        cancelLabel="Cancelar"
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
         variant="warning"
         isLoading={isDeactivating}
         onConfirm={confirmarDesactivacion}

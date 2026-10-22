@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   Ban,
   CircleDollarSign,
@@ -9,7 +10,12 @@ import {
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
 import TableActionButton from "../common/TableActionButton";
-import { formatCurrency } from "../common/formatters";
+import { formatCurrency, formatDate } from "../common/formatters";
+import {
+  getPaymentMethodLabel,
+  getPaymentStatusLabel,
+  getSaleStatusLabel,
+} from "../../i18n/statusMap";
 
 import {
   puedeAnularVenta,
@@ -33,22 +39,6 @@ type TablaVentasProps = {
   onVoid: (venta: Venta) => void;
 };
 
-function getEstadoPagoLabel(
-  estado: EstadoPagoVenta,
-) {
-  const labels: Record<
-    EstadoPagoVenta,
-    string
-  > = {
-    PAGADA: "Pagada",
-    PARCIAL: "Parcial",
-    EN_DEUDA: "En deuda",
-    ANULADA: "Anulada",
-  };
-
-  return labels[estado];
-}
-
 function getEstadoPagoVariant(
   estado: EstadoPagoVenta,
 ):
@@ -70,20 +60,6 @@ function getEstadoPagoVariant(
   }
 
   return "danger";
-}
-
-function getEstadoVentaLabel(
-  estado: EstadoVenta,
-) {
-  const labels: Record<
-    EstadoVenta,
-    string
-  > = {
-    REGISTRADA: "Registrada",
-    ANULADA: "Anulada",
-  };
-
-  return labels[estado];
 }
 
 function getEstadoVentaVariant(
@@ -110,10 +86,12 @@ function TablaVentas({
   onRestore,
   onVoid,
 }: TablaVentasProps) {
+  const { t } = useTranslation();
+
   return (
     <DataTableShell
       data={ventas}
-      emptyMessage="No hay ventas que coincidan con los filtros."
+      emptyMessage={t("sales.emptyTitle", "No hay ventas que coincidan con los filtros.")}
       getRowKey={(row) =>
         String(
           row.id,
@@ -122,13 +100,13 @@ function TablaVentas({
       columns={[
         {
           key: "numero",
-          header: "Venta",
+          header: t("sales.title", "Venta"),
           render: (
             row,
           ) => (
             <div>
               <p className="font-semibold text-zinc-950">
-                Venta #
+                {t("sales.title", "Venta")} #
                 {
                   row.numeroVenta
                 }
@@ -139,7 +117,7 @@ function TablaVentas({
                   row.detalles
                     .length
                 }{" "}
-                detalle(s)
+                {t("common.details", "detalles")}
               </p>
             </div>
           ),
@@ -147,35 +125,35 @@ function TablaVentas({
 
         {
           key: "fecha",
-          header: "Fecha",
+          header: t("sales.date", "Fecha"),
           render: (
             row,
           ) =>
-            row.fechaVenta,
+            formatDate(row.fechaVenta),
         },
 
         {
           key: "cliente",
-          header: "Cliente",
+          header: t("sales.client", "Cliente"),
           render: (
             row,
           ) =>
             row.clienteNombre ||
-            "Venta mostrador",
+            t("sales.clientPlaceholder", "Venta mostrador"),
         },
 
         {
           key: "medioPago",
-          header: "Método",
+          header: t("sales.paymentMethod", "Método"),
           render: (
             row,
           ) =>
-            row.medioPago,
+            getPaymentMethodLabel(t, row.medioPago),
         },
 
         {
           key: "total",
-          header: "Total",
+          header: t("sales.total", "Total"),
           render: (
             row,
           ) =>
@@ -186,7 +164,7 @@ function TablaVentas({
 
         {
           key: "pagado",
-          header: "Pagado",
+          header: t("sales.paid", "Pagado"),
           render: (
             row,
           ) =>
@@ -197,7 +175,7 @@ function TablaVentas({
 
         {
           key: "saldo",
-          header: "Saldo",
+          header: t("sales.balance", "Saldo"),
           render: (
             row,
           ) => (
@@ -218,12 +196,13 @@ function TablaVentas({
 
         {
           key: "estadoPago",
-          header: "Pago",
+          header: t("sales.status", "Pago"),
           render: (
             row,
           ) => (
             <StatusBadge
-              label={getEstadoPagoLabel(
+              label={getPaymentStatusLabel(
+                t,
                 row.estadoPago,
               )}
               variant={getEstadoPagoVariant(
@@ -235,12 +214,13 @@ function TablaVentas({
 
         {
           key: "estadoVenta",
-          header: "Estado",
+          header: t("common.status", "Estado"),
           render: (
             row,
           ) => (
             <StatusBadge
-              label={getEstadoVentaLabel(
+              label={getSaleStatusLabel(
+                t,
                 row.estadoVenta,
               )}
               variant={getEstadoVentaVariant(
@@ -266,7 +246,7 @@ function TablaVentas({
         >
           <div className="shrink-0">
             <TableActionButton
-              label="Ver detalle"
+              label={t("sales.saleDetails", "Ver detalle")}
               variant="view"
               icon={
                 <Eye
@@ -288,7 +268,7 @@ function TablaVentas({
           ) ? (
             <div className="shrink-0">
               <TableActionButton
-                label="Registrar pago"
+                label={t("sales.registerPayment", "Registrar pago")}
                 variant="edit"
                 icon={
                   <CircleDollarSign
@@ -311,7 +291,7 @@ function TablaVentas({
           ) ? (
             <div className="shrink-0">
               <TableActionButton
-                label="Enviar a papelera"
+                label={t("sales.viewTrash", "Enviar a papelera")}
                 variant="delete"
                 icon={
                   <Trash2
@@ -334,7 +314,7 @@ function TablaVentas({
           ) ? (
             <div className="shrink-0">
               <TableActionButton
-                label="Restaurar venta"
+                label={t("sales.restoreSale", "Restaurar venta")}
                 variant="edit"
                 icon={
                   <RotateCcw
@@ -357,7 +337,7 @@ function TablaVentas({
           ) ? (
             <div className="shrink-0">
               <TableActionButton
-                label="Anular venta"
+                label={t("sales.voidSale", "Anular venta")}
                 variant="delete"
                 icon={
                   <Ban

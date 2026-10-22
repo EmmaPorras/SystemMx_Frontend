@@ -3,6 +3,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   CalendarClock,
@@ -20,6 +21,7 @@ import SectionCard from "../common/SectionCard";
 import StatCard from "../common/StatCard";
 import StatusBadge from "../common/StatusBadge";
 import { formatCurrency } from "../common/formatters";
+import { getPaymentStatusLabel } from "../../i18n/statusMap";
 
 import {
   obtenerCuentasPorCobrarApi,
@@ -46,6 +48,7 @@ function fechaLocalActual(): string {
 }
 
 function CuentasPorCobrarPage() {
+  const { t } = useTranslation();
   const [data, setData] =
     useState<
       CuentasPorCobrarResumenResponse | null
@@ -99,12 +102,12 @@ function CuentasPorCobrarPage() {
         setError(
           requestError instanceof Error
             ? requestError.message
-            : "No fue posible cargar las cuentas por cobrar.",
+            : t("receivables.loadError", "No fue posible cargar las cuentas por cobrar."),
         );
       } finally {
         setLoading(false);
       }
-    }, [fechaCorte]);
+    }, [fechaCorte, t]);
 
   useEffect(() => {
     void cargar();
@@ -113,33 +116,33 @@ function CuentasPorCobrarPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Cuentas por cobrar"
-        description="Consultá saldos pendientes y vencimientos calculados por el backend."
+        title={t("receivables.title", "Cuentas por cobrar")}
+        description={t("receivables.pageDesc", "Consultá saldos pendientes y vencimientos calculados por el backend.")}
         icon={WalletCards}
       />
 
       {error ? (
         <AlertMessage
           variant="error"
-          title="No fue posible cargar cuentas por cobrar"
+          title={t("receivables.loadErrorTitle", "No fue posible cargar cuentas por cobrar")}
           message={error}
         />
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Ventas con saldo"
+          label={t("receivables.salesWithBalance", "Ventas con saldo")}
           value={String(
             data?.resumen
               .ventasConSaldo ?? 0,
           )}
-          hint="Ventas con deuda pendiente"
+          hint={t("receivables.salesWithDebtHint", "Ventas con deuda pendiente")}
           icon={WalletCards}
           variant="info"
         />
 
         <StatCard
-          label="Total por cobrar"
+          label={t("receivables.totalReceivable", "Total por cobrar")}
           value={
             data
               ? formatCurrency(
@@ -148,13 +151,13 @@ function CuentasPorCobrarPage() {
                 )
               : "—"
           }
-          hint="Saldo oficial pendiente"
+          hint={t("receivables.officialPendingHint", "Saldo oficial pendiente")}
           icon={CircleDollarSign}
           variant="warning"
         />
 
         <StatCard
-          label="Saldo vencido"
+          label={t("receivables.overdueBalance", "Saldo vencido")}
           value={
             vencimientos
               ? formatCurrency(
@@ -165,15 +168,18 @@ function CuentasPorCobrarPage() {
           }
           hint={
             vencimientos
-              ? `${vencimientos.vencidas.cantidad} ventas vencidas`
-              : "Según fecha de corte"
+              ? t("receivables.overdueCountHint", {
+                  count: vencimientos.vencidas.cantidad,
+                  defaultValue: `${vencimientos.vencidas.cantidad} ventas vencidas`,
+                })
+              : t("receivables.accordingToCutoff", "Según fecha de corte")
           }
           icon={CalendarClock}
           variant="danger"
         />
 
         <StatCard
-          label="Por vencer"
+          label={t("receivables.toExpire", "Por vencer")}
           value={
             vencimientos
               ? formatCurrency(
@@ -184,8 +190,11 @@ function CuentasPorCobrarPage() {
           }
           hint={
             vencimientos
-              ? `${vencimientos.porVencer.cantidad} ventas`
-              : "Según fecha de corte"
+              ? t("receivables.toExpireCountHint", {
+                  count: vencimientos.porVencer.cantidad,
+                  defaultValue: `${vencimientos.porVencer.cantidad} ventas`,
+                })
+              : t("receivables.accordingToCutoff", "Según fecha de corte")
           }
           icon={CalendarClock}
           variant="success"
@@ -193,76 +202,96 @@ function CuentasPorCobrarPage() {
       </div>
 
       <SectionCard
-        title="Vencimientos"
-        description="La clasificación proviene directamente del reporte oficial del backend."
+        title={t("receivables.maturities", "Vencimientos")}
+        description={t("receivables.evaluationNotice", "Se evalúan los saldos pendientes actuales comparando sus fechas límite de pago contra la fecha seleccionada.")}
       >
-        <div className="mb-5 flex max-w-md flex-col gap-3 sm:flex-row sm:items-end">
-          <InputField
-            label="Fecha de corte"
-            type="date"
-            value={fechaCorte}
-            onChange={setFechaCorte}
-            disabled={loading}
-          />
+        <div className="mb-5 max-w-lg">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <InputField
+                label={t("receivables.evaluateDueDateTo", "Evaluar vencimientos al")}
+                type="date"
+                value={fechaCorte}
+                onChange={setFechaCorte}
+                disabled={loading}
+              />
+            </div>
 
-          <PrimaryButton
-            onClick={() => {
-              void cargar();
-            }}
-            loading={loading}
-            loadingText="Consultando..."
-            disabled={loading}
-          >
-            Consultar
-          </PrimaryButton>
+            <PrimaryButton
+              onClick={() => {
+                void cargar();
+              }}
+              loading={loading}
+              loadingText={t("receivables.consulting", "Consultando...")}
+              disabled={loading}
+              className="h-[38px] sm:self-end"
+            >
+              {t("receivables.consult", "Consultar")}
+            </PrimaryButton>
+          </div>
+          <p className="mt-1.5 text-xs text-zinc-500">
+            {t("receivables.evaluationHelper", "Clasifica los saldos pendientes actuales según esta fecha límite de referencia.")}
+          </p>
         </div>
 
         {vencimientos ? (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
-              label="Sin vencimiento"
+              label={t("receivables.noDueDate", "Sin vencimiento")}
               value={formatCurrency(
                 vencimientos
                   .sinVencimiento
                   .saldo,
               )}
-              hint={`${vencimientos.sinVencimiento.cantidad} ventas`}
+              hint={t("receivables.salesCountHint", {
+                count: vencimientos.sinVencimiento.cantidad,
+                defaultValue: `${vencimientos.sinVencimiento.cantidad} ventas`,
+              })}
               icon={CalendarClock}
               variant="neutral"
             />
 
             <StatCard
-              label="Vencidas"
+              label={t("receivables.overdue", "Vencidas")}
               value={formatCurrency(
                 vencimientos
                   .vencidas
                   .saldo,
               )}
-              hint={`${vencimientos.vencidas.cantidad} ventas`}
+              hint={t("receivables.salesCountHint", {
+                count: vencimientos.vencidas.cantidad,
+                defaultValue: `${vencimientos.vencidas.cantidad} ventas`,
+              })}
               icon={CalendarClock}
               variant="danger"
             />
 
             <StatCard
-              label="Vencen en corte"
+              label={t("receivables.dueOnCutoff", "Vencen en corte")}
               value={formatCurrency(
                 vencimientos
                   .venceEnFechaCorte
                   .saldo,
               )}
-              hint={`${vencimientos.venceEnFechaCorte.cantidad} ventas`}
+              hint={t("receivables.salesCountHint", {
+                count: vencimientos.venceEnFechaCorte.cantidad,
+                defaultValue: `${vencimientos.venceEnFechaCorte.cantidad} ventas`,
+              })}
               icon={CalendarClock}
               variant="warning"
             />
 
             <StatCard
-              label="Por vencer"
+              label={t("receivables.toExpire", "Por vencer")}
               value={formatCurrency(
                 vencimientos
                   .porVencer
                   .saldo,
               )}
-              hint={`${vencimientos.porVencer.cantidad} ventas`}
+              hint={t("receivables.salesCountHint", {
+                count: vencimientos.porVencer.cantidad,
+                defaultValue: `${vencimientos.porVencer.cantidad} ventas`,
+              })}
               icon={CalendarClock}
               variant="success"
             />
@@ -271,45 +300,45 @@ function CuentasPorCobrarPage() {
       </SectionCard>
 
       <SectionCard
-        title="Detalle de cuentas por cobrar"
-        description="Saldos oficiales devueltos por el backend."
+        title={t("receivables.receivablesDetail", "Detalle de cuentas por cobrar")}
+        description={t("receivables.officialBalancesDesc", "Saldos oficiales devueltos por el backend.")}
       >
         {loading ? (
-          <LoadingState message="Cargando cuentas por cobrar..." />
+          <LoadingState message={t("receivables.loading", "Cargando cuentas por cobrar...")} />
         ) : data ? (
           <DataTableShell
             data={data.detalle}
-            emptyMessage="No existen ventas con saldo pendiente."
+            emptyMessage={t("receivables.emptyDetail", "No existen ventas con saldo pendiente.")}
             getRowKey={(row) =>
               row.idVenta
             }
             columns={[
               {
                 key: "venta",
-                header: "Venta",
+                header: t("receivables.sale", "Venta"),
                 render: (row) =>
                   `#${row.numeroVenta}`,
               },
               {
                 key: "cliente",
-                header: "Cliente",
+                header: t("receivables.client", "Cliente"),
                 render: (row) =>
                   row.cliente ||
-                  "Sin cliente",
+                  t("receivables.noClient", "Sin cliente"),
               },
               {
                 key: "fecha",
-                header: "Fecha",
+                header: t("receivables.date", "Fecha"),
                 render: (row) =>
                   row.fechaVenta,
               },
               {
                 key: "estado",
-                header: "Estado",
+                header: t("common.status", "Estado"),
                 render: (row) => (
                   <StatusBadge
                     label={
-                      row.estadoPago
+                      getPaymentStatusLabel(t, row.estadoPago)
                     }
                     variant="warning"
                   />
@@ -317,7 +346,7 @@ function CuentasPorCobrarPage() {
               },
               {
                 key: "total",
-                header: "Total venta",
+                header: t("receivables.total", "Total venta"),
                 render: (row) =>
                   formatCurrency(
                     row.totalVenta,
@@ -325,7 +354,7 @@ function CuentasPorCobrarPage() {
               },
               {
                 key: "pagado",
-                header: "Pagado",
+                header: t("receivables.paid", "Pagado"),
                 render: (row) =>
                   formatCurrency(
                     row.montoPagado,
@@ -333,7 +362,7 @@ function CuentasPorCobrarPage() {
               },
               {
                 key: "saldo",
-                header: "Saldo",
+                header: t("receivables.balance", "Saldo"),
                 render: (row) => (
                   <span className="font-bold">
                     {formatCurrency(
@@ -344,10 +373,10 @@ function CuentasPorCobrarPage() {
               },
               {
                 key: "vencimiento",
-                header: "Vencimiento",
+                header: t("receivables.dueDate", "Vencimiento"),
                 render: (row) =>
                   row.fechaVencimientoPago ??
-                  "Sin vencimiento",
+                  t("receivables.noDueDate", "Sin vencimiento"),
               },
             ]}
           />

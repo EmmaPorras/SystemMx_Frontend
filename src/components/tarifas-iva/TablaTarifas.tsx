@@ -1,7 +1,9 @@
 import { Pencil, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
 import TableActionButton from "../common/TableActionButton";
+import { getCatalogStatusLabel } from "../../i18n/statusMap";
 import type { TarifaIVA } from "./tarifas-iva.types";
 
 type TablaTarifasProps = {
@@ -11,10 +13,13 @@ type TablaTarifasProps = {
 };
 
 function TablaTarifas({ tarifas, onEdit, onDelete }: TablaTarifasProps) {
+  const { t } = useTranslation();
+
   return (
     <DataTableShell
       data={tarifas}
-      emptyMessage="Todavía no hay tarifas IVA registradas."
+      emptyMessage={t("vatRates.emptyTitle")}
+      emptyDescription={t("vatRates.emptyDesc")}
       getRowKey={(row) => row.id}
       columns={[
         {
@@ -25,28 +30,28 @@ function TablaTarifas({ tarifas, onEdit, onDelete }: TablaTarifasProps) {
         },
         {
           key: "codigo",
-          header: "Código",
+          header: t("common.code"),
           render: (row) => (
             <span className="font-semibold text-slate-900">{row.codigo}</span>
           ),
         },
         {
           key: "porcentaje",
-          header: "Porcentaje",
+          header: t("vatRates.percentage"),
           render: (row) => `${row.porcentaje}%`,
         },
         {
           key: "descripcion",
-          header: "Descripción",
+          header: t("common.description"),
           render: (row) => row.descripcion,
           className: "max-w-xs",
         },
         {
           key: "estado",
-          header: "Estado",
+          header: t("common.status"),
           render: (row) => (
             <StatusBadge
-              label={row.estado}
+              label={getCatalogStatusLabel(t, row.estado)}
               variant={row.estado === "ACTIVA" ? "success" : "warning"}
             />
           ),
@@ -55,7 +60,7 @@ function TablaTarifas({ tarifas, onEdit, onDelete }: TablaTarifasProps) {
       actions={(row) => (
         <>
           <TableActionButton
-            label="Editar tarifa"
+            label={t("vatRates.editRate")}
             variant="edit"
             icon={<Pencil size={17} />}
             onClick={() => onEdit(row)}
@@ -63,7 +68,7 @@ function TablaTarifas({ tarifas, onEdit, onDelete }: TablaTarifasProps) {
 
           {row.estado === "ACTIVA" ? (
             <TableActionButton
-              label="Desactivar tarifa"
+              label={t("common.delete")}
               variant="delete"
               icon={<Trash2 size={17} />}
               onClick={() => onDelete(row)}

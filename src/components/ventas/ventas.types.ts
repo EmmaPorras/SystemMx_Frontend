@@ -208,6 +208,7 @@ export type VentaDetalleForm = {
   porcentajeDescuento: string;
   tipoTarifa: TipoTarifaVenta;
   idTarifaIva?: number;
+  tarifaSeleccionada?: string;
   porcentajeIva: string;
   modoDescuentoLote: ModoDescuentoLote;
   detalle: string;

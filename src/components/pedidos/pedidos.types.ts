@@ -34,8 +34,8 @@ export type PedidoDetalle = {
   productoId?: number;
   productoNombre: string;
   categoriaId?: number | null;
-  categoriaNombre: string;
-  marca: string;
+  categoriaNombre?: string;
+  marca?: string;
   loteCodigo: string;
   cantidad: number;
 

@@ -40,6 +40,33 @@ function createAuthValue(
 }
 
 describe("LoginPage", () => {
+  it("presenta el video como logo animado con reproducción automática y bucle", () => {
+    const loginMock = vi.fn(async () => undefined);
+    const { container } = render(
+      <AuthContext.Provider value={createAuthValue(loginMock)}>
+        <MemoryRouter initialEntries={["/login"]}>
+          <LoginPage />
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    );
+
+    const logo = container.querySelector<HTMLVideoElement>(
+      '[data-testid="systemmx-animated-logo"]',
+    );
+    expect(logo).not.toBeNull();
+    expect(logo).toHaveClass("object-cover");
+    expect(logo?.parentElement).toHaveClass("aspect-video", "bg-white");
+    expect(logo).toHaveAttribute("autoplay");
+    expect(logo).toHaveAttribute("loop");
+    expect(logo).toHaveAttribute("muted");
+    expect(logo).toHaveAttribute("playsinline");
+    expect(logo).not.toHaveAttribute("controls");
+    expect(logo?.querySelector("source")).toHaveAttribute(
+      "src",
+      "https://res.cloudinary.com/dqqnhxhcp/video/upload/v1791492297/gemini_generated_video_68192616_ogqmlj.mp4",
+    );
+  });
+
   it("envía las credenciales al AuthProvider", async () => {
     const user = userEvent.setup();
 

@@ -1,5 +1,8 @@
+import { useTranslation } from "react-i18next";
+
 import InputField from "../common/InputField";
 import SelectField from "../common/SelectField";
+import { translateStatus } from "../../i18n/statusMap";
 
 export type ReportFilterMode =
   | "none"
@@ -43,6 +46,8 @@ function ReportFilters({
   value,
   onChange,
 }: ReportFiltersProps) {
+  const { t } = useTranslation();
+
   const activeModes =
     modes ??
     (
@@ -101,7 +106,7 @@ function ReportFilters({
     return (
       <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-4">
         <p className="text-sm font-semibold text-zinc-700">
-          Los reportes seleccionados no requieren filtros.
+          {t("reports.noFiltersRequired")}
         </p>
       </div>
     );
@@ -112,12 +117,12 @@ function ReportFilters({
       {requierePeriodo ? (
         <div>
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-zinc-500">
-            Período
+            {t("home.filterPeriod")}
           </p>
 
           <div className="grid gap-4 md:grid-cols-2">
             <InputField
-              label="Fecha desde"
+              label={t("reports.dateFrom")}
               type="date"
               value={
                 value.fechaDesde
@@ -133,7 +138,7 @@ function ReportFilters({
             />
 
             <InputField
-              label="Fecha hasta"
+              label={t("reports.dateTo")}
               type="date"
               value={
                 value.fechaHasta
@@ -154,12 +159,12 @@ function ReportFilters({
       {requiereFechaCorte ? (
         <div>
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-zinc-500">
-            Fecha de corte
+            {t("reports.cutoffDate")}
           </p>
 
           <div className="max-w-sm">
             <InputField
-              label="Fecha de corte"
+              label={t("reports.cutoffDate")}
               type="date"
               value={
                 value.fechaCorte
@@ -182,13 +187,13 @@ function ReportFilters({
       requiereTipoMovimiento ? (
         <div>
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-zinc-500">
-            Auditoría
+            {t("reports.audit")}
           </p>
 
           <div className="grid gap-4 md:grid-cols-2">
             {requiereUsuario ? (
               <InputField
-                label="ID usuario"
+                label={t("reports.userId")}
                 type="number"
                 min={
                   1
@@ -207,13 +212,13 @@ function ReportFilters({
                     next,
                   )
                 }
-                placeholder="Todos"
+                placeholder={t("reports.all")}
               />
             ) : null}
 
             {requiereTipoMovimiento ? (
               <SelectField
-                label="Tipo de movimiento"
+                label={t("reports.movementType")}
                 value={
                   value.tipoMovimiento
                 }
@@ -230,25 +235,25 @@ function ReportFilters({
                     value:
                       "",
                     label:
-                      "Todos",
+                      t("reports.all"),
                   },
                   {
                     value:
                       "ENTRADA_COMPRA",
                     label:
-                      "Entrada por compra",
+                      translateStatus("movements", "ENTRADA_COMPRA"),
                   },
                   {
                     value:
                       "SALIDA_VENTA",
                     label:
-                      "Salida por venta",
+                      translateStatus("movements", "SALIDA_VENTA"),
                   },
                   {
                     value:
                       "REINGRESO_ANULACION_VENTA",
                     label:
-                      "Reingreso por anulación",
+                      translateStatus("movements", "REINGRESO_ANULACION_VENTA"),
                   },
                 ]}
               />

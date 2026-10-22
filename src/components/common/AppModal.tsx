@@ -5,6 +5,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 
 type AppModalProps = {
   isOpen: boolean;
@@ -25,6 +26,7 @@ function AppModal({
   maxWidthClassName = "max-w-2xl",
   isSubmitting = false,
 }: AppModalProps) {
+  const { t } = useTranslation();
   const titleId = useId();
   const descId = useId();
 
@@ -199,8 +201,8 @@ function AppModal({
             onClick={onClose}
             disabled={isSubmitting}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xl font-bold leading-none text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="Cerrar modal"
-            title="Cerrar modal"
+            aria-label={t("common.closeModal")}
+            title={t("common.closeModal")}
           >
             ✕
           </button>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import SectionCard from "../common/SectionCard";
 import { formatCurrency } from "../common/formatters";
 import type { PedidoDetalle } from "./pedidos.types";
@@ -7,6 +8,8 @@ type ResumenPedidoProps = {
 };
 
 function ResumenPedido({ detalles }: ResumenPedidoProps) {
+  const { t } = useTranslation();
+
   const costoTotal = detalles.reduce(
     (acc, item) => acc + item.costoUnitarioReal * item.cantidad,
     0,
@@ -24,24 +27,24 @@ function ResumenPedido({ detalles }: ResumenPedidoProps) {
 
   return (
     <SectionCard
-      title="Resumen del pedido"
-      description="Resumen basado en los lotes asociados al pedido."
+      title={t("orders.orderSummary")}
+      description={t("orders.subtitle")}
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl bg-zinc-100 p-4">
-          <p className="text-sm text-zinc-500">Costo total real</p>
+          <p className="text-sm text-zinc-500">{t("orders.totalInvestment")}</p>
           <p className="mt-2 text-xl font-semibold">{formatCurrency(costoTotal)}</p>
         </div>
 
         <div className="rounded-xl bg-zinc-100 p-4">
-          <p className="text-sm text-zinc-500">Venta estimada</p>
+          <p className="text-sm text-zinc-500">{t("orders.recommendedPrice")}</p>
           <p className="mt-2 text-xl font-semibold">
             {formatCurrency(valorVentaEstimado)}
           </p>
         </div>
 
         <div className="rounded-xl bg-zinc-100 p-4">
-          <p className="text-sm text-zinc-500">Stock actual</p>
+          <p className="text-sm text-zinc-500">{t("products.stock")}</p>
           <p className="mt-2 text-xl font-semibold">{stockActual}</p>
         </div>
       </div>
