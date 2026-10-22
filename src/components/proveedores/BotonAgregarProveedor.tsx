@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import PrimaryButton from "../common/PrimaryButton";
 
 type BotonAgregarProveedorProps = {
@@ -5,7 +6,8 @@ type BotonAgregarProveedorProps = {
 };
 
 function BotonAgregarProveedor({ onClick }: BotonAgregarProveedorProps) {
-  return <PrimaryButton onClick={onClick}>+ Nuevo proveedor</PrimaryButton>;
+  const { t } = useTranslation();
+  return <PrimaryButton onClick={onClick}>+ {t("suppliers.newSupplier")}</PrimaryButton>;
 }
 
 export default BotonAgregarProveedor;

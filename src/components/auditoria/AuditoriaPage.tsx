@@ -3,6 +3,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   Banknote,
@@ -26,6 +27,7 @@ import {
   formatCurrency,
   formatDateTime,
 } from "../common/formatters";
+import { translateStatus } from "../../i18n/statusMap";
 
 import {
   obtenerReporteAuditoriaLegacyApi,
@@ -87,6 +89,8 @@ function varianteMovimiento(
 }
 
 function AuditoriaPage() {
+  const { t } = useTranslation();
+
   const [vista, setVista] =
     useState<AuditoriaVista>(
       "RESUMEN",
@@ -160,12 +164,12 @@ function AuditoriaPage() {
         setError(
           requestError instanceof Error
             ? requestError.message
-            : "No fue posible cargar la auditoría.",
+            : t("audit.loadErrorDesc"),
         );
       } finally {
         setLoading(false);
       }
-    }, []);
+    }, [t]);
 
   useEffect(() => {
     void cargarResumen();
@@ -224,7 +228,7 @@ function AuditoriaPage() {
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "No fue posible consultar la auditoría.",
+          : t("audit.consultError"),
       );
     } finally {
       setLoadingDetalle(false);
@@ -249,114 +253,101 @@ function AuditoriaPage() {
 
     return (
       <SectionCard
-        title="Filtros"
-        description="Filtrá el historial sin modificar los registros."
+        title={t("audit.filtersTitle")}
+        description={t("audit.filtersDesc")}
       >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <InputField
-            label="Fecha desde"
-            type="date"
-            value={
-              filtrosDraft.fechaDesde
-            }
-            onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
+        <div className="flex flex-wrap items-end gap-3.5">
+          <div className="w-full sm:w-44">
+            <InputField
+              label={t("reports.dateFrom")}
+              type="date"
+              value={filtrosDraft.fechaDesde}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
                   ...current,
                   fechaDesde: value,
-                }),
-              )
-            }
-          />
+                }))
+              }
+            />
+          </div>
 
-          <InputField
-            label="Fecha hasta"
-            type="date"
-            value={
-              filtrosDraft.fechaHasta
-            }
-            onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
+          <div className="w-full sm:w-44">
+            <InputField
+              label={t("reports.dateTo")}
+              type="date"
+              value={filtrosDraft.fechaHasta}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
                   ...current,
                   fechaHasta: value,
-                }),
-              )
-            }
-          />
+                }))
+              }
+            />
+          </div>
 
-          <InputField
-            label="ID usuario"
-            type="number"
-            min={1}
-            step={1}
-            value={
-              filtrosDraft.usuarioId
-            }
-            onChange={(value) =>
-              setFiltrosDraft(
-                (current) => ({
+          <div className="w-full sm:w-36">
+            <InputField
+              label={t("reports.userId")}
+              type="number"
+              min={1}
+              step={1}
+              value={filtrosDraft.usuarioId}
+              onChange={(value) =>
+                setFiltrosDraft((current) => ({
                   ...current,
                   usuarioId: value,
-                }),
-              )
-            }
-            placeholder="Todos"
-          />
+                }))
+              }
+              placeholder={t("reports.all")}
+            />
+          </div>
 
           {vista === "MOVIMIENTOS" ? (
-            <SelectField
-              label="Tipo de movimiento"
-              value={
-                filtrosDraft.tipoMovimiento
-              }
-              onChange={(value) =>
-                setFiltrosDraft(
-                  (current) => ({
+            <div className="w-full sm:w-56">
+              <SelectField
+                label={t("reports.movementType")}
+                value={filtrosDraft.tipoMovimiento}
+                onChange={(value) =>
+                  setFiltrosDraft((current) => ({
                     ...current,
-                    tipoMovimiento:
-                      value,
-                  }),
-                )
-              }
-              options={[
-                {
-                  value: "",
-                  label: "Todos",
-                },
-                {
-                  value:
-                    "ENTRADA_COMPRA",
-                  label:
-                    "Entrada por compra",
-                },
-                {
-                  value:
-                    "SALIDA_VENTA",
-                  label:
-                    "Salida por venta",
-                },
-                {
-                  value:
-                    "REINGRESO_ANULACION_VENTA",
-                  label:
-                    "Reingreso por anulación",
-                },
-              ]}
-            />
+                    tipoMovimiento: value,
+                  }))
+                }
+                options={[
+                  {
+                    value: "",
+                    label: t("reports.all"),
+                  },
+                  {
+                    value: "ENTRADA_COMPRA",
+                    label: translateStatus("movements", "ENTRADA_COMPRA"),
+                  },
+                  {
+                    value: "SALIDA_VENTA",
+                    label: translateStatus("movements", "SALIDA_VENTA"),
+                  },
+                  {
+                    value: "REINGRESO_ANULACION_VENTA",
+                    label: translateStatus("movements", "REINGRESO_ANULACION_VENTA"),
+                  },
+                ]}
+              />
+            </div>
           ) : null}
-        </div>
 
-        <div className="mt-5">
-          <PrimaryButton
-            onClick={() => {
-              void consultarDetalle();
-            }}
-          >
-            {loadingDetalle
-              ? "Consultando..."
-              : "Consultar"}
-          </PrimaryButton>
+          <div className="w-full sm:w-auto">
+            <PrimaryButton
+              onClick={() => {
+                void consultarDetalle();
+              }}
+              loading={loadingDetalle}
+              loadingText={t("audit.consulting")}
+              disabled={loadingDetalle}
+              className="h-[38px] w-full sm:w-auto"
+            >
+              {t("audit.consult")}
+            </PrimaryButton>
+          </div>
         </div>
       </SectionCard>
     );
@@ -364,21 +355,21 @@ function AuditoriaPage() {
 
   function renderResultado() {
     if (loadingDetalle) {
-      return <LoadingState message="Consultando auditoría..." />;
+      return <LoadingState message={t("audit.consultingAudit")} />;
     }
 
     if (vista === "USUARIOS") {
       return (
         <DataTableShell
           data={usuarios}
-          emptyMessage="No existen registros de actividad para los filtros seleccionados."
+          emptyMessage={t("audit.noUserActivity")}
           getRowKey={(row) =>
             row.idUsuario
           }
           columns={[
             {
               key: "usuario",
-              header: "Usuario",
+              header: t("audit.user"),
               render: (row) => (
                 <div>
                   <p className="font-semibold text-zinc-950">
@@ -393,13 +384,13 @@ function AuditoriaPage() {
             },
             {
               key: "rol",
-              header: "Rol registrado",
+              header: t("audit.registeredRole"),
               render: (row) =>
-                row.rol,
+                translateStatus("roles", row.rol),
             },
             {
               key: "movimientos",
-              header: "Movimientos",
+              header: t("audit.movements"),
               render: (row) =>
                 String(
                   row.movimientos,
@@ -407,19 +398,19 @@ function AuditoriaPage() {
             },
             {
               key: "entradas",
-              header: "Entradas",
+              header: t("audit.entries"),
               render: (row) =>
                 String(row.entradas),
             },
             {
               key: "salidas",
-              header: "Salidas",
+              header: t("audit.exits"),
               render: (row) =>
                 String(row.salidas),
             },
             {
               key: "reingresos",
-              header: "Reingresos",
+              header: t("audit.reentries"),
               render: (row) =>
                 String(
                   row.reingresos,
@@ -427,7 +418,7 @@ function AuditoriaPage() {
             },
             {
               key: "unidades",
-              header: "Unidades movidas",
+              header: t("audit.movedUnits"),
               render: (row) =>
                 String(
                   row.unidadesMovidas,
@@ -435,7 +426,7 @@ function AuditoriaPage() {
             },
             {
               key: "pagos",
-              header: "Pagos procesados",
+              header: t("audit.processedPayments"),
               render: (row) =>
                 String(
                   row.pagosProcesados,
@@ -443,7 +434,7 @@ function AuditoriaPage() {
             },
             {
               key: "monto",
-              header: "Monto procesado",
+              header: t("audit.processedAmount"),
               render: (row) =>
                 formatCurrency(
                   row.montoPagosProcesado,
@@ -458,14 +449,14 @@ function AuditoriaPage() {
       return (
         <DataTableShell
           data={movimientos}
-          emptyMessage="No existen movimientos para los filtros seleccionados."
+          emptyMessage={t("audit.noMovements")}
           getRowKey={(row) =>
             row.idMovimiento
           }
           columns={[
             {
               key: "fecha",
-              header: "Fecha",
+              header: t("audit.date"),
               render: (row) =>
                 formatearFecha(
                   row.fechaMovimiento,
@@ -473,11 +464,11 @@ function AuditoriaPage() {
             },
             {
               key: "tipo",
-              header: "Tipo",
+              header: t("audit.action"),
               render: (row) => (
                 <StatusBadge
                   label={
-                    row.tipoMovimiento
+                    translateStatus("movements", row.tipoMovimiento)
                   }
                   variant={varianteMovimiento(
                     row.tipoMovimiento,
@@ -487,13 +478,13 @@ function AuditoriaPage() {
             },
             {
               key: "producto",
-              header: "Producto / lote",
+              header: t("audit.productBatch"),
               render: (row) =>
                 `#${row.idProducto} / Lote #${row.idLote}`,
             },
             {
               key: "cantidad",
-              header: "Cantidad",
+              header: t("common.quantity"),
               render: (row) =>
                 String(
                   row.cantidad,
@@ -501,23 +492,23 @@ function AuditoriaPage() {
             },
             {
               key: "usuario",
-              header: "Usuario",
+              header: t("audit.user"),
               render: (row) =>
                 row.usuarioActual ??
                 row.usuarioSnapshot ??
                 (row.idUsuario
-                  ? `Usuario #${row.idUsuario}`
-                  : "Sin usuario"),
+                  ? `${t("audit.user")} #${row.idUsuario}`
+                  : t("audit.withoutUser")),
             },
             {
               key: "referencia",
-              header: "Referencia",
+              header: t("audit.reference"),
               render: (row) =>
                 `${row.referenciaTipo} #${row.referenciaId}`,
             },
             {
               key: "costo",
-              header: "Costo unitario",
+              header: t("audit.unitCost"),
               render: (row) =>
                 formatCurrency(
                   row.costoUnitario,
@@ -525,7 +516,7 @@ function AuditoriaPage() {
             },
             {
               key: "total",
-              header: "Total",
+              header: t("common.total"),
               render: (row) =>
                 formatCurrency(
                   row.totalMovimiento,
@@ -533,7 +524,7 @@ function AuditoriaPage() {
             },
             {
               key: "motivo",
-              header: "Motivo",
+              header: t("audit.reason"),
               render: (row) =>
                 row.motivo,
             },
@@ -546,14 +537,14 @@ function AuditoriaPage() {
       return (
         <DataTableShell
           data={pagos}
-          emptyMessage="No existen pagos para los filtros seleccionados."
+          emptyMessage={t("audit.noPayments")}
           getRowKey={(row) =>
             row.idPagoVenta
           }
           columns={[
             {
               key: "fecha",
-              header: "Fecha",
+              header: t("audit.date"),
               render: (row) =>
                 formatearFecha(
                   row.fecha,
@@ -561,25 +552,25 @@ function AuditoriaPage() {
             },
             {
               key: "venta",
-              header: "Venta",
+              header: t("audit.saleNumber"),
               render: (row) =>
                 `#${row.numeroVenta}`,
             },
             {
               key: "estado",
-              header: "Estado venta",
+              header: t("audit.saleStatus"),
               render: (row) =>
-                row.estadoVenta,
+                translateStatus("sales", row.estadoVenta),
             },
             {
               key: "metodo",
-              header: "Método",
+              header: t("audit.paymentMethod"),
               render: (row) =>
-                row.metodoPago,
+                translateStatus("paymentMethods", row.metodoPago),
             },
             {
               key: "monto",
-              header: "Monto",
+              header: t("audit.amount"),
               render: (row) =>
                 formatCurrency(
                   row.monto,
@@ -587,23 +578,23 @@ function AuditoriaPage() {
             },
             {
               key: "usuario",
-              header: "Usuario",
+              header: t("audit.user"),
               render: (row) =>
                 row.usuarioActual ??
                 row.usuarioSnapshot ??
                 (row.idUsuario
-                  ? `Usuario #${row.idUsuario}`
-                  : "Sin usuario"),
+                  ? `${t("audit.user")} #${row.idUsuario}`
+                  : t("audit.withoutUser")),
             },
             {
               key: "referencia",
-              header: "Referencia",
+              header: t("audit.reference"),
               render: (row) =>
                 row.referencia ?? "—",
             },
             {
               key: "observaciones",
-              header: "Observaciones",
+              header: t("audit.observations"),
               render: (row) =>
                 row.observaciones ??
                 "—",
@@ -619,18 +610,18 @@ function AuditoriaPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Auditoría"
-        description="Trazabilidad administrativa de movimientos de inventario y pagos."
+        title={t("navigation.audit")}
+        description={t("audit.pageDesc")}
         icon={ShieldCheck}
       />
 
       {loading ? (
-        <LoadingState message="Cargando auditoría..." />
+        <LoadingState message={t("audit.loadingAudit")} />
       ) : error && !resumen ? (
         <div className="space-y-4">
           <AlertMessage
             variant="error"
-            title="No fue posible cargar la auditoría"
+            title={t("audit.loadErrorTitle")}
             message={error}
           />
 
@@ -639,7 +630,7 @@ function AuditoriaPage() {
               void cargarResumen();
             }}
           >
-            Reintentar
+            {t("common.retry")}
           </PrimaryButton>
         </div>
       ) : (
@@ -647,20 +638,20 @@ function AuditoriaPage() {
           {resumen ? (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard
-                label="Movimientos"
+                label={t("audit.statMovements")}
                 value={String(
                   resumen.movimientos
                     .total,
                 )}
-                hint="Registros auditados"
+                hint={t("audit.statAuditedRecords")}
                 icon={History}
                 variant="info"
               />
 
               <StatCard
-                label="Cobertura movimientos"
+                label={t("audit.statMovementCoverage")}
                 value={`${resumen.movimientos.coberturaPorcentaje}%`}
-                hint={`${resumen.movimientos.conUsuario} con usuario`}
+                hint={t("audit.statWithUser", { count: resumen.movimientos.conUsuario })}
                 icon={ShieldCheck}
                 variant={
                   resumen.movimientos
@@ -671,19 +662,19 @@ function AuditoriaPage() {
               />
 
               <StatCard
-                label="Pagos"
+                label={t("audit.statPayments")}
                 value={String(
                   resumen.pagos.total,
                 )}
-                hint="Pagos auditados"
+                hint={t("audit.statAuditedPayments")}
                 icon={Banknote}
                 variant="info"
               />
 
               <StatCard
-                label="Cobertura pagos"
+                label={t("audit.statPaymentCoverage")}
                 value={`${resumen.pagos.coberturaPorcentaje}%`}
-                hint={`${resumen.pagos.conUsuario} con usuario`}
+                hint={t("audit.statWithUser", { count: resumen.pagos.conUsuario })}
                 icon={ShieldCheck}
                 variant={
                   resumen.pagos
@@ -698,7 +689,7 @@ function AuditoriaPage() {
           {error ? (
             <AlertMessage
               variant="error"
-              title="No fue posible completar la consulta"
+              title={t("audit.queryErrorTitle")}
               message={error}
               onClose={() =>
                 setError(null)
@@ -707,39 +698,39 @@ function AuditoriaPage() {
           ) : null}
 
           <SectionCard
-            title="Vista de auditoría"
-            description="Seleccioná el tipo de información a consultar."
+            title={t("audit.auditView")}
+            description={t("audit.auditViewDesc")}
           >
             <div className="flex flex-wrap gap-2">
               {[
                 {
                   value:
                     "RESUMEN" as const,
-                  label: "Resumen",
+                  label: t("audit.tabSummary"),
                   icon: ShieldCheck,
                 },
                 {
                   value:
                     "USUARIOS" as const,
-                  label: "Actividad",
+                  label: t("audit.tabActivity"),
                   icon: Users,
                 },
                 {
                   value:
                     "MOVIMIENTOS" as const,
-                  label: "Movimientos",
+                  label: t("audit.tabMovements"),
                   icon: History,
                 },
                 {
                   value:
                     "PAGOS" as const,
-                  label: "Pagos",
+                  label: t("audit.tabPayments"),
                   icon: Banknote,
                 },
                 {
                   value:
                     "LEGACY" as const,
-                  label: "Legacy",
+                  label: t("audit.tabLegacy"),
                   icon: Database,
                 },
               ].map((item) => {
@@ -775,36 +766,36 @@ function AuditoriaPage() {
           {vista === "RESUMEN" &&
           resumen ? (
             <SectionCard
-              title="Cobertura de auditoría"
-              description="Cobertura oficial registrada por el backend."
+              title={t("audit.auditCoverage")}
+              description={t("audit.officialCoverageDesc")}
             >
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-2xl border border-zinc-200 p-5">
                   <p className="font-bold text-zinc-950">
-                    Movimientos
+                    {t("audit.movements")}
                   </p>
 
                   <div className="mt-4 space-y-2 text-sm text-zinc-600">
                     <p>
-                      Total:{" "}
+                      {t("audit.total")}{" "}
                       {resumen.movimientos.total}
                     </p>
                     <p>
-                      Con usuario:{" "}
+                      {t("audit.withUser")}{" "}
                       {
                         resumen.movimientos
                           .conUsuario
                       }
                     </p>
                     <p>
-                      Sin usuario:{" "}
+                      {t("audit.withoutUserLabel")}{" "}
                       {
                         resumen.movimientos
                           .sinUsuario
                       }
                     </p>
                     <p>
-                      Cobertura:{" "}
+                      {t("audit.coverage")}{" "}
                       {
                         resumen.movimientos
                           .coberturaPorcentaje
@@ -816,30 +807,30 @@ function AuditoriaPage() {
 
                 <div className="rounded-2xl border border-zinc-200 p-5">
                   <p className="font-bold text-zinc-950">
-                    Pagos
+                    {t("audit.statPayments")}
                   </p>
 
                   <div className="mt-4 space-y-2 text-sm text-zinc-600">
                     <p>
-                      Total:{" "}
+                      {t("audit.total")}{" "}
                       {resumen.pagos.total}
                     </p>
                     <p>
-                      Con usuario:{" "}
+                      {t("audit.withUser")}{" "}
                       {
                         resumen.pagos
                           .conUsuario
                       }
                     </p>
                     <p>
-                      Sin usuario:{" "}
+                      {t("audit.withoutUserLabel")}{" "}
                       {
                         resumen.pagos
                           .sinUsuario
                       }
                     </p>
                     <p>
-                      Cobertura:{" "}
+                      {t("audit.coverage")}{" "}
                       {
                         resumen.pagos
                           .coberturaPorcentaje
@@ -856,14 +847,14 @@ function AuditoriaPage() {
           legacy ? (
             <div className="space-y-6">
               <SectionCard
-                title="Movimientos legacy"
-                description="Registros históricos agrupados sin cobertura completa de identidad."
+                title={t("audit.legacyMovements")}
+                description={t("audit.legacyMovementsDesc")}
               >
                 <DataTableShell
                   data={
                     legacy.movimientos
                   }
-                  emptyMessage="No existen movimientos legacy."
+                  emptyMessage={t("audit.noLegacyMovements")}
                   getRowKey={(
                     row,
                   ) =>
@@ -873,14 +864,14 @@ function AuditoriaPage() {
                     {
                       key: "tipo",
                       header:
-                        "Tipo",
+                        t("audit.action"),
                       render: (row) =>
-                        row.tipoMovimiento,
+                        translateStatus("movements", row.tipoMovimiento),
                     },
                     {
                       key: "cantidad",
                       header:
-                        "Registros",
+                        t("audit.records"),
                       render: (row) =>
                         String(
                           row.cantidad,
@@ -889,7 +880,7 @@ function AuditoriaPage() {
                     {
                       key: "unidades",
                       header:
-                        "Unidades",
+                        t("audit.units"),
                       render: (row) =>
                         String(
                           row.unidades,
@@ -900,28 +891,28 @@ function AuditoriaPage() {
               </SectionCard>
 
               <SectionCard
-                title="Pagos legacy"
-                description="Cobertura histórica de pagos sin identidad completa."
+                title={t("audit.legacyPayments")}
+                description={t("audit.legacyPaymentsDesc")}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <StatCard
-                    label="Pagos"
+                    label={t("audit.statPayments")}
                     value={String(
                       legacy.pagos
                         .cantidad,
                     )}
-                    hint="Registros históricos"
+                    hint={t("audit.historicalRecords")}
                     icon={Banknote}
                     variant="neutral"
                   />
 
                   <StatCard
-                    label="Monto"
+                    label={t("audit.amount")}
                     value={formatCurrency(
                       legacy.pagos
                         .monto,
                     )}
-                    hint="Monto histórico"
+                    hint={t("audit.historicalAmount")}
                     icon={Banknote}
                     variant="neutral"
                   />
@@ -935,11 +926,11 @@ function AuditoriaPage() {
             <SectionCard
               title={
                 vista === "USUARIOS"
-                  ? "Actividad por usuario"
+                  ? t("audit.userActivityTitle")
                   : vista ===
                       "MOVIMIENTOS"
-                    ? "Movimientos auditados"
-                    : "Pagos auditados"
+                    ? t("audit.auditedMovementsTitle")
+                    : t("audit.auditedPaymentsTitle")
               }
             >
               {renderResultado()}

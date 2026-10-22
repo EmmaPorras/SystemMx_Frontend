@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
+import { Inbox, type LucideIcon } from "lucide-react";
 
 type EmptyStateProps = {
   title: string;
@@ -12,7 +12,7 @@ type EmptyStateProps = {
 function EmptyState({
   title,
   description,
-  icon: Icon,
+  icon: Icon = Inbox,
   action,
   className = "",
 }: EmptyStateProps) {
@@ -20,21 +20,12 @@ function EmptyState({
     <div
       className={`flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 px-6 py-10 text-center ${className}`}
     >
-      {Icon ? (
-        <div
-          aria-hidden="true"
-          className="mb-3 grid h-12 w-12 place-items-center rounded-2xl border border-zinc-200 bg-white text-zinc-400 shadow-sm"
-        >
-          <Icon size={24} />
-        </div>
-      ) : (
-        <div
-          aria-hidden="true"
-          className="mb-3 grid h-12 w-12 place-items-center rounded-2xl border border-zinc-200 bg-white shadow-sm"
-        >
-          <span className="h-2.5 w-2.5 rounded-full bg-zinc-300" />
-        </div>
-      )}
+      <div
+        aria-hidden="true"
+        className="mb-3 grid h-12 w-12 place-items-center rounded-2xl border border-zinc-200 bg-white text-zinc-400 shadow-xs"
+      >
+        <Icon size={24} />
+      </div>
 
       <p className="font-semibold text-zinc-950">{title}</p>
 

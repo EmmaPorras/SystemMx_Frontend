@@ -56,23 +56,7 @@ function ModuleCard({
         focus-visible:ring-offset-2
       "
     >
-      {/* Decoración */}
-
-      <div
-        aria-hidden="true"
-        className="
-          absolute
-          -bottom-16
-          -right-16
-          h-32
-          w-32
-          rounded-full
-          bg-zinc-50
-          transition-transform
-          duration-300
-          group-hover:scale-125
-        "
-      />
+      
 
       {/* Línea inferior */}
 

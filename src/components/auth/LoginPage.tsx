@@ -3,6 +3,7 @@ import {
   type FormEvent,
 } from "react";
 import {
+  Link,
   Navigate,
   useLocation,
   useNavigate,
@@ -12,9 +13,11 @@ import {
   LogIn,
   UserRound,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import AlertMessage from "../common/AlertMessage";
 import InputField from "../common/InputField";
+import LanguageSelector from "../common/LanguageSelector";
 import PrimaryButton from "../common/PrimaryButton";
 import { ApiError } from "../../api/ApiError";
 import { useAuth } from "../../auth/useAuth";
@@ -48,6 +51,7 @@ function getDestination(state: unknown): string {
 }
 
 function LoginPage() {
+  const { t } = useTranslation();
   const {
     login,
     status,
@@ -63,6 +67,7 @@ function LoginPage() {
   const [errors, setErrors] = useState<LoginErrors>({});
   const [apiError, setApiError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [brandVideoFailed, setBrandVideoFailed] = useState(false);
 
   if (status === "authenticated") {
     return (
@@ -78,15 +83,15 @@ function LoginPage() {
     const normalizedUsername = username.trim();
 
     if (!normalizedUsername) {
-      nextErrors.username = "Ingrese el nombre de usuario.";
+      nextErrors.username = t("auth.usernameRequired");
     } else if (normalizedUsername.length > 50) {
-      nextErrors.username = "El usuario no puede superar 50 caracteres.";
+      nextErrors.username = t("auth.usernameMaxLength");
     }
 
     if (!password) {
-      nextErrors.password = "Ingrese la contraseña.";
+      nextErrors.password = t("auth.passwordRequired");
     } else if (password.length > 128) {
-      nextErrors.password = "La contraseña no puede superar 128 caracteres.";
+      nextErrors.password = t("auth.passwordMaxLength");
     }
 
     setErrors(nextErrors);
@@ -114,12 +119,12 @@ function LoginPage() {
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 401) {
-          setApiError("Usuario o contraseña incorrectos.");
+          setApiError(t("auth.invalidCredentials"));
         } else {
           setApiError(error.message);
         }
       } else {
-        setApiError("No fue posible conectar con el servidor.");
+        setApiError(t("auth.serverConnectionError"));
       }
     } finally {
       setIsSubmitting(false);
@@ -128,25 +133,38 @@ function LoginPage() {
 
   return (
     <div className="relative grid min-h-screen place-items-center overflow-hidden bg-zinc-100 px-4 py-8">
-      <div
-        aria-hidden="true"
-        className="absolute -right-24 -top-24 h-80 w-80 rounded-full border border-zinc-200 bg-white/60"
-      />
-
-      <div
-        aria-hidden="true"
-        className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-zinc-200/70 blur-3xl"
-      />
-
       <div className="relative z-10 w-full max-w-md">
+        <div className="mb-3 flex justify-end">
+          <LanguageSelector id="login-language-selector" />
+        </div>
+
         <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-xl shadow-black/5">
           <div className="border-b border-zinc-200 bg-zinc-950 px-6 py-7 text-white sm:px-8">
             <div className="flex items-center gap-4">
               <div
                 aria-hidden="true"
-                className="grid h-14 w-14 place-items-center rounded-2xl border border-zinc-700 bg-zinc-900"
+                className="flex aspect-video w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-white/20 sm:w-32"
               >
-                <LockKeyhole className="h-7 w-7" />
+                {brandVideoFailed ? (
+                  <LockKeyhole className="h-7 w-7 text-zinc-900" />
+                ) : (
+                  <video
+                    data-testid="systemmx-animated-logo"
+                    className="block h-full w-full scale-[1.08] object-cover"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    disablePictureInPicture
+                    onError={() => setBrandVideoFailed(true)}
+                  >
+                    <source
+                      src="https://res.cloudinary.com/dqqnhxhcp/video/upload/v1791492297/gemini_generated_video_68192616_ogqmlj.mp4"
+                      type="video/mp4"
+                    />
+                  </video>
+                )}
               </div>
 
               <div>
@@ -155,13 +173,13 @@ function LoginPage() {
                 </p>
 
                 <h1 className="mt-1 text-2xl font-bold">
-                  Iniciar sesión
+                  {t("auth.loginTitle")}
                 </h1>
               </div>
             </div>
 
             <p className="mt-5 text-sm leading-6 text-zinc-400">
-              Acceso administrativo al sistema.
+              {t("auth.loginSubtitle")}
             </p>
           </div>
 
@@ -173,7 +191,7 @@ function LoginPage() {
             {apiError ? (
               <AlertMessage
                 variant="error"
-                title="No fue posible iniciar sesión"
+                title={t("common.errorOccurred")}
                 message={apiError}
                 onClose={() => setApiError(null)}
               />
@@ -181,7 +199,7 @@ function LoginPage() {
 
             <div className="space-y-4">
               <InputField
-                label="Usuario"
+                label={t("auth.usernameOrEmail")}
                 value={username}
                 onChange={(value) => {
                   setUsername(value);
@@ -192,43 +210,54 @@ function LoginPage() {
                     }));
                   }
                 }}
-                placeholder="Ingrese su usuario"
+                placeholder={t("auth.usernamePlaceholder")}
                 required
                 autoComplete="username"
                 maxLength={50}
                 error={errors.username}
               />
 
-              <InputField
-                label="Contraseña"
-                value={password}
-                onChange={(value) => {
-                  setPassword(value);
-                  if (errors.password) {
-                    setErrors((current) => ({
-                      ...current,
-                      password: undefined,
-                    }));
-                  }
-                }}
-                type="password"
-                placeholder="Ingrese su contraseña"
-                required
-                autoComplete="current-password"
-                maxLength={128}
-                error={errors.password}
-              />
+              <div className="space-y-1.5">
+                <InputField
+                  label={t("auth.password")}
+                  value={password}
+                  onChange={(value) => {
+                    setPassword(value);
+                    if (errors.password) {
+                      setErrors((current) => ({
+                        ...current,
+                        password: undefined,
+                      }));
+                    }
+                  }}
+                  type="password"
+                  placeholder={t("auth.passwordPlaceholder")}
+                  required
+                  autoComplete="current-password"
+                  maxLength={128}
+                  error={errors.password}
+                />
+
+                <div className="flex justify-end pt-0.5">
+                  <Link
+                    to="/recuperar-contrasena"
+                    className="text-xs font-semibold text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+                  >
+                    {t("auth.forgotPassword")}
+                  </Link>
+                </div>
+              </div>
             </div>
 
             <div className="border-t border-zinc-100 pt-5">
               <PrimaryButton
                 type="submit"
                 loading={isSubmitting}
-                loadingText="Ingresando..."
+                loadingText={t("auth.submitting")}
                 className="w-full"
               >
                 <LogIn size={17} aria-hidden="true" />
-                <span>Ingresar</span>
+                <span>{t("auth.enter")}</span>
               </PrimaryButton>
             </div>
 
@@ -240,7 +269,7 @@ function LoginPage() {
               />
 
               <span>
-                Acceso reservado al administrador de SystemMx.
+                {t("auth.loginAdminAccess")}
               </span>
             </div>
           </form>

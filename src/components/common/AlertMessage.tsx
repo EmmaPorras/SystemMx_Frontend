@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type AlertVariant = "success" | "error" | "warning" | "info";
 
@@ -70,6 +71,7 @@ function AlertMessage({
   onClose,
   className = "",
 }: AlertMessageProps) {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const styles = alertStyles[variant];
 
@@ -100,31 +102,31 @@ function AlertMessage({
           : "-translate-y-1 scale-[0.99] opacity-0"
       } ${className}`}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2.5">
         <div
           aria-hidden="true"
-          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${styles.iconWrapper}`}
+          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${styles.iconWrapper}`}
         >
           {styles.icon}
         </div>
 
         <div className="min-w-0 flex-1 pt-0.5">
           {title ? (
-            <p className={`text-sm font-bold ${styles.title}`}>{title}</p>
+            <p className={`text-xs font-bold leading-tight ${styles.title}`}>{title}</p>
           ) : null}
 
-          <p className={`text-sm leading-relaxed ${styles.message}`}>{message}</p>
+          <p className={`text-xs leading-relaxed ${styles.message}`}>{message}</p>
         </div>
 
         {onClose ? (
           <button
             type="button"
             onClick={handleClose}
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition outline-none focus-visible:ring-2 ${styles.closeButton}`}
-            aria-label="Cerrar mensaje"
-            title="Cerrar mensaje"
+            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition outline-none focus-visible:ring-2 ${styles.closeButton}`}
+            aria-label={t("common.closeAlert")}
+            title={t("common.closeAlert")}
           >
-            <X size={16} aria-hidden="true" />
+            <X size={14} aria-hidden="true" />
           </button>
         ) : null}
       </div>

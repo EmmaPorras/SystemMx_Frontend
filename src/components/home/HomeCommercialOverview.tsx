@@ -1,6 +1,7 @@
 import type {
   ElementType,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   ArrowUpRight,
@@ -125,6 +126,7 @@ function HomeCommercialOverview({
   productosPath,
   reportesPath,
 }: HomeCommercialOverviewProps) {
+  const { t } = useTranslation();
   const topProductos =
     productos.slice(0, 5);
 
@@ -147,11 +149,11 @@ function HomeCommercialOverview({
         <div className="flex items-center gap-4">
           <div className="shrink-0">
             <h2 className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-500 sm:text-sm">
-              Acciones rápidas
+              {t("home.quickActions", "Acciones rápidas")}
             </h2>
 
             <p className="mt-1 text-sm text-zinc-400">
-              Accesos directos a las operaciones más utilizadas.
+              {t("home.quickActionsDesc", "Accesos directos a las operaciones más utilizadas.")}
             </p>
           </div>
 
@@ -160,29 +162,29 @@ function HomeCommercialOverview({
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <QuickAction
-            title="Ventas"
-            description="Registrar y consultar ventas"
+            title={t("navigation.sales", "Ventas")}
+            description={t("home.quickActionSalesDesc", "Registrar y consultar ventas")}
             to={ventasPath}
             icon={ShoppingCart}
           />
 
           <QuickAction
-            title="Pedidos"
-            description="Crear y administrar pedidos"
+            title={t("navigation.orders", "Pedidos")}
+            description={t("home.quickActionOrdersDesc", "Crear y administrar pedidos")}
             to={pedidosPath}
             icon={ReceiptText}
           />
 
           <QuickAction
-            title="Productos"
-            description="Administrar el catálogo"
+            title={t("navigation.products", "Productos")}
+            description={t("home.quickActionProductsDesc", "Administrar el catálogo")}
             to={productosPath}
             icon={PackagePlus}
           />
 
           <QuickAction
-            title="Reportes"
-            description="Consultar análisis del sistema"
+            title={t("navigation.reports", "Reportes")}
+            description={t("home.quickActionReportsDesc", "Consultar análisis del sistema")}
             to={reportesPath}
             icon={BarChart3}
           />
@@ -197,11 +199,11 @@ function HomeCommercialOverview({
         <div className="flex items-center gap-4">
           <div className="shrink-0">
             <h2 className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-500 sm:text-sm">
-              Productos destacados
+              {t("home.featuredProducts", "Productos destacados")}
             </h2>
 
             <p className="mt-1 text-sm text-zinc-400">
-              Productos con mayor importe vendido en el período seleccionado.
+              {t("home.featuredProductsDesc", "Productos con mayor importe vendido en el período seleccionado.")}
             </p>
           </div>
 
@@ -217,11 +219,11 @@ function HomeCommercialOverview({
 
               <div>
                 <h3 className="font-bold text-zinc-950">
-                  Top 5 productos vendidos
+                  {t("home.top5Products", "Top 5 productos vendidos")}
                 </h3>
 
                 <p className="mt-0.5 text-xs text-zinc-500">
-                  Ordenados por monto total vendido
+                  {t("home.sortedBySalesAmount", "Ordenados por monto total vendido")}
                 </p>
               </div>
             </div>
@@ -240,7 +242,7 @@ function HomeCommercialOverview({
                 sm:flex
               "
             >
-              Ver reportes
+              {t("home.viewReports", "Ver reportes")}
 
               <ArrowUpRight size={15} />
             </Link>
@@ -248,12 +250,12 @@ function HomeCommercialOverview({
 
           {loading ? (
             <div className="p-10">
-              <LoadingState message="Cargando productos más vendidos..." />
+              <LoadingState message={t("home.loadingTopProducts", "Cargando productos más vendidos...")} />
             </div>
           ) : error ? (
             <div className="p-10 text-center">
               <p className="font-bold text-zinc-950">
-                No fue posible cargar los productos
+                {t("home.loadErrorTopProductsTitle", "No fue posible cargar los productos")}
               </p>
 
               <p className="mt-1 text-sm text-zinc-500">
@@ -268,11 +270,11 @@ function HomeCommercialOverview({
               />
 
               <p className="mt-3 font-bold text-zinc-950">
-                No existen ventas en este período
+                {t("home.noSalesInPeriod", "No existen ventas en este período")}
               </p>
 
               <p className="mt-1 text-sm text-zinc-500">
-                Cambiá el período de la gráfica para consultar otros datos.
+                {t("home.changePeriodHint", "Cambiá el período de la gráfica para consultar otros datos.")}
               </p>
             </div>
           ) : (
@@ -359,15 +361,16 @@ function HomeCommercialOverview({
 
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 sm:hidden">
-                          Unidades
+                          {t("home.units", "Unidades")}
                         </p>
 
                         <p className="text-sm font-bold text-zinc-700">
-                          {producto.unidadesVendidas}{" "}
-                          {producto.unidadesVendidas ===
-                          1
-                            ? "unidad"
-                            : "unidades"}
+                          {t("home.unitsCount", {
+                            count: producto.unidadesVendidas,
+                            defaultValue: `${producto.unidadesVendidas} ${
+                              producto.unidadesVendidas === 1 ? "unidad" : "unidades"
+                            }`,
+                          })}
                         </p>
                       </div>
 
@@ -381,11 +384,10 @@ function HomeCommercialOverview({
                         </p>
 
                         <p className="mt-0.5 text-xs font-semibold text-emerald-600">
-                          +{" "}
-                          {formatCurrency(
-                            producto.gananciaBruta,
-                          )}{" "}
-                          ganancia
+                          {t("home.profitGain", {
+                            amount: formatCurrency(producto.gananciaBruta),
+                            defaultValue: `+ ${formatCurrency(producto.gananciaBruta)} ganancia`,
+                          })}
                         </p>
                       </div>
                     </div>

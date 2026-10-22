@@ -34,19 +34,28 @@ function SelectField({
   const selectId = customId || generatedId;
   const errorId = `${selectId}-error`;
 
+  const hasEmptyPlaceholder = Boolean(placeholder);
+  const normalizedOptions = options.filter(
+    (opt, index, self) =>
+      (!hasEmptyPlaceholder || opt.value !== "") &&
+      self.findIndex((o) => o.value === opt.value) === index,
+  );
+
   return (
     <div className={className}>
-      <label
-        htmlFor={selectId}
-        className="mb-1.5 block text-sm font-semibold text-zinc-700"
-      >
-        {label}
-        {required ? (
-          <span className="ml-1 text-red-500" aria-hidden="true">
-            *
-          </span>
-        ) : null}
-      </label>
+      {label ? (
+        <label
+          htmlFor={selectId}
+          className="mb-1 block text-xs font-semibold text-zinc-700"
+        >
+          {label}
+          {required ? (
+            <span className="ml-1 text-rose-500" aria-hidden="true">
+              *
+            </span>
+          ) : null}
+        </label>
+      ) : null}
 
       <select
         id={selectId}
@@ -57,15 +66,15 @@ function SelectField({
         aria-required={required}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? errorId : undefined}
-        className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 ${
+        className={`w-full rounded-xl border px-3 py-2 text-xs sm:text-sm outline-none shadow-2xs transition disabled:cursor-not-allowed disabled:bg-zinc-100 disabled:text-zinc-400 ${
           error
-            ? "border-red-400 bg-red-50/50 text-zinc-900 focus-visible:border-red-500 focus-visible:ring-2 focus-visible:ring-red-200"
-            : "border-zinc-300 bg-white text-zinc-900 focus-visible:border-zinc-950 focus-visible:ring-2 focus-visible:ring-zinc-200"
+            ? "border-rose-300 bg-rose-50/40 text-zinc-900 focus-visible:border-rose-500 focus-visible:ring-2 focus-visible:ring-rose-200"
+            : "border-zinc-200/90 bg-white text-zinc-900 hover:border-zinc-300 focus-visible:border-zinc-950 focus-visible:ring-2 focus-visible:ring-zinc-950/10"
         }`}
       >
         {placeholder ? <option value="">{placeholder}</option> : null}
 
-        {options.map((option) => (
+        {normalizedOptions.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>

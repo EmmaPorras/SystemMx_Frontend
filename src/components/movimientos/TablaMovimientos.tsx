@@ -1,6 +1,9 @@
+import { useTranslation } from "react-i18next";
+
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
-import { formatCurrency } from "../common/formatters";
+import { formatCurrency, formatDate } from "../common/formatters";
+import { getMovementTypeLabel } from "../../i18n/statusMap";
 
 import type {
   MovimientoInventario,
@@ -10,21 +13,6 @@ import type {
 type TablaMovimientosProps = {
   movimientos: MovimientoInventario[];
 };
-
-function getTipoLabel(
-  tipo: TipoMovimientoInventario,
-): string {
-  switch (tipo) {
-    case "ENTRADA_COMPRA":
-      return "ENTRADA COMPRA";
-
-    case "SALIDA_VENTA":
-      return "SALIDA VENTA";
-
-    case "REINGRESO_ANULACION_VENTA":
-      return "REINGRESO ANULACIÓN";
-  }
-}
 
 function getTipoVariant(
   tipo: TipoMovimientoInventario,
@@ -41,41 +29,32 @@ function getTipoVariant(
   }
 }
 
-function formatFechaMovimiento(
-  value: string,
-): string {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString();
-}
-
 function TablaMovimientos({
   movimientos,
 }: TablaMovimientosProps) {
+  const { t } = useTranslation();
+
   return (
     <DataTableShell
       data={movimientos}
-      emptyMessage="No hay movimientos que coincidan con los filtros."
+      emptyMessage={t("movements.emptyTitle", "No hay movimientos que coincidan con los filtros.")}
       getRowKey={(row) => row.idMovimiento}
       columns={[
         {
           key: "fecha",
-          header: "Fecha",
+          header: t("movements.date", "Fecha"),
           render: (row) =>
-            formatFechaMovimiento(
+            formatDate(
               row.fechaMovimiento,
             ),
         },
         {
           key: "tipo",
-          header: "Tipo",
+          header: t("movements.type", "Tipo"),
           render: (row) => (
             <StatusBadge
-              label={getTipoLabel(
+              label={getMovementTypeLabel(
+                t,
                 row.tipoMovimiento,
               )}
               variant={getTipoVariant(
@@ -86,19 +65,19 @@ function TablaMovimientos({
         },
         {
           key: "producto",
-          header: "Producto",
+          header: t("movements.product", "Producto"),
           render: (row) =>
             row.producto?.nombre ?? "—",
         },
         {
           key: "lote",
-          header: "Lote",
+          header: t("movements.lot", "Lote"),
           render: (row) =>
             row.lote?.codigoLote ?? "—",
         },
         {
           key: "cantidad",
-          header: "Cantidad",
+          header: t("movements.quantity", "Cantidad"),
           render: (row) => (
             <span className="font-semibold">
               {row.cantidad}
@@ -107,11 +86,15 @@ function TablaMovimientos({
         },
         {
           key: "referencia",
-          header: "Referencia",
+          header: t("movements.reference", "Referencia"),
           render: (row) => (
             <div>
               <p className="font-semibold text-zinc-900">
-                {row.referenciaTipo}
+                {row.referenciaTipo === "PEDIDO"
+                  ? t("movements.orderRef", "Pedido")
+                  : row.referenciaTipo === "VENTA"
+                  ? t("movements.saleRef", "Venta")
+                  : row.referenciaTipo}
               </p>
 
               <p className="text-xs text-zinc-500">
@@ -122,16 +105,16 @@ function TablaMovimientos({
         },
         {
           key: "usuario",
-          header: "Usuario",
+          header: t("movements.user", "Usuario"),
           render: (row) =>
             row.usuario ??
             (row.idUsuario
-              ? `Usuario #${row.idUsuario}`
-              : "Sistema"),
+              ? `${t("movements.user", "Usuario")} #${row.idUsuario}`
+              : t("movements.system", "Sistema")),
         },
         {
           key: "costo",
-          header: "Costo unitario",
+          header: t("movements.unitCost", "Costo unitario"),
           render: (row) =>
             formatCurrency(
               row.costoUnitario,
@@ -139,7 +122,7 @@ function TablaMovimientos({
         },
         {
           key: "total",
-          header: "Total movimiento",
+          header: t("movements.totalMovement", "Total movimiento"),
           render: (row) =>
             formatCurrency(
               row.totalMovimiento,
@@ -147,7 +130,7 @@ function TablaMovimientos({
         },
         {
           key: "motivo",
-          header: "Motivo",
+          header: t("movements.reason", "Motivo"),
           render: (row) => (
             <div className="max-w-xs">
               <p className="text-sm text-zinc-700">

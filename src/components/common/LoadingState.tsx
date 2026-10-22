@@ -1,12 +1,17 @@
+import { useTranslation } from "react-i18next";
+
 type LoadingStateProps = {
   message?: string;
   className?: string;
 };
 
 function LoadingState({
-  message = "Cargando información...",
+  message,
   className = "min-h-48",
 }: LoadingStateProps) {
+  const { t } = useTranslation();
+  const resolvedMessage = message ?? t("common.loadingInfo");
+
   return (
     <div
       role="status"
@@ -20,7 +25,7 @@ function LoadingState({
         />
 
         <p className="mt-3 text-sm font-semibold text-zinc-600">
-          {message}
+          {resolvedMessage}
         </p>
       </div>
     </div>

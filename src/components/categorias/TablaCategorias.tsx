@@ -2,10 +2,12 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
 import TableActionButton from "../common/TableActionButton";
+import { getCatalogStatusLabel } from "../../i18n/statusMap";
 
 import type { Categoria } from "./categorias.types";
 
@@ -20,29 +22,32 @@ function TablaCategorias({
   onEdit,
   onDeactivate,
 }: TablaCategoriasProps) {
+  const { t } = useTranslation();
+
   return (
     <DataTableShell
       data={categorias}
-      emptyMessage="Todavía no hay categorías registradas."
+      emptyMessage={t("categories.emptyTitle")}
+      emptyDescription={t("categories.emptyDesc")}
       getRowKey={(row) => row.idCategoria}
       columns={[
         {
           key: "nombre",
-          header: "Nombre",
+          header: t("common.name"),
           render: (row) => row.nombre,
         },
         {
           key: "descripcion",
-          header: "Descripción",
+          header: t("common.description"),
           render: (row) =>
             row.descripcion?.trim() || "—",
         },
         {
           key: "estado",
-          header: "Estado",
+          header: t("common.status"),
           render: (row) => (
             <StatusBadge
-              label={row.activo ? "ACTIVA" : "INACTIVA"}
+              label={getCatalogStatusLabel(t, row.activo)}
               variant={
                 row.activo
                   ? "success"
@@ -55,7 +60,7 @@ function TablaCategorias({
       actions={(row) => (
         <>
           <TableActionButton
-            label="Editar categoría"
+            label={t("categories.editCategory")}
             variant="edit"
             icon={<Pencil size={17} />}
             onClick={() => onEdit(row)}
@@ -63,7 +68,7 @@ function TablaCategorias({
 
           {row.activo ? (
             <TableActionButton
-              label="Desactivar categoría"
+              label={t("common.delete")}
               variant="delete"
               icon={<Trash2 size={17} />}
               onClick={() => onDeactivate(row)}

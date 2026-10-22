@@ -1,8 +1,9 @@
+import { useTranslation } from "react-i18next";
 import InputField from "../common/InputField";
 import PrimaryButton from "../common/PrimaryButton";
 import SearchableSelectField from "../common/SearchableSelectField";
 import SelectField from "../common/SelectField";
-import { paisesOptions } from "../../data/paises";
+import { usePaisesOptions } from "../../data/paises";
 import {
   monedaPreferidaOptions,
   type Proveedor,
@@ -24,11 +25,15 @@ function FormularioProveedor({
   proveedor,
   errors,
   isSubmitting = false,
-  submitLabel = "Guardar proveedor",
+  submitLabel,
   onChange,
   onSubmit,
   onCancel,
 }: FormularioProveedorProps) {
+  const { t } = useTranslation();
+  const paisesOptions = usePaisesOptions();
+  const resolvedSubmitLabel = submitLabel ?? t("common.save");
+
   return (
     <form
       onSubmit={(e) => {
@@ -41,80 +46,78 @@ function FormularioProveedor({
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <InputField
-          label="Nombre"
+          label={t("common.name")}
           required
           value={proveedor.nombre}
           onChange={(value) => onChange("nombre", value)}
-          placeholder="Ejemplo: Proveedor Central"
+          placeholder={t("suppliers.namePlaceholder")}
           maxLength={40}
           showCharacterCount
           error={errors.nombre}
         />
 
         <InputField
-          label="Teléfono"
+          label={t("suppliers.phone")}
           required
           value={proveedor.telefono}
           onChange={(value) => onChange("telefono", value)}
-          placeholder="Ejemplo: +506 8888-8888"
+          placeholder={t("suppliers.phonePlaceholder")}
           maxLength={20}
           showCharacterCount
-          helperText="Puede incluir código de país, espacios, guiones o paréntesis."
           error={errors.telefono}
         />
 
         <InputField
-          label="Correo"
+          label={t("suppliers.email")}
           required
           type="email"
           value={proveedor.correo}
           onChange={(value) => onChange("correo", value)}
-          placeholder="correo@ejemplo.com"
+          placeholder={t("suppliers.emailPlaceholder")}
           maxLength={100}
           error={errors.correo}
         />
 
         <SearchableSelectField
-          label="País de origen"
+          label={t("suppliers.country")}
           required
           value={proveedor.pais}
           onChange={(value) => onChange("pais", value)}
-          placeholder="Seleccione el país del proveedor"
+          placeholder={t("suppliers.countryPlaceholder")}
           error={errors.pais}
           options={paisesOptions}
         />
 
         <SelectField
-          label="Moneda preferida"
+          label={t("suppliers.currency")}
           required
           value={proveedor.monedaPreferida}
           onChange={(value) => onChange("monedaPreferida", value)}
-          placeholder="Seleccioná una moneda"
+          placeholder={t("suppliers.currencyPlaceholder")}
           error={errors.monedaPreferida}
           options={monedaPreferidaOptions}
         />
 
         <SelectField
-          label="Estado"
+          label={t("common.status")}
           required
           value={proveedor.estado}
           onChange={(value) => onChange("estado", value)}
           error={errors.estado}
           options={[
-            { value: "ACTIVO", label: "Activo" },
-            { value: "INACTIVO", label: "Inactivo" },
+            { value: "ACTIVO", label: t("common.active") },
+            { value: "INACTIVO", label: t("common.inactive") },
           ]}
         />
 
         <div className="sm:col-span-2">
           <InputField
-            label="Dirección exacta"
+            label={t("suppliers.address")}
             value={proveedor.direccion}
             onChange={(value) => onChange("direccion", value)}
-            placeholder="Opcional: ciudad, calle, edificio o referencia"
+            placeholder={t("suppliers.addressPlaceholder")}
             maxLength={150}
             showCharacterCount
-            helperText="Este campo es opcional y se mostrará únicamente en el detalle del proveedor."
             error={errors.direccion}
           />
         </div>
@@ -127,15 +130,15 @@ function FormularioProveedor({
           disabled={isSubmitting}
           className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Cancelar
+          {t("common.cancel")}
         </button>
 
         <PrimaryButton
           type="submit"
           loading={isSubmitting}
-          loadingText="Guardando..."
+          loadingText={t("common.processing")}
         >
-          {submitLabel}
+          {resolvedSubmitLabel}
         </PrimaryButton>
       </div>
     </form>

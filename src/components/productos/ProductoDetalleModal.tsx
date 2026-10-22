@@ -1,6 +1,8 @@
+import { useTranslation } from "react-i18next";
 import AppModal from "../common/AppModal";
 import StatusBadge from "../common/StatusBadge";
 import { formatCurrency } from "../common/formatters";
+import { getCatalogStatusLabel } from "../../i18n/statusMap";
 
 import ProductoLotesSection from "./ProductoLotesSection";
 
@@ -37,14 +39,16 @@ function ProductoDetalleModal({
   producto,
   onClose,
 }: ProductoDetalleModalProps) {
+  const { t } = useTranslation();
+
   return (
     <AppModal
       isOpen={isOpen}
-      title="Detalle del producto"
+      title={t("products.details")}
       description={
         producto
           ? producto.nombre
-          : "Información del producto."
+          : t("products.subtitle")
       }
       onClose={onClose}
       maxWidthClassName="max-w-4xl"
@@ -58,16 +62,12 @@ function ProductoDetalleModal({
               </p>
 
               <p className="mt-1 text-sm text-zinc-500">
-                {producto.sku?.trim() || "Sin SKU"}
+                {producto.sku?.trim() || "—"}
               </p>
             </div>
 
             <StatusBadge
-              label={
-                producto.activo
-                  ? "ACTIVO"
-                  : "INACTIVO"
-              }
+              label={getCatalogStatusLabel(t, producto.activo)}
               variant={
                 producto.activo
                   ? "success"
@@ -78,15 +78,15 @@ function ProductoDetalleModal({
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <DetailItem
-              label="Categoría"
+              label={t("products.category")}
               value={
                 producto.categoria?.nombre ??
-                "Sin categoría"
+                "—"
               }
             />
 
             <DetailItem
-              label="Marca"
+              label={t("products.brand")}
               value={
                 producto.marca?.trim() || "—"
               }
@@ -100,7 +100,14 @@ function ProductoDetalleModal({
             />
 
             <DetailItem
-              label="Stock actual"
+              label={t("products.suggestedPrice")}
+              value={formatCurrency(
+                producto.precioVentaSugeridoSinIva,
+              )}
+            />
+
+            <DetailItem
+              label={t("products.stock")}
               value={producto.stockActual}
             />
 
@@ -110,66 +117,25 @@ function ProductoDetalleModal({
             />
 
             <DetailItem
-              label="Precio sugerido sin IVA"
-              value={formatCurrency(
-                producto.precioVentaSugeridoSinIva,
-              )}
-            />
-
-            <DetailItem
-              label="Precio estándar con IVA"
+              label="IVA"
               value={
-                producto.precioVentaEstandarConIva !==
-                  null &&
-                producto.precioVentaEstandarConIva !==
-                  undefined
-                  ? formatCurrency(
-                      producto.precioVentaEstandarConIva,
-                    )
+                producto.tarifaIva
+                  ? `${producto.tarifaIva.codigo} · ${producto.tarifaIva.porcentaje}%`
                   : "—"
               }
             />
 
             <DetailItem
-              label="Costo de referencia"
-              value={
-                producto.costoReferencia !== null &&
-                producto.costoReferencia !== undefined
-                  ? formatCurrency(
-                      producto.costoReferencia,
-                    )
-                  : "—"
-              }
+              label={t("common.status")}
+              value={getCatalogStatusLabel(t, producto.activo)}
             />
           </div>
 
-          {producto.descripcion?.trim() ? (
-            <div className="rounded-2xl border border-zinc-200 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Descripción
-              </p>
-
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-700">
-                {producto.descripcion}
-              </p>
-            </div>
-          ) : null}
-
-          {producto.observaciones?.trim() ? (
-            <div className="rounded-2xl border border-zinc-200 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Observaciones
-              </p>
-
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-700">
-                {producto.observaciones}
-              </p>
-            </div>
-          ) : null}
-
-          <ProductoLotesSection
-            productoId={producto.idProducto}
-          />
+          <div className="border-t border-zinc-200 pt-6">
+            <ProductoLotesSection
+              productoId={producto.idProducto}
+            />
+          </div>
         </div>
       ) : null}
     </AppModal>

@@ -1,5 +1,7 @@
+import { useTranslation } from "react-i18next";
 import AlertMessage from "../common/AlertMessage";
 import InputField from "../common/InputField";
+import MoneyInputField from "../common/MoneyInputField";
 import PrimaryButton from "../common/PrimaryButton";
 import SelectField from "../common/SelectField";
 import type {
@@ -25,19 +27,21 @@ type FormularioPedidoProps = {
 };
 
 const monedas: Array<{ value: MonedaCompra; label: string }> = [
-  { value: "CRC", label: "₡ CRC - Colones" },
-  { value: "USD", label: "$ USD - Dólares" },
-  { value: "EUR", label: "€ EUR - Euros" },
+  { value: "CRC", label: "CRC - Colones costarricenses (₡)" },
+  { value: "USD", label: "USD - Dólares estadounidenses ($)" },
+  { value: "EUR", label: "EUR - Euros (€)" },
   { value: "COP", label: "COP - Pesos colombianos" },
-  { value: "BRL", label: "R$ BRL - Reales brasileños" },
+  { value: "BRL", label: "BRL - Reales brasileños (R$)" },
 ];
 
 function esCostaRica(pais: string) {
-  return pais
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase() === "costa rica";
+  return (
+    pais
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase() === "costa rica"
+  );
 }
 
 function FormularioPedido({
@@ -49,6 +53,7 @@ function FormularioPedido({
   onSubmit,
   onCancel,
 }: FormularioPedidoProps) {
+  const { t } = useTranslation();
   const proveedorSeleccionado = proveedores.find(
     (item) => item.id === pedido.proveedorId,
   );
@@ -62,32 +67,26 @@ function FormularioPedido({
       {alertMessage ? (
         <AlertMessage
           variant="error"
-          title="Revisá la información"
+          title={t("common.errorOccurred")}
           message={alertMessage}
         />
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <p className="mb-1.5 block text-sm font-semibold text-zinc-700">
-            Número de pedido
+          <p className="mb-1 block text-xs font-semibold text-zinc-700">
+            {t("orders.orderNumber")}
           </p>
 
-          <div className="flex min-h-[42px] items-center rounded-xl border border-zinc-300 bg-zinc-50 px-3.5 py-2.5 text-sm">
-            <span className="font-semibold text-zinc-900">
-              {pedido.numeroPedido
-                ? `Pedido #${pedido.numeroPedido}`
-                : "Calculando número..."}
+          <div className="flex min-h-[38px] items-center rounded-xl border border-zinc-200/90 bg-zinc-50 px-3 py-2 text-xs sm:text-sm shadow-2xs">
+            <span className="font-semibold text-zinc-950">
+              {pedido.numeroPedido ? `#${pedido.numeroPedido}` : "—"}
             </span>
           </div>
-
-          <p className="mt-1.5 text-xs text-zinc-500">
-            El número se asigna automáticamente y no se puede editar.
-          </p>
         </div>
 
         <InputField
-          label="Fecha"
+          label={t("orders.date")}
           type="date"
           value={pedido.fecha}
           onChange={(value) => onChange("fecha", value)}
@@ -96,10 +95,10 @@ function FormularioPedido({
         />
 
         <SelectField
-          label="Proveedor"
+          label={t("orders.supplier")}
           value={pedido.proveedorId ? String(pedido.proveedorId) : ""}
           onChange={(value) => onChange("proveedorId", value)}
-          placeholder="Seleccione un proveedor"
+          placeholder={t("orders.supplierPlaceholder")}
           required
           error={errors.proveedorId}
           options={proveedores.map((item) => ({
@@ -109,35 +108,34 @@ function FormularioPedido({
         />
 
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-zinc-700">
-            País de origen<span className="ml-1 text-red-500" aria-hidden="true">*</span>
+          <label className="mb-1 block text-xs font-semibold text-zinc-700">
+            {t("orders.origin")}
+            <span className="ml-1 text-rose-500" aria-hidden="true">
+              *
+            </span>
           </label>
 
           <div
-            className={`flex min-h-[42px] items-center rounded-xl border px-3.5 py-2.5 text-sm ${
+            className={`flex min-h-[38px] items-center rounded-xl border px-3 py-2 text-xs sm:text-sm shadow-2xs ${
               errors.origen
-                ? "border-red-400 bg-red-50/50 text-red-700"
+                ? "border-rose-300 bg-rose-50/40 text-rose-700"
                 : pedido.origen
-                  ? "border-zinc-300 bg-zinc-50 font-semibold text-zinc-800"
-                  : "border-zinc-300 bg-zinc-50 text-zinc-400"
+                  ? "border-zinc-200/90 bg-zinc-50 font-semibold text-zinc-800"
+                  : "border-zinc-200/90 bg-zinc-50 text-zinc-400"
             }`}
           >
-            {pedido.origen || "Se completará al seleccionar el proveedor"}
+            {pedido.origen || "—"}
           </div>
 
           {errors.origen ? (
             <p role="alert" className="mt-1.5 text-xs font-medium text-red-600">
               {errors.origen}
             </p>
-          ) : (
-            <p className="mt-1.5 text-xs text-zinc-400">
-              Este dato se toma automáticamente del proveedor.
-            </p>
-          )}
+          ) : null}
         </div>
 
         <SelectField
-          label="Moneda"
+          label={t("orders.currency")}
           value={pedido.monedaCompra}
           onChange={(value) => onChange("monedaCompra", value)}
           required
@@ -146,44 +144,47 @@ function FormularioPedido({
           options={monedas}
         />
 
-        <InputField
-          label="Tipo de cambio"
-          type="text"
-          value={pedido.tipoCambio}
-          onChange={(value) => onChange("tipoCambio", value)}
-          placeholder={compraLocal ? "1.00" : "Ejemplo: 445.00"}
-          required={!compraLocal && Boolean(pedido.proveedorId)}
-          disabled={!pedido.proveedorId || compraLocal}
-          error={errors.tipoCambio}
-          maxLength={6}
-          helperText={
-            !pedido.proveedorId
-              ? "Seleccioná un proveedor para definir el tipo de cambio."
-              : compraLocal
-                ? "Compra nacional: se utiliza automáticamente 1 CRC = 1 CRC."
-                : "Obligatorio para proveedores fuera de Costa Rica."
-          }
-          showCharacterCount={!compraLocal && Boolean(pedido.proveedorId)}
-        />
+        <div>
+          <MoneyInputField
+            label={t("orders.exchangeRate")}
+            value={pedido.tipoCambio}
+            onChange={(value) => onChange("tipoCambio", value)}
+            placeholder={compraLocal ? "1.00" : "520.00"}
+            required={!compraLocal && Boolean(pedido.proveedorId)}
+            disabled={!pedido.proveedorId || compraLocal}
+            error={errors.tipoCambio}
+            currencySymbol="₡"
+            allowDecimals={true}
+            maxDecimals={4}
+          />
+          {!compraLocal && pedido.monedaCompra && pedido.monedaCompra !== "CRC" ? (
+            <p className="mt-1 text-xs text-zinc-500">
+              1 {pedido.monedaCompra} equivale a{" "}
+              <span className="font-semibold text-zinc-700">
+                {pedido.tipoCambio ? `₡ ${pedido.tipoCambio}` : "X CRC"}
+              </span>
+            </p>
+          ) : null}
+        </div>
 
         <SelectField
-          label="Estado"
+          label={t("common.status")}
           value={pedido.estado}
           onChange={(value) => onChange("estado", value)}
           required
           error={errors.estado}
           options={[
-            { value: "REGISTRADO", label: "Registrado" },
-            { value: "EN_TRANSITO", label: "En tránsito" },
+            { value: "REGISTRADO", label: t("statuses.orders.REGISTRADO") },
+            { value: "EN_TRANSITO", label: t("statuses.orders.EN_TRANSITO") },
           ]}
         />
 
         <div className="sm:col-span-2">
           <InputField
-            label="Observaciones"
+            label={t("orders.observations")}
             value={pedido.observaciones}
             onChange={(value) => onChange("observaciones", value)}
-            placeholder="Notas del pedido"
+            placeholder={t("orders.observationsPlaceholder")}
             error={errors.observaciones}
             maxLength={150}
             showCharacterCount
@@ -197,10 +198,10 @@ function FormularioPedido({
           onClick={onCancel}
           className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950"
         >
-          Cancelar
+          {t("common.cancel")}
         </button>
 
-        <PrimaryButton onClick={onSubmit}>Siguiente</PrimaryButton>
+        <PrimaryButton onClick={onSubmit}>{t("common.confirm")}</PrimaryButton>
       </div>
     </div>
   );

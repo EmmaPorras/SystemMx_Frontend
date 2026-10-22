@@ -50,4 +50,33 @@ describe("InputField", () => {
     await user.type(input, "8");
     expect(handleChange).toHaveBeenCalledWith("8");
   });
+
+  it("alterna entre mostrar y ocultar contraseña al presionar el botón de ojo", async () => {
+    const user = userEvent.setup();
+    render(
+      <InputField
+        label="Contraseña"
+        type="password"
+        value="MiClave123"
+        onChange={vi.fn()}
+      />
+    );
+
+    const input = screen.getByLabelText(/^contraseña$/i);
+    expect(input).toHaveAttribute("type", "password");
+
+    const toggleButton = screen.getByRole("button", {
+      name: /mostrar contraseña/i,
+    });
+    expect(toggleButton).toBeInTheDocument();
+
+    await user.click(toggleButton);
+    expect(input).toHaveAttribute("type", "text");
+
+    const hideButton = screen.getByRole("button", {
+      name: /ocultar contraseña/i,
+    });
+    await user.click(hideButton);
+    expect(input).toHaveAttribute("type", "password");
+  });
 });

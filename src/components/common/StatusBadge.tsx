@@ -8,23 +8,23 @@ type StatusBadgeProps = {
 
 const styles: Record<StatusBadgeVariant, { container: string; dot: string }> = {
   success: {
-    container: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    container: "bg-emerald-50/80 text-emerald-800 border-emerald-200/80",
     dot: "bg-emerald-500",
   },
   warning: {
-    container: "bg-amber-50 text-amber-700 border-amber-200",
+    container: "bg-amber-50/90 text-amber-800 border-amber-200/90",
     dot: "bg-amber-500",
   },
   danger: {
-    container: "bg-rose-50 text-rose-700 border-rose-200",
+    container: "bg-rose-50/80 text-rose-800 border-rose-200/80",
     dot: "bg-rose-500",
   },
   neutral: {
-    container: "bg-zinc-100 text-zinc-700 border-zinc-200",
+    container: "bg-zinc-100/80 text-zinc-700 border-zinc-200/80",
     dot: "bg-zinc-400",
   },
   info: {
-    container: "bg-sky-50 text-sky-700 border-sky-200",
+    container: "bg-sky-50/80 text-sky-800 border-sky-200/80",
     dot: "bg-sky-500",
   },
 };
@@ -38,7 +38,7 @@ function StatusBadge({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${currentStyle.container} ${className}`}
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-normal shadow-2xs ${currentStyle.container} ${className}`}
     >
       <span
         aria-hidden="true"

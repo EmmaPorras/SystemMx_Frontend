@@ -1,6 +1,8 @@
+import { useTranslation } from "react-i18next";
 import DataTableShell from "../common/DataTableShell";
 import StatusBadge from "../common/StatusBadge";
-import { formatCurrency } from "../common/formatters";
+import { formatCurrency, getActiveLocale } from "../common/formatters";
+import { getLotStatusLabel } from "../../i18n/statusMap";
 import type {
   EstadoLoteProducto,
   MonedaCompra,
@@ -26,12 +28,10 @@ function getMonedaSymbol(moneda: MonedaCompra) {
 
 function formatMoneyByMoneda(value: number, moneda: MonedaCompra) {
   const numericValue = Number(value);
-
   const safeValue = Number.isFinite(numericValue) ? numericValue : 0;
-
   const decimals = moneda === "CRC" || moneda === "COP" ? 0 : 2;
 
-  const formattedValue = new Intl.NumberFormat("es-CR", {
+  const formattedValue = new Intl.NumberFormat(getActiveLocale(), {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(safeValue);
@@ -61,17 +61,6 @@ function getCantidadPendiente(row: PedidoDetalle) {
   );
 }
 
-function getEstadoLoteLabel(estado: EstadoLoteProducto) {
-  const labels: Record<EstadoLoteProducto, string> = {
-    EN_PROCESO: "En proceso",
-    EN_STOCK: "En stock",
-    VENDIDO_PARCIAL: "Vendido parcial",
-    AGOTADO: "Agotado",
-  };
-
-  return labels[estado];
-}
-
 function getEstadoLoteVariant(estado: EstadoLoteProducto) {
   if (estado === "EN_STOCK") return "success";
   if (estado === "EN_PROCESO") return "warning";
@@ -82,15 +71,18 @@ function PedidoDetalleTable({
   detalles,
   monedaCompra,
 }: PedidoDetalleTableProps) {
+  const { t } = useTranslation();
+
   return (
     <DataTableShell
       data={detalles}
-      emptyMessage="Este pedido todavia no tiene artículos o lotes registrados."
+      emptyMessage={t("orders.emptyTitle")}
+      emptyDescription={t("orders.emptyDesc")}
       getRowKey={(row) => row.idTemporal}
       columns={[
         {
           key: "producto",
-          header: "Producto",
+          header: t("products.title"),
           render: (row) => (
             <div>
               <p className="font-semibold text-slate-900">
@@ -98,7 +90,7 @@ function PedidoDetalleTable({
               </p>
               {row.productoId ? (
                 <p className="text-xs text-slate-500">
-                  ID producto: {row.productoId}
+                  ID: {row.productoId}
                 </p>
               ) : null}
             </div>
@@ -106,63 +98,63 @@ function PedidoDetalleTable({
         },
         {
           key: "categoria",
-          header: "Categoría",
-          render: (row) => row.categoriaNombre || "Sin categoría",
+          header: t("products.category"),
+          render: (row) => row.categoriaNombre || "—",
         },
         {
           key: "marca",
-          header: "Marca",
+          header: t("products.brand"),
           render: (row) => row.marca || "—",
         },
         {
           key: "lote",
-          header: "Lote",
+          header: t("orders.lotCode"),
           render: (row) => (
             <p className="font-semibold text-slate-900">{row.loteCodigo}</p>
           ),
         },
         {
           key: "cantidad",
-          header: "Pedida",
+          header: t("orders.quantity"),
           render: (row) => row.cantidad,
         },
         {
           key: "recibida",
-          header: "Recibida",
+          header: t("orders.quantityReceived"),
           render: (row) => getCantidadRecibida(row),
         },
         {
           key: "pendiente",
-          header: "Pendiente",
+          header: t("orders.pending"),
           render: (row) => getCantidadPendiente(row),
         },
         {
           key: "stock",
-          header: "Stock actual",
+          header: t("products.stock"),
           render: (row) => row.cantidadDisponible,
         },
         {
           key: "costoOrigen",
-          header: "Costo origen",
+          header: t("orders.costOrigin"),
           render: (row) =>
             formatMoneyByMoneda(row.costoUnitarioOrigen, monedaCompra),
         },
         {
           key: "costoReal",
-          header: "Costo real CRC",
+          header: t("lots.costReal"),
           render: (row) => formatCurrency(row.costoUnitarioReal),
         },
         {
           key: "precio",
-          header: "Precio recom.",
+          header: t("orders.recommendedPrice"),
           render: (row) => formatCurrency(row.precioVentaRecomendado),
         },
         {
           key: "estado",
-          header: "Estado lote",
+          header: t("common.status"),
           render: (row) => (
             <StatusBadge
-              label={getEstadoLoteLabel(row.estadoLote)}
+              label={getLotStatusLabel(t, row.estadoLote)}
               variant={getEstadoLoteVariant(row.estadoLote)}
             />
           ),
