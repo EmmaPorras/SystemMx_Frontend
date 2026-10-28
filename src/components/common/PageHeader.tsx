@@ -29,7 +29,9 @@ function PageHeader({
   iconAriaLabel,
 }: PageHeaderProps) {
   const { t } = useTranslation();
-  const resolvedIconAriaLabel = iconAriaLabel ?? t("common.goHome");
+
+  const resolvedIconAriaLabel =
+    iconAriaLabel ?? t("common.goHome");
 
   const iconBox = iconTo ? (
     <Link
@@ -108,8 +110,6 @@ function PageHeader({
         lg:p-6
       "
     >
-      
-
       <div
         className="
           relative
@@ -130,7 +130,7 @@ function PageHeader({
               <span className="h-px w-6 bg-zinc-400" />
 
               <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-400">
-                Panel administrativo
+                {t("appLayout.adminPanel")}
               </span>
             </div>
 
@@ -139,7 +139,7 @@ function PageHeader({
             </h1>
 
             {description ? (
-              <p className="mt-1 max-w-3xl text-xs sm:text-[13px] leading-relaxed text-zinc-500">
+              <p className="mt-1 max-w-3xl text-xs leading-relaxed text-zinc-500 sm:text-[13px]">
                 {description}
               </p>
             ) : null}

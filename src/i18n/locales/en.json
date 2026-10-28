@@ -58,7 +58,8 @@
     "code": "Code",
     "retry": "Retry",
     "next": "Next",
-    "you": "(You)"
+    "you": "(You)",
+    "indicator": "Indicator"
   },
   "language": {
     "label": "Language",
@@ -411,7 +412,7 @@
     "newRate": "New tax rate",
     "editRate": "Edit tax rate",
     "percentage": "Percentage (%)",
-    "percentagePlaceholder": "E.g. 13, 8, 4, 0",
+    "percentagePlaceholder": "E.g. 13",
     "description": "Description",
     "descriptionPlaceholder": "E.g. Standard rate 13%",
     "status": "Status",
@@ -426,7 +427,9 @@
     "percentageMin": "Percentage cannot be negative.",
     "percentageMax": "Percentage cannot exceed 100.",
     "descriptionRequired": "Description is required.",
-    "exempt": "Exempt"
+    "exempt": "Exempt",
+    "codePlaceholder": "E.g. VAT13",
+    "percentageHelper": "Enter a value between 0 and 100 (e.g. 13 for 13%)."
   },
   "suppliers": {
     "title": "Suppliers",
@@ -545,7 +548,15 @@
     "detailTitle": "Order details",
     "cancelConfirmTitle": "Cancel purchase order",
     "cancelConfirmMessage": "Are you sure you want to cancel order #{{number}}? This action cannot be undone.",
-    "orderSummary": "Order summary"
+    "orderSummary": "Order summary",
+    "currencies": {
+      "CRC": "CRC - Costa Rican colones (₡)",
+      "USD": "USD - US dollars ($)",
+      "EUR": "EUR - Euros (€)",
+      "COP": "COP - Colombian pesos",
+      "BRL": "BRL - Brazilian reais (R$)"
+    },
+    "exchangeRateHint": "1 {{currency}} equals {{rate}}"
   },
   "lots": {
     "title": "Inventory Batches",

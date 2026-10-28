@@ -58,7 +58,8 @@
     "code": "Código",
     "retry": "Reintentar",
     "next": "Siguiente",
-    "you": "(Tú)"
+    "you": "(Tú)",
+    "indicator": "Indicador"
   },
   "language": {
     "label": "Idioma",
@@ -411,7 +412,7 @@
     "newRate": "Nueva tarifa",
     "editRate": "Editar tarifa",
     "percentage": "Porcentaje (%)",
-    "percentagePlaceholder": "Ej. 13, 8, 4, 0",
+    "percentagePlaceholder": "Ej. 13",
     "description": "Descripción",
     "descriptionPlaceholder": "Ej. Tarifa general 13%",
     "status": "Estado",
@@ -426,7 +427,9 @@
     "percentageMin": "El porcentaje no puede ser negativo.",
     "percentageMax": "El porcentaje no puede ser mayor a 100.",
     "descriptionRequired": "La descripción es obligatoria.",
-    "exempt": "Exento"
+    "exempt": "Exento",
+    "codePlaceholder": "Ej. IVA13",
+    "percentageHelper": "Ingrese un valor entre 0 y 100 (ej. 13 para 13%)."
   },
   "suppliers": {
     "title": "Proveedores",
@@ -545,7 +548,15 @@
     "detailTitle": "Detalle del pedido",
     "cancelConfirmTitle": "Cancelar pedido",
     "cancelConfirmMessage": "¿Está seguro de cancelar el pedido #{{number}}? Esta acción es definitiva.",
-    "orderSummary": "Resumen del pedido"
+    "orderSummary": "Resumen del pedido",
+    "currencies": {
+      "CRC": "CRC - Colones costarricenses (₡)",
+      "USD": "USD - Dólares estadounidenses ($)",
+      "EUR": "EUR - Euros (€)",
+      "COP": "COP - Pesos colombianos",
+      "BRL": "BRL - Reales brasileños (R$)"
+    },
+    "exchangeRateHint": "1 {{currency}} equivale a {{rate}}"
   },
   "lots": {
     "title": "Lotes de Inventario",
