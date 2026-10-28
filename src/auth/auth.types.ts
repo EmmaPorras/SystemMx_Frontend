@@ -2,7 +2,8 @@ export type BackendRole =
   | "ADMIN"
   | "VENTAS"
   | "COMPRAS"
-  | "CONSULTA";
+  | "CONSULTA"
+  | "DEMO";
 
 export type LoginRequest = {
   username: string;
@@ -55,4 +56,17 @@ export type ActivarCuentaRequest = {
 export type RestablecerPasswordRequest = {
   token: string;
   password: string;
+};
+
+export type RegistroRequest = {
+  nombre: string;
+  username: string;
+  email: string;
+  password: string;
+  lang?: "es" | "en" | "pt";
+};
+
+export type RegistroResponse = {
+  message: string;
+  usuario: CurrentUser;
 };

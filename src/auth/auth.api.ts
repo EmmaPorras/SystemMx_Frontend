@@ -5,6 +5,8 @@ import type {
   CurrentUser,
   LoginRequest,
   LoginResponse,
+  RegistroRequest,
+  RegistroResponse,
   RestablecerPasswordRequest,
   SolicitarRecuperacionRequest,
   ValidarTokenResponse,
@@ -71,6 +73,18 @@ export function restablecerPasswordApi(
 ): Promise<{ success: boolean; message: string }> {
   return apiClient.post<{ success: boolean; message: string }, RestablecerPasswordRequest>(
     "/auth/restablecer-password",
+    data,
+    {
+      auth: false,
+    },
+  );
+}
+
+export function registroApi(
+  data: RegistroRequest,
+): Promise<RegistroResponse> {
+  return apiClient.post<RegistroResponse, RegistroRequest>(
+    "/auth/registro",
     data,
     {
       auth: false,

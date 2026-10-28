@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import {
   Navigate,
   Route,
   Routes,
+  useLocation,
 } from "react-router";
 
 import ProtectedRoute from "./auth/ProtectedRoute";
@@ -10,9 +12,11 @@ import { getDefaultRouteForRole } from "./auth/permissions";
 
 import AppLayout from "./components/common/AppLayout";
 import LoginPage from "./components/auth/LoginPage";
+import RegistroPage from "./auth/RegistroPage";
 import RecuperarPasswordPage from "./auth/RecuperarPasswordPage";
 import RestablecerPasswordPage from "./auth/RestablecerPasswordPage";
 import ActivarCuentaPage from "./auth/ActivarCuentaPage";
+import DemoPage from "./components/demo/DemoPage";
 
 import HomePage from "./components/home/HomePage";
 import ProveedoresPage from "./components/proveedores/ProveedoresPage";
@@ -28,6 +32,40 @@ import ReportesPage from "./components/reportes/ReportesPage";
 import AuditoriaPage from "./components/auditoria/AuditoriaPage";
 import UsuariosPage from "./components/usuarios/UsuariosPage";
 
+const ROUTE_TITLES: Record<string, string> = {
+  "/login": "Iniciar Sesión | SystemMx",
+  "/registro": "Crear Cuenta | SystemMx",
+  "/recuperar-contrasena": "Recuperar Contraseña | SystemMx",
+  "/restablecer-contrasena": "Restablecer Contraseña | SystemMx",
+  "/activar-cuenta": "Activar Cuenta | SystemMx",
+  "/": "Inicio | SystemMx",
+  "/usuarios": "Usuarios | SystemMx",
+  "/proveedores": "Proveedores | SystemMx",
+  "/categorias": "Categorías | SystemMx",
+  "/tarifas-iva": "Tarifas IVA | SystemMx",
+  "/pedidos": "Pedidos de Compra | SystemMx",
+  "/productos": "Catálogo de Productos | SystemMx",
+  "/inventario/lotes": "Lotes de Inventario | SystemMx",
+  "/inventario/movimientos": "Movimientos de Inventario | SystemMx",
+  "/ventas": "Ventas y Facturación | SystemMx",
+  "/cuentas-por-cobrar": "Cuentas por Cobrar | SystemMx",
+  "/reportes": "Reportes Operativos | SystemMx",
+  "/auditoria": "Auditoría del Sistema | SystemMx",
+  "/demo": "Demostración del Sistema | SystemMx",
+};
+
+function PageTitleSync() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const title =
+      ROUTE_TITLES[location.pathname] || "SystemMx — Gestión Empresarial";
+    document.title = title;
+  }, [location.pathname]);
+
+  return null;
+}
+
 function HomeRoute() {
   const { user } = useAuth();
   if (user && user.rol !== "ADMIN") {
@@ -38,10 +76,17 @@ function HomeRoute() {
 
 function App() {
   return (
-    <Routes>
+    <>
+      <PageTitleSync />
+      <Routes>
       <Route
         path="/login"
         element={<LoginPage />}
+      />
+
+      <Route
+        path="/registro"
+        element={<RegistroPage />}
       />
 
       <Route
@@ -180,6 +225,16 @@ function App() {
             }
           />
 
+          {/* Entorno Demostrativo Evaluativo Aislado */}
+          <Route
+            path="/demo"
+            element={
+              <ProtectedRoute allowedRoles={["ADMIN", "DEMO"]}>
+                <DemoPage />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="*"
             element={<Navigate to="/" replace />}
@@ -187,6 +242,7 @@ function App() {
         </Route>
       </Route>
     </Routes>
+    </>
   );
 }
 

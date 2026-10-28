@@ -82,7 +82,7 @@ function SelectField({
       </select>
 
       {error ? (
-        <p id={errorId} role="alert" className="mt-1.5 text-xs font-medium text-red-600">
+        <p id={errorId} role="alert" className="mt-1.5 text-xs font-medium text-red-800">
           {error}
         </p>
       ) : null}

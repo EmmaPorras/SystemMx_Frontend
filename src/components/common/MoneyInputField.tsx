@@ -124,11 +124,11 @@ function MoneyInputField({
         <div className="mt-1.5 flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             {error ? (
-              <p id={errorId} role="alert" className="text-xs font-medium text-red-600">
+              <p id={errorId} role="alert" className="text-xs font-medium text-red-800">
                 {error}
               </p>
             ) : helperText ? (
-              <p id={helperId} className="text-xs text-zinc-500">
+              <p id={helperId} className="text-xs text-zinc-600">
                 {helperText}
               </p>
             ) : null}
