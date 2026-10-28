@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getDefaultRouteForRole, isRoleAllowedForPath, ROUTE_PERMISSIONS } from "./permissions";
 import type { BackendRole } from "./auth.types";
 
-describe("SYSTEMMX - Matriz de Permisos Frontend (Etapa 12)", () => {
+describe("SYSTEMMX - Matriz de Permisos Frontend (Etapa 12 y Fase 4)", () => {
   describe("Rutas por defecto en Login / Redirección", () => {
     it("ADMIN dirige a Inicio (/)", () => {
       expect(getDefaultRouteForRole("ADMIN")).toBe("/");
@@ -18,6 +18,10 @@ describe("SYSTEMMX - Matriz de Permisos Frontend (Etapa 12)", () => {
 
     it("CONSULTA dirige a Productos (/productos)", () => {
       expect(getDefaultRouteForRole("CONSULTA")).toBe("/productos");
+    });
+
+    it("DEMO dirige a /demo", () => {
+      expect(getDefaultRouteForRole("DEMO")).toBe("/demo");
     });
 
     it("Sin rol dirige a /login", () => {
@@ -48,6 +52,7 @@ describe("SYSTEMMX - Matriz de Permisos Frontend (Etapa 12)", () => {
       expect(isRoleAllowedForPath("/tarifas-iva", "VENTAS")).toBe(false);
       expect(isRoleAllowedForPath("/reportes", "VENTAS")).toBe(false);
       expect(isRoleAllowedForPath("/auditoria", "VENTAS")).toBe(false);
+      expect(isRoleAllowedForPath("/demo", "VENTAS")).toBe(false);
     });
 
     it("COMPRAS solo accede a pedidos e inventario de consulta", () => {
@@ -82,6 +87,21 @@ describe("SYSTEMMX - Matriz de Permisos Frontend (Etapa 12)", () => {
       expect(isRoleAllowedForPath("/categorias", "CONSULTA")).toBe(false);
       expect(isRoleAllowedForPath("/tarifas-iva", "CONSULTA")).toBe(false);
       expect(isRoleAllowedForPath("/auditoria", "CONSULTA")).toBe(false);
+    });
+
+    it("DEMO solo accede al entorno demostrativo aislado /demo", () => {
+      expect(isRoleAllowedForPath("/demo", "DEMO")).toBe(true);
+
+      // Estrictamente prohibido en datos reales y operaciones
+      expect(isRoleAllowedForPath("/ventas", "DEMO")).toBe(false);
+      expect(isRoleAllowedForPath("/cuentas-por-cobrar", "DEMO")).toBe(false);
+      expect(isRoleAllowedForPath("/pedidos", "DEMO")).toBe(false);
+      expect(isRoleAllowedForPath("/proveedores", "DEMO")).toBe(false);
+      expect(isRoleAllowedForPath("/usuarios", "DEMO")).toBe(false);
+      expect(isRoleAllowedForPath("/categorias", "DEMO")).toBe(false);
+      expect(isRoleAllowedForPath("/tarifas-iva", "DEMO")).toBe(false);
+      expect(isRoleAllowedForPath("/reportes", "DEMO")).toBe(false);
+      expect(isRoleAllowedForPath("/auditoria", "DEMO")).toBe(false);
     });
   });
 });

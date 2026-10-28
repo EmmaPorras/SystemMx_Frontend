@@ -14,6 +14,7 @@ export const ROUTE_PERMISSIONS: Record<string, BackendRole[]> = {
   "/productos": ["ADMIN", "VENTAS", "COMPRAS", "CONSULTA"],
   "/lotes": ["ADMIN", "VENTAS", "COMPRAS", "CONSULTA"],
   "/inventario/movimientos": ["ADMIN", "VENTAS", "COMPRAS", "CONSULTA"],
+  "/demo": ["ADMIN", "DEMO"],
 };
 
 export function getDefaultRouteForRole(role?: BackendRole | null): string {
@@ -27,6 +28,8 @@ export function getDefaultRouteForRole(role?: BackendRole | null): string {
       return "/pedidos";
     case "CONSULTA":
       return "/productos";
+    case "DEMO":
+      return "/demo";
     default:
       return "/productos";
   }

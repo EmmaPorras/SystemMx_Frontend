@@ -149,6 +149,12 @@ function LoginPage() {
                   <LockKeyhole className="h-7 w-7 text-zinc-900" />
                 ) : (
                   <video
+                    ref={(el) => {
+                      if (el) {
+                        el.muted = true;
+                        el.setAttribute("muted", "");
+                      }
+                    }}
                     data-testid="systemmx-animated-logo"
                     className="block h-full w-full scale-[1.08] object-cover"
                     autoPlay
@@ -271,6 +277,16 @@ function LoginPage() {
               <span>
                 {t("auth.loginAdminAccess")}
               </span>
+            </div>
+
+            <div className="mt-4 text-center text-xs text-zinc-500">
+              {t("auth.noAccountPrompt", "¿No tienes cuenta?")}{" "}
+              <Link
+                to="/registro"
+                className="font-semibold text-zinc-900 underline underline-offset-4 hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 rounded"
+              >
+                {t("auth.registerHere", "Regístrate aquí")}
+              </Link>
             </div>
           </form>
         </div>

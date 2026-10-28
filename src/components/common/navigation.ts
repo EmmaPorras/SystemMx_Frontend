@@ -62,6 +62,15 @@ export const navigationGroupConfigs: NavigationGroupConfig[] = [
         icon: House,
         allowedRoles: ["ADMIN"],
       },
+      {
+        labelKey: "navigation.demo",
+        defaultLabel: "Evaluación Demo",
+        path: "/demo",
+        descriptionKey: "navigation.demoDesc",
+        defaultDescription: "Entorno evaluativo seguro",
+        icon: ShieldCheck,
+        allowedRoles: ["ADMIN", "DEMO"],
+      },
     ],
   },
   {

@@ -12,6 +12,7 @@ import InputField from "../components/common/InputField";
 import LanguageSelector from "../components/common/LanguageSelector";
 import PrimaryButton from "../components/common/PrimaryButton";
 import LoadingState from "../components/common/LoadingState";
+import PasswordStrengthIndicator from "../components/common/PasswordStrengthIndicator";
 import { ApiError } from "../api/ApiError";
 import { restablecerPasswordApi, validarTokenApi } from "./auth.api";
 
@@ -74,7 +75,14 @@ function RestablecerPasswordPage() {
 
     if (!password) {
       nextErrors.password = t("auth.passwordRequired");
-    } else if (password.length < 8) {
+    } else if (password.length < 15) {
+      nextErrors.password = t("auth.passwordMinLength15", {
+        defaultValue: "La contraseña debe tener al menos 15 caracteres.",
+      });
+    } else if (/^(.)\1+$/.test(password)) {
+      nextErrors.password = t("auth.passwordTrivial", {
+        defaultValue: "La contraseña no puede consistir únicamente en la repetición del mismo carácter.",
+      });
       nextErrors.password = t("auth.passwordMinLength");
     } else if (password.length > 128) {
       nextErrors.password = t("auth.passwordMaxLength");
@@ -174,7 +182,7 @@ function RestablecerPasswordPage() {
                 <div className="pt-2 flex flex-col gap-2.5">
                   <Link
                     to="/recuperar-contrasena"
-                    className="inline-flex justify-center items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                    className="inline-flex justify-center items-center gap-2 rounded-xl bg-blue-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-900 transition"
                   >
                     <span>{t("auth.sendRecoveryLink")}</span>
                   </Link>
@@ -204,7 +212,7 @@ function RestablecerPasswordPage() {
                 <div className="pt-2">
                   <Link
                     to="/login"
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-900 transition"
                   >
                     <span>{t("auth.backToLogin")}</span>
                   </Link>
@@ -237,6 +245,8 @@ function RestablecerPasswordPage() {
                     autoComplete="new-password"
                     maxLength={128}
                     error={errors.password}
+                  />
+                  <PasswordStrengthIndicator password={password} id="restablecer-password-strength"
                   />
 
                   <InputField

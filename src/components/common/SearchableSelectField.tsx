@@ -171,23 +171,29 @@ function SearchableSelectField({
           >
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
-                <button
+                <div
                   key={option.value}
                   role="option"
-                  type="button"
+                  tabIndex={0}
                   aria-selected={option.value === value}
                   onClick={() => selectOption(option)}
-                  className={`block w-full px-3.5 py-2 text-left text-sm transition ${
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      selectOption(option);
+                    }
+                  }}
+                  className={`block w-full cursor-pointer px-3.5 py-2 text-left text-sm transition focus:outline-none focus-visible:bg-zinc-100 ${
                     option.value === value
                       ? "bg-zinc-950 font-semibold text-white"
                       : "text-zinc-700 hover:bg-zinc-100"
                   }`}
                 >
                   {option.label}
-                </button>
+                </div>
               ))
             ) : (
-              <p className="px-3.5 py-3 text-center text-xs text-zinc-500">
+              <p className="px-3.5 py-3 text-center text-xs text-zinc-600">
                 {t("common.noOptionsFound")}
               </p>
             )}
@@ -196,7 +202,7 @@ function SearchableSelectField({
       ) : null}
 
       {error ? (
-        <p id={errorId} role="alert" className="mt-1.5 text-xs font-medium text-red-600">
+        <p id={errorId} role="alert" className="mt-1.5 text-xs font-medium text-red-800">
           {error}
         </p>
       ) : null}
