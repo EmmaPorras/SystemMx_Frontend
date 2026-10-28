@@ -12,6 +12,7 @@ import InputField from "../components/common/InputField";
 import LanguageSelector from "../components/common/LanguageSelector";
 import PrimaryButton from "../components/common/PrimaryButton";
 import LoadingState from "../components/common/LoadingState";
+import PasswordStrengthIndicator from "../components/common/PasswordStrengthIndicator";
 import { ApiError } from "../api/ApiError";
 import { restablecerPasswordApi, validarTokenApi } from "./auth.api";
 
@@ -74,7 +75,14 @@ function RestablecerPasswordPage() {
 
     if (!password) {
       nextErrors.password = t("auth.passwordRequired");
-    } else if (password.length < 8) {
+    } else if (password.length < 15) {
+      nextErrors.password = t("auth.passwordMinLength15", {
+        defaultValue: "La contraseña debe tener al menos 15 caracteres.",
+      });
+    } else if (/^(.)\1+$/.test(password)) {
+      nextErrors.password = t("auth.passwordTrivial", {
+        defaultValue: "La contraseña no puede consistir únicamente en la repetición del mismo carácter.",
+      });
       nextErrors.password = t("auth.passwordMinLength");
     } else if (password.length > 128) {
       nextErrors.password = t("auth.passwordMaxLength");
@@ -237,6 +245,8 @@ function RestablecerPasswordPage() {
                     autoComplete="new-password"
                     maxLength={128}
                     error={errors.password}
+                  />
+                  <PasswordStrengthIndicator password={password} id="restablecer-password-strength"
                   />
 
                   <InputField
