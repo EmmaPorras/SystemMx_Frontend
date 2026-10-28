@@ -182,7 +182,7 @@ function RestablecerPasswordPage() {
                 <div className="pt-2 flex flex-col gap-2.5">
                   <Link
                     to="/recuperar-contrasena"
-                    className="inline-flex justify-center items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                    className="inline-flex justify-center items-center gap-2 rounded-xl bg-blue-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-900 transition"
                   >
                     <span>{t("auth.sendRecoveryLink")}</span>
                   </Link>
@@ -212,7 +212,7 @@ function RestablecerPasswordPage() {
                 <div className="pt-2">
                   <Link
                     to="/login"
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-900 transition"
                   >
                     <span>{t("auth.backToLogin")}</span>
                   </Link>

@@ -187,7 +187,7 @@ function ActivarCuentaPage() {
                 <div className="pt-2">
                   <Link
                     to="/login"
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-900 transition"
                   >
                     <span>{t("auth.backToLogin")}</span>
                   </Link>
@@ -210,7 +210,7 @@ function ActivarCuentaPage() {
                 <div className="pt-2">
                   <Link
                     to="/login"
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition"
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-900 transition"
                   >
                     <span>{t("auth.backToLogin")}</span>
                   </Link>
