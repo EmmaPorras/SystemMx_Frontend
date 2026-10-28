@@ -141,3 +141,4 @@ describe("Auditoría de Accesibilidad Automatizada con axe-core (WCAG 2.2 AAA)",
     expect(results.violations).toEqual([]);
   });
 });
+

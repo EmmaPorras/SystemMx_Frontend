@@ -32,3 +32,4 @@ describe("PasswordStrengthIndicator (Fase 3 - Seguridad de Contraseñas)", () =>
     expect(Number(bar.getAttribute("aria-valuenow"))).toBeGreaterThan(0);
   });
 });
+
