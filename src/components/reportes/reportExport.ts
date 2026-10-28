@@ -3424,6 +3424,128 @@ function ensurePdfSpace(
   return currentY;
 }
 
+
+function normalizePdfHeader(
+  value: string,
+): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function isIdentifierColumn(
+  header: string,
+): boolean {
+  const normalized = normalizePdfHeader(header);
+
+  return (
+    normalized === "id" ||
+    normalized.startsWith("id ") ||
+    normalized.includes(" id ") ||
+    normalized.includes("numero") ||
+    normalized.includes("codigo") ||
+    normalized.includes("referencia")
+  );
+}
+
+function getPdfSemanticHeader(
+  header: string,
+  row: ExportRow,
+): string {
+  const normalized = normalizePdfHeader(header);
+
+  if (
+    normalized !== "valor" &&
+    normalized !== "value"
+  ) {
+    return header;
+  }
+
+  const descriptor = Object.entries(row).find(
+    ([key, value]) => {
+      const normalizedKey = normalizePdfHeader(key);
+
+      return (
+        (normalizedKey === "campo" ||
+          normalizedKey === "field") &&
+        typeof value === "string"
+      );
+    },
+  );
+
+  if (
+    descriptor &&
+    typeof descriptor[1] === "string"
+  ) {
+    return descriptor[1];
+  }
+
+  return header;
+}
+
+function formatPdfNumber(
+  value: number,
+  header: string,
+  row: ExportRow,
+): string {
+  const semanticHeader = getPdfSemanticHeader(
+    header,
+    row,
+  );
+
+  if (isIdentifierColumn(semanticHeader)) {
+    return String(value);
+  }
+
+  if (isPercentageColumn(semanticHeader)) {
+    return `${new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(value)}%`;
+  }
+
+  if (isIntegerColumn(semanticHeader)) {
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function formatPdfCell(
+  value: Primitive | undefined,
+  header: string,
+  row: ExportRow,
+): string {
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return "—";
+  }
+
+  if (typeof value === "number") {
+    return formatPdfNumber(
+      value,
+      header,
+      row,
+    );
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "Sí" : "No";
+  }
+
+  return String(value);
+}
+
 /* =========================================================
  * EXPORTAR PDF
  * =========================================================
@@ -3696,9 +3818,10 @@ export function exportarReportesPdf(
           (row) =>
             headers.map(
               (key) =>
-                String(
-                  row[key] ??
-                    "—",
+                formatPdfCell(
+                  row[key],
+                  key,
+                  row,
                 ),
             ),
         );

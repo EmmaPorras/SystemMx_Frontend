@@ -1,5 +1,6 @@
 import type { ElementType } from "react";
 import { TbChartDots3 } from "react-icons/tb";
+import { useTranslation } from "react-i18next";
 
 type StatCardVariant =
   | "neutral"
@@ -80,6 +81,7 @@ function StatCard({
   icon: Icon = TbChartDots3,
   variant = "neutral",
 }: StatCardProps) {
+  const { t } = useTranslation();
   const styles = variantStyles[variant];
 
   return (
@@ -167,7 +169,7 @@ function StatCard({
             `}
           >
             <span className={`h-1.5 w-1.5 rounded-full ${styles.dot}`} />
-            Indicador
+            {t("common.indicator")}
           </div>
         </div>
       </div>

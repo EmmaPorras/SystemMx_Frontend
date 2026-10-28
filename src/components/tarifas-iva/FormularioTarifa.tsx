@@ -34,6 +34,7 @@ function FormularioTarifa({
     <form
       onSubmit={(e) => {
         e.preventDefault();
+
         if (!isSubmitting) {
           onSubmit();
         }
@@ -42,44 +43,61 @@ function FormularioTarifa({
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <InputField
-          label={t("common.code", "Código")}
+          label={t("common.code")}
           required
           value={tarifa.codigo}
           onChange={(value) => onChange("codigo", value)}
-          placeholder="Ej. IVA13"
+          placeholder={t("vatRates.codePlaceholder")}
           maxLength={20}
           showCharacterCount
           error={errors.codigo}
         />
 
         <InputField
-          label={t("vatRates.percentage", "Porcentaje (%)")}
+          label={t("vatRates.percentage")}
           required
           type="text"
           value={tarifa.porcentaje}
           onChange={(value) => {
-            const clean = value.replace(",", ".").replace(/[^\d.]/g, "");
+            const clean = value
+              .replace(",", ".")
+              .replace(/[^\d.]/g, "");
+
             const parts = clean.split(".");
+
             if (parts.length > 2) return;
             if (parts[1] && parts[1].length > 2) return;
+
             const num = Number(clean);
-            if (clean && !Number.isNaN(num) && num > 100) return;
+
+            if (
+              clean &&
+              !Number.isNaN(num) &&
+              num > 100
+            ) {
+              return;
+            }
+
             onChange("porcentaje", clean);
           }}
-          placeholder="Ej. 13"
+          placeholder={t("vatRates.percentagePlaceholder")}
           maxLength={6}
           prefix="%"
           error={errors.porcentaje}
-          helperText="Ingrese un valor entre 0 y 100 (ej. 13 para 13%)."
+          helperText={t("vatRates.percentageHelper")}
         />
 
         <div className="sm:col-span-2">
           <InputField
-            label={t("common.description", "Descripción")}
+            label={t("common.description")}
             required
             value={tarifa.descripcion}
-            onChange={(value) => onChange("descripcion", value)}
-            placeholder={t("vatRates.descriptionPlaceholder", "Ej. Tarifa general 13%")}
+            onChange={(value) =>
+              onChange("descripcion", value)
+            }
+            placeholder={t(
+              "vatRates.descriptionPlaceholder",
+            )}
             maxLength={45}
             showCharacterCount
             error={errors.descripcion}
@@ -87,14 +105,22 @@ function FormularioTarifa({
         </div>
 
         <SelectField
-          label={t("common.status", "Estado")}
+          label={t("common.status")}
           required
           value={tarifa.estado}
-          onChange={(value) => onChange("estado", value)}
+          onChange={(value) =>
+            onChange("estado", value)
+          }
           error={errors.estado}
           options={[
-            { value: "ACTIVA", label: t("common.active", "Activo") },
-            { value: "INACTIVA", label: t("common.inactive", "Inactivo") },
+            {
+              value: "ACTIVA",
+              label: t("common.active"),
+            },
+            {
+              value: "INACTIVA",
+              label: t("common.inactive"),
+            },
           ]}
         />
       </div>

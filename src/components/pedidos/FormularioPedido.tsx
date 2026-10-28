@@ -26,14 +26,6 @@ type FormularioPedidoProps = {
   onCancel: () => void;
 };
 
-const monedas: Array<{ value: MonedaCompra; label: string }> = [
-  { value: "CRC", label: "CRC - Colones costarricenses (₡)" },
-  { value: "USD", label: "USD - Dólares estadounidenses ($)" },
-  { value: "EUR", label: "EUR - Euros (€)" },
-  { value: "COP", label: "COP - Pesos colombianos" },
-  { value: "BRL", label: "BRL - Reales brasileños (R$)" },
-];
-
 function esCostaRica(pais: string) {
   return (
     pais
@@ -54,6 +46,15 @@ function FormularioPedido({
   onCancel,
 }: FormularioPedidoProps) {
   const { t } = useTranslation();
+
+  const monedas: Array<{ value: MonedaCompra; label: string }> = [
+    { value: "CRC", label: t("orders.currencies.CRC") },
+    { value: "USD", label: t("orders.currencies.USD") },
+    { value: "EUR", label: t("orders.currencies.EUR") },
+    { value: "COP", label: t("orders.currencies.COP") },
+    { value: "BRL", label: t("orders.currencies.BRL") },
+  ];
+
   const proveedorSeleccionado = proveedores.find(
     (item) => item.id === pedido.proveedorId,
   );
@@ -78,7 +79,7 @@ function FormularioPedido({
             {t("orders.orderNumber")}
           </p>
 
-          <div className="flex min-h-[38px] items-center rounded-xl border border-zinc-200/90 bg-zinc-50 px-3 py-2 text-xs sm:text-sm shadow-2xs">
+          <div className="flex min-h-[38px] items-center rounded-xl border border-zinc-200/90 bg-zinc-50 px-3 py-2 text-xs shadow-2xs sm:text-sm">
             <span className="font-semibold text-zinc-950">
               {pedido.numeroPedido ? `#${pedido.numeroPedido}` : "—"}
             </span>
@@ -116,7 +117,7 @@ function FormularioPedido({
           </label>
 
           <div
-            className={`flex min-h-[38px] items-center rounded-xl border px-3 py-2 text-xs sm:text-sm shadow-2xs ${
+            className={`flex min-h-[38px] items-center rounded-xl border px-3 py-2 text-xs shadow-2xs sm:text-sm ${
               errors.origen
                 ? "border-rose-300 bg-rose-50/40 text-rose-700"
                 : pedido.origen
@@ -154,15 +155,16 @@ function FormularioPedido({
             disabled={!pedido.proveedorId || compraLocal}
             error={errors.tipoCambio}
             currencySymbol="₡"
-            allowDecimals={true}
+            allowDecimals
             maxDecimals={4}
           />
+
           {!compraLocal && pedido.monedaCompra && pedido.monedaCompra !== "CRC" ? (
             <p className="mt-1 text-xs text-zinc-500">
-              1 {pedido.monedaCompra} equivale a{" "}
-              <span className="font-semibold text-zinc-700">
-                {pedido.tipoCambio ? `₡ ${pedido.tipoCambio}` : "X CRC"}
-              </span>
+              {t("orders.exchangeRateHint", {
+                currency: pedido.monedaCompra,
+                rate: pedido.tipoCambio ? `₡ ${pedido.tipoCambio}` : "X CRC",
+              })}
             </p>
           ) : null}
         </div>
@@ -201,7 +203,9 @@ function FormularioPedido({
           {t("common.cancel")}
         </button>
 
-        <PrimaryButton onClick={onSubmit}>{t("common.confirm")}</PrimaryButton>
+        <PrimaryButton onClick={onSubmit}>
+          {t("common.confirm")}
+        </PrimaryButton>
       </div>
     </div>
   );
