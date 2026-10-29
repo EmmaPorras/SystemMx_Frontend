@@ -136,4 +136,60 @@ describe("UsuariosPage", () => {
       expect(resendSpy).toHaveBeenCalledWith(2);
     });
   });
+  it("muestra el rol DEMO en la tabla, en el selector de roles y permite filtrar por DEMO", async () => {
+    const user = userEvent.setup();
+
+    const mockUsuarios: usuariosApi.UsuarioItem[] = [
+      {
+        idUsuario: 1,
+        username: "admin",
+        nombre: "Administrador General",
+        email: "admin@systemmx.com",
+        rol: "ADMIN",
+        activo: true,
+        estadoActivacion: "ACTIVO",
+      },
+      {
+        idUsuario: 5,
+        username: "evaluador.demo",
+        nombre: "Evaluador Externo",
+        email: "demo@externo.com",
+        rol: "DEMO",
+        activo: true,
+        estadoActivacion: "ACTIVO",
+      },
+    ];
+
+    vi.spyOn(usuariosApi, "listarUsuariosApi").mockResolvedValue(mockUsuarios);
+    const cambiarRolSpy = vi.spyOn(usuariosApi, "cambiarRolUsuarioApi").mockResolvedValue({
+      ...mockUsuarios[1],
+      rol: "CONSULTA",
+    });
+
+    render(
+      <AuthContext.Provider value={createAuthContextValue("ADMIN")}>
+        <MemoryRouter>
+          <UsuariosPage />
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    );
+
+    expect(await screen.findByText("evaluador.demo")).toBeInTheDocument();
+
+    // El selector del rol del usuario 5 debe tener seleccionado DEMO
+    const roleSelects = screen.getAllByRole("combobox", { name: /rol/i });
+    // roleSelects[0] es el filtro de rol en la barra superior
+    // roleSelects[1] es el selector en la fila del usuario DEMO (el admin no tiene selector por ser el actual)
+    const userRoleSelect = roleSelects[1] as HTMLSelectElement;
+    expect(userRoleSelect.value).toBe("DEMO");
+
+    // Cambiar rol de DEMO a CONSULTA
+    await user.selectOptions(userRoleSelect, "CONSULTA");
+    expect(cambiarRolSpy).toHaveBeenCalledWith(5, "CONSULTA");
+
+    // Selector de filtro de roles contiene opción DEMO y ALL
+    const filterRoleSelect = roleSelects[0] as HTMLSelectElement;
+    await user.selectOptions(filterRoleSelect, "DEMO");
+    expect(filterRoleSelect.value).toBe("DEMO");
+  });
 });

@@ -9,7 +9,7 @@ import LanguageSelector from "../components/common/LanguageSelector";
 import PrimaryButton from "../components/common/PrimaryButton";
 import PasswordStrengthIndicator from "../components/common/PasswordStrengthIndicator";
 import { ApiError } from "../api/ApiError";
-import { registroApi } from "./auth.api";
+import { registroApi, reenviarActivacionApi } from "./auth.api";
 
 type RegistroErrors = {
   nombre?: string;
@@ -32,6 +32,10 @@ function RegistroPage() {
   const [apiError, setApiError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [emailEnviado, setEmailEnviado] = useState(true);
+  const [isResending, setIsResending] = useState(false);
+  const [resendFeedback, setResendFeedback] = useState<string | null>(null);
 
   function validateForm(): boolean {
     const nextErrors: RegistroErrors = {};
@@ -133,7 +137,7 @@ function RegistroPage() {
 
     try {
       const currentLang = (i18n.language?.slice(0, 2) as "es" | "en" | "pt") || "es";
-      await registroApi({
+      const response = await registroApi({
         nombre: nombre.trim(),
         username: username.trim(),
         email: email.trim().toLowerCase(),
@@ -141,6 +145,8 @@ function RegistroPage() {
         lang: ["es", "en", "pt"].includes(currentLang) ? currentLang : "es",
       });
 
+      setRegisteredEmail(email.trim().toLowerCase());
+      setEmailEnviado(response.emailEnviado !== false);
       setSuccess(true);
     } catch (err) {
       if (err instanceof ApiError) {
@@ -164,6 +170,24 @@ function RegistroPage() {
       }
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleResend() {
+    if (isResending || !registeredEmail) return;
+    setIsResending(true);
+    setResendFeedback(null);
+    try {
+      const currentLang = (i18n.language?.slice(0, 2) as "es" | "en" | "pt") || "es";
+      await reenviarActivacionApi({
+        email: registeredEmail,
+        lang: ["es", "en", "pt"].includes(currentLang) ? currentLang : "es",
+      });
+      setResendFeedback(t("auth.resendActivationSuccess"));
+    } catch {
+      setResendFeedback(t("auth.resendActivationSuccess"));
+    } finally {
+      setIsResending(false);
     }
   }
 
@@ -205,12 +229,38 @@ function RegistroPage() {
                     {t("auth.registerSuccessTitle", "¡Cuenta creada exitosamente!")}
                   </h2>
                   <p className="mt-2 text-xs sm:text-sm text-zinc-600 leading-relaxed">
-                    {t(
-                      "auth.registerSuccessMessage",
-                      "Hemos enviado un enlace de activación seguro a tu correo electrónico. Por favor revisa tu bandeja de entrada para verificar tu cuenta y comenzar a utilizar la plataforma.",
-                    )}
+                    {emailEnviado
+                      ? t(
+                          "auth.registerSuccessMessage",
+                          "Hemos enviado un enlace de activación seguro a tu correo electrónico. Por favor revisa tu bandeja de entrada para verificar tu cuenta y comenzar a utilizar la plataforma.",
+                        )
+                      : t(
+                          "auth.registerMailFailMessage",
+                          "Tu cuenta fue creada exitosamente con rol DEMO. Sin embargo, no pudimos enviar el correo de activación en este momento debido a un problema con el servicio de correo. Puedes solicitar el reenvío a continuación.",
+                        )}
                   </p>
                 </div>
+
+                {!emailEnviado ? (
+                  <div className="space-y-3 pt-1">
+                    {resendFeedback ? (
+                      <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl p-2.5">
+                        {resendFeedback}
+                      </p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleResend}
+                        disabled={isResending}
+                        className="inline-flex w-full items-center justify-center rounded-xl bg-blue-800 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-blue-900 transition disabled:opacity-50"
+                      >
+                        {isResending
+                          ? t("auth.resendingActivation", "Reenviando activación...")
+                          : t("auth.resendActivationButton", "Reenviar correo de activación")}
+                      </button>
+                    )}
+                  </div>
+                ) : null}
 
                 <div className="rounded-2xl border border-blue-200/80 bg-blue-50/60 p-3.5 text-left text-xs text-blue-900">
                   <div className="flex gap-2.5">

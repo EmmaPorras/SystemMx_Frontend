@@ -68,5 +68,12 @@ export type RegistroRequest = {
 
 export type RegistroResponse = {
   message: string;
+  emailEnviado?: boolean;
   usuario: CurrentUser;
 };
+
+export type ReenviarActivacionRequest = {
+  email: string;
+  lang?: "es" | "en" | "pt";
+};
+

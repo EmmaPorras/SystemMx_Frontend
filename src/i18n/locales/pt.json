@@ -192,7 +192,12 @@
     "strengthAcceptable": "Palavra-passe aceitável. Adicione mais comprimento para maior segurança.",
     "strengthStrong": "Palavra-passe forte e resistente.",
     "strengthVeryStrong": "Excelente frase-passe. Muito segura.",
-    "strengthWeak": "Palavra-passe fraca. Recomenda-se o uso de uma frase longa."
+    "strengthWeak": "Palavra-passe fraca. Recomenda-se o uso de uma frase longa.",
+    "registerMailFailMessage": "Sua conta foi criada com sucesso com a função DEMO. No entanto, não foi possível enviar o e-mail de ativação no momento devido a um problema no serviço de e-mail. Você pode solicitar o reenvio abaixo.",
+    "resendActivationButton": "Reenviar e-mail de ativação",
+    "resendingActivation": "Reenviando ativação...",
+    "resendActivationSuccess": "Se a sua conta existir e estiver com ativação pendente, você receberá um novo link em seu e-mail.",
+    "requestNewActivationLink": "Solicitar novo link de ativação"
   },
   "appLayout": {
     "admin": "Administrador",

@@ -7,6 +7,7 @@ import type {
   LoginResponse,
   RegistroRequest,
   RegistroResponse,
+  ReenviarActivacionRequest,
   RestablecerPasswordRequest,
   SolicitarRecuperacionRequest,
   ValidarTokenResponse,
@@ -85,6 +86,18 @@ export function registroApi(
 ): Promise<RegistroResponse> {
   return apiClient.post<RegistroResponse, RegistroRequest>(
     "/auth/registro",
+    data,
+    {
+      auth: false,
+    },
+  );
+}
+
+export function reenviarActivacionApi(
+  data: ReenviarActivacionRequest,
+): Promise<{ message: string }> {
+  return apiClient.post<{ message: string }, ReenviarActivacionRequest>(
+    "/auth/reenviar-activacion",
     data,
     {
       auth: false,

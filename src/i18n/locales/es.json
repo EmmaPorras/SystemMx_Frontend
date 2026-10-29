@@ -192,7 +192,12 @@
     "strengthAcceptable": "Contraseña aceptable. Agrega más longitud para mayor seguridad.",
     "strengthStrong": "Contraseña fuerte y resistente.",
     "strengthVeryStrong": "Excelente frase de contraseña. Muy segura.",
-    "strengthWeak": "Contraseña débil. Se recomienda usar una frase larga."
+    "strengthWeak": "Contraseña débil. Se recomienda usar una frase larga.",
+    "registerMailFailMessage": "Tu cuenta fue creada exitosamente con rol DEMO. Sin embargo, no pudimos enviar el correo de activación en este momento debido a un problema con el servicio de correo. Puedes solicitar el reenvío a continuación.",
+    "resendActivationButton": "Reenviar correo de activación",
+    "resendingActivation": "Reenviando activación...",
+    "resendActivationSuccess": "Si tu cuenta existe y está pendiente de activación, recibirás un nuevo enlace en tu correo electrónico.",
+    "requestNewActivationLink": "Solicitar nuevo enlace de activación"
   },
   "appLayout": {
     "admin": "Administrador",

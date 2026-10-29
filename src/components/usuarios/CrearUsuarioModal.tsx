@@ -189,6 +189,7 @@ function CrearUsuarioModal({
             { value: "COMPRAS", label: `${getUserRoleLabel(t, "COMPRAS")} (COMPRAS)` },
             { value: "ADMIN", label: `${getUserRoleLabel(t, "ADMIN")} (ADMIN)` },
             { value: "CONSULTA", label: `${getUserRoleLabel(t, "CONSULTA")} (CONSULTA)` },
+            { value: "DEMO", label: `${getUserRoleLabel(t, "DEMO")} (DEMO)` },
           ]}
           required
         />

@@ -14,16 +14,24 @@ import PrimaryButton from "../components/common/PrimaryButton";
 import LoadingState from "../components/common/LoadingState";
 import PasswordStrengthIndicator from "../components/common/PasswordStrengthIndicator";
 import { ApiError } from "../api/ApiError";
-import { activarCuentaApi, validarTokenApi } from "./auth.api";
+import { activarCuentaApi, validarTokenApi, reenviarActivacionApi } from "./auth.api";
 
 function ActivarCuentaPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const hashQuery = window.location.hash.includes("?")
+    ? window.location.hash.split("?")[1]
+    : "";
   const token =
     searchParams.get("token") ||
     new URLSearchParams(window.location.search).get("token") ||
+    new URLSearchParams(hashQuery).get("token") ||
     "";
+
+  const [resendEmail, setResendEmail] = useState("");
+  const [isResending, setIsResending] = useState(false);
+  const [resendFeedback, setResendFeedback] = useState<string | null>(null);
 
   const [isValidating, setIsValidating] = useState(true);
   const [tokenValid, setTokenValid] = useState(false);
@@ -74,6 +82,25 @@ function ActivarCuentaPage() {
       isMounted = false;
     };
   }, [token, t]);
+
+  async function handleRequestNewLink(e: FormEvent) {
+    e.preventDefault();
+    if (!resendEmail.trim() || isResending) return;
+    setIsResending(true);
+    setResendFeedback(null);
+    try {
+      const currentLang = (i18n.language?.slice(0, 2) as "es" | "en" | "pt") || "es";
+      await reenviarActivacionApi({
+        email: resendEmail.trim().toLowerCase(),
+        lang: ["es", "en", "pt"].includes(currentLang) ? currentLang : "es",
+      });
+      setResendFeedback(t("auth.resendActivationSuccess"));
+    } catch {
+      setResendFeedback(t("auth.resendActivationSuccess"));
+    } finally {
+      setIsResending(false);
+    }
+  }
 
   function validateForm(): boolean {
     const nextErrors: { password?: string; confirmPassword?: string } = {};
@@ -184,12 +211,44 @@ function ActivarCuentaPage() {
                   </p>
                 </div>
 
-                <div className="pt-2">
+                <form onSubmit={handleRequestNewLink} className="pt-2 max-w-xs mx-auto space-y-2.5 text-left">
+                  <label htmlFor="resend-activation-email" className="block text-xs font-semibold text-zinc-700">
+                    {t("auth.email", "Correo electrónico")}
+                  </label>
+                  {resendFeedback ? (
+                    <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-center">
+                      {resendFeedback}
+                    </p>
+                  ) : (
+                    <>
+                      <input
+                        id="resend-activation-email"
+                        type="email"
+                        value={resendEmail}
+                        onChange={(e) => setResendEmail(e.target.value)}
+                        placeholder={t("auth.emailPlaceholder", "ejemplo@correo.com")}
+                        required
+                        className="h-9 w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 text-xs text-zinc-900 focus:bg-white focus:border-zinc-950 focus:outline-none"
+                      />
+                      <button
+                        type="submit"
+                        disabled={isResending}
+                        className="inline-flex w-full items-center justify-center rounded-xl bg-blue-800 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-900 transition disabled:opacity-50"
+                      >
+                        {isResending
+                          ? t("auth.resendingActivation", "Reenviando activación...")
+                          : t("auth.requestNewActivationLink", "Solicitar nuevo enlace de activación")}
+                      </button>
+                    </>
+                  )}
+                </form>
+
+                <div className="pt-1">
                   <Link
                     to="/login"
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-900 transition"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600 hover:text-zinc-900 transition"
                   >
-                    <span>{t("auth.backToLogin")}</span>
+                    <span>← {t("auth.backToLogin")}</span>
                   </Link>
                 </div>
               </div>

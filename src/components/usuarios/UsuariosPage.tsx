@@ -260,6 +260,7 @@ function UsuariosPage() {
               <option value="COMPRAS">{getUserRoleLabel(t, "COMPRAS")}</option>
               <option value="ADMIN">{getUserRoleLabel(t, "ADMIN")}</option>
               <option value="CONSULTA">{getUserRoleLabel(t, "CONSULTA")}</option>
+              <option value="DEMO">{getUserRoleLabel(t, "DEMO")}</option>
             </select>
           );
         },
@@ -438,6 +439,7 @@ function UsuariosPage() {
             <option value="COMPRAS">{getUserRoleLabel(t, "COMPRAS")}</option>
             <option value="ADMIN">{getUserRoleLabel(t, "ADMIN")}</option>
             <option value="CONSULTA">{getUserRoleLabel(t, "CONSULTA")}</option>
+              <option value="DEMO">{getUserRoleLabel(t, "DEMO")}</option>
           </select>
 
           <select

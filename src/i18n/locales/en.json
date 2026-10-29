@@ -192,7 +192,12 @@
     "strengthAcceptable": "Acceptable password. Add more length for greater security.",
     "strengthStrong": "Strong and resilient password.",
     "strengthVeryStrong": "Excellent passphrase. Highly secure.",
-    "strengthWeak": "Weak password. A long passphrase is recommended."
+    "strengthWeak": "Weak password. A long passphrase is recommended.",
+    "registerMailFailMessage": "Your account was successfully created with DEMO role. However, we could not send the activation email at this moment due to a mail service issue. You can request a resend below.",
+    "resendActivationButton": "Resend activation email",
+    "resendingActivation": "Resending activation...",
+    "resendActivationSuccess": "If your account exists and is pending activation, you will receive a new link in your email.",
+    "requestNewActivationLink": "Request a new activation link"
   },
   "appLayout": {
     "admin": "Administrator",
