@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { getDefaultRouteForRole, isRoleAllowedForPath, ROUTE_PERMISSIONS } from "./permissions";
-import type { BackendRole } from "./auth.types";
 
 describe("SYSTEMMX - Matriz de Permisos Frontend (Etapa 12 y Fase 4)", () => {
   describe("Rutas por defecto en Login / Redirección", () => {
