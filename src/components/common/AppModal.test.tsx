@@ -81,4 +81,15 @@ describe("AppModal", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     expect(handleClose).not.toHaveBeenCalled();
   });
+
+  it("utiliza capa z-60 para superponerse correctamente sobre la jerarquía visual de la aplicación", () => {
+    render(
+      <AppModal isOpen={true} title="Modal de prueba" onClose={vi.fn()}>
+        <p>Contenido</p>
+      </AppModal>,
+    );
+
+    const presentationContainer = screen.getByRole("presentation");
+    expect(presentationContainer.className).toContain("z-60");
+  });
 });

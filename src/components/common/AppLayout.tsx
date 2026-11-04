@@ -376,7 +376,7 @@ function AppLayout() {
             bottom-0
             left-0
             top-15
-            z-20
+            z-50 lg:z-20
             w-64
             overflow-y-auto
             border-r
@@ -596,8 +596,8 @@ function AppLayout() {
               fixed
               inset-0
               top-15
-              z-10
-              bg-black/40
+              z-40
+              bg-black/50
               backdrop-blur-xs
               lg:hidden
             "
@@ -610,6 +610,8 @@ function AppLayout() {
 
         <main
           className="
+            relative
+            isolate
             min-w-0
             flex-1
             px-4

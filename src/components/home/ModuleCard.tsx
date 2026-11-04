@@ -75,7 +75,7 @@ function ModuleCard({
         "
       />
 
-      <div className="relative z-10 flex w-full flex-col">
+      <div className="relative z-1 flex w-full flex-col">
         <div className="flex items-start justify-between gap-4">
           {/* ÍCONO */}
 

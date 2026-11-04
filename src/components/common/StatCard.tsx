@@ -106,7 +106,7 @@ function StatCard({
         className={`absolute inset-x-0 top-0 h-0.5 ${styles.line}`}
       />
 
-      <div className="relative z-10 flex w-full flex-col">
+      <div className="relative z-1 flex w-full flex-col">
         <div className="flex items-center justify-between gap-3">
           <div
             className={`

@@ -113,7 +113,6 @@ function PageHeader({
       <div
         className="
           relative
-          z-10
           flex
           flex-col
           gap-4
@@ -147,7 +146,7 @@ function PageHeader({
         </div>
 
         {action ? (
-          <div className="relative z-20 w-full shrink-0 lg:w-auto">
+          <div className="relative w-full shrink-0 lg:w-auto">
             {action}
           </div>
         ) : null}
