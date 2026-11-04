@@ -144,7 +144,7 @@ function SearchableSelectField({
       </button>
 
       {isOpen ? (
-        <div className="absolute z-40 mt-1.5 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl">
+        <div className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl">
           <div className="border-b border-zinc-100 p-2">
             <div className="relative">
               <Search

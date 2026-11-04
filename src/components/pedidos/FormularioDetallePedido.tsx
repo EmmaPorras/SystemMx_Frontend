@@ -264,7 +264,7 @@ function FormularioDetallePedido({
             </div>
 
             {debeMostrarListaSugerencias ? (
-              <div className="absolute left-0 right-0 z-30 mt-1.5 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl">
+              <div className="absolute left-0 right-0 z-20 mt-1.5 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl">
                 {cargandoSugerencias ? (
                   <p className="px-3.5 py-3 text-sm text-zinc-500">
                     {t("common.loading")}

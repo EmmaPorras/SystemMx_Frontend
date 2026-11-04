@@ -95,7 +95,7 @@ function ProductoPedidoFilter({
       </div>
 
       {isOpen && filteredOptions.length > 0 ? (
-        <div className="absolute z-40 mt-2 max-h-64 w-full overflow-y-auto rounded-xl border border-zinc-200 bg-white p-1.5 shadow-xl shadow-black/10">
+        <div className="absolute z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-xl border border-zinc-200 bg-white p-1.5 shadow-xl shadow-black/10">
           {filteredOptions.map((option) => (
             <button
               key={option}
@@ -111,7 +111,7 @@ function ProductoPedidoFilter({
       ) : null}
 
       {isOpen && value.trim() && filteredOptions.length === 0 ? (
-        <div className="absolute z-40 mt-2 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-500 shadow-lg">
+        <div className="absolute z-20 mt-2 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-500 shadow-lg">
           No hay productos registrados que coincidan.
         </div>
       ) : null}

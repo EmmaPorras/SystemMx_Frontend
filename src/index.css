@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+  --z-index-1: 1;
+  --z-index-60: 60;
+  --z-index-70: 70;
+}
+
 :root {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   color: #09090b;

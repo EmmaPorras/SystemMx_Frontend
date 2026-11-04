@@ -1,6 +1,7 @@
 import {
   useEffect,
 } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -176,12 +177,12 @@ function LoteDetalleModal({
     return null;
   }
 
-  return (
+  return createPortal(
     <div
       className="
         fixed
         inset-0
-        z-[100]
+        z-60
         flex
         items-center
         justify-center
@@ -563,7 +564,8 @@ function LoteDetalleModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

@@ -161,4 +161,51 @@ describe("AppLayout", () => {
     unmount();
     expect(document.body.style.overflow).toBe("");
   });
+
+  it("aplica jerarquía correcta de capas visuales y gestiona apertura/cierre de menú móvil", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <AuthContext.Provider value={createAuthValue()}>
+        <MemoryRouter initialEntries={["/"]}>
+          <Routes>
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<div data-testid="page-content">Dashboard Content</div>} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </AuthContext.Provider>,
+    );
+
+    const mainEl = screen.getByRole("main");
+    expect(mainEl.className).toContain("isolate");
+    expect(mainEl.className).toContain("relative");
+
+    const asideNav = document.getElementById("mobile-navigation");
+    expect(asideNav).toBeInTheDocument();
+    expect(asideNav?.className).toContain("z-50");
+
+    const menuToggle = screen.getByRole("button", { name: /abrir navegación|open/i });
+    expect(menuToggle).toHaveAttribute("aria-expanded", "false");
+
+    // Abrir menú móvil
+    await user.click(menuToggle);
+    expect(menuToggle).toHaveAttribute("aria-expanded", "true");
+
+    // Backdrop debe estar visible con z-40
+    const backdrop = document.querySelector(".fixed.inset-0.top-15.z-40");
+    expect(backdrop).toBeInTheDocument();
+    expect(backdrop?.className).toContain("z-40");
+
+    // Cerrar al hacer clic en el backdrop
+    await user.click(backdrop as Element);
+    expect(document.querySelector(".fixed.inset-0.top-15.z-40")).not.toBeInTheDocument();
+    expect(menuToggle).toHaveAttribute("aria-expanded", "false");
+
+    // Abrir nuevamente y cerrar con tecla Escape
+    await user.click(menuToggle);
+    expect(document.querySelector(".fixed.inset-0.top-15.z-40")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(document.querySelector(".fixed.inset-0.top-15.z-40")).not.toBeInTheDocument();
+  });
 });
