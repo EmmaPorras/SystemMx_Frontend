@@ -454,7 +454,7 @@ function safeSheetName(
   return (
     value
       .replace(
-        /[:\\/?*\[\]]/g,
+        /[:\\/?*[\]]/g,
         " ",
       )
       .replace(
