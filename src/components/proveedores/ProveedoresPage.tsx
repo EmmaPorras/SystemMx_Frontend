@@ -118,10 +118,6 @@ function ProveedoresPage() {
     return errs;
   }
 
-  useEffect(() => {
-    void cargarProveedores();
-  }, []);
-
   async function cargarProveedores() {
     try {
       setIsLoading(true);
@@ -137,6 +133,10 @@ function ProveedoresPage() {
       setIsLoading(false);
     }
   }
+
+  useEffect(() => {
+    void cargarProveedores();
+  }, []);
 
   const paisesRegistradosOptions = useMemo(() => {
     const unicos = Array.from(
