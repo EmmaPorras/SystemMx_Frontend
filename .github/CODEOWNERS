@@ -1,0 +1,12 @@
+# Workflows de GitHub Actions
+/.github/workflows/ @ROSHIII96 @EmmaPorras
+
+# Reglas de revisión
+/.github/CODEOWNERS @EmmaPorras @ROSHIII96
+
+# Pruebas del frontend
+/test/ @ROSHIII96 @Veldor09
+**/*.test.ts @ROSHIII96 @Veldor09
+**/*.test.tsx @ROSHIII96 @Veldor09
+**/*.spec.ts @ROSHIII96 @Veldor09
+**/*.spec.tsx @ROSHIII96 @Veldor09
