@@ -10,6 +10,7 @@ on:
     branches:
       - main
       - deploy-render
+      - development
   workflow_dispatch:
 
 jobs:
@@ -36,3 +37,4 @@ jobs:
 
       - name: Run automated tests
         run: npm test -- --run
+        
