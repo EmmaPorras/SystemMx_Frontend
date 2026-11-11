@@ -65,3 +65,21 @@ jobs:
             }
           printf 'Render recibió la solicitud para el commit `%s`.\n' \
             "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify frontend responds over HTTP
+        shell: bash
+        env:
+          FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+        run: |
+          : "${FRONTEND_URL:?Falta la variable FRONTEND_URL}"
+          for attempt in {1..12}; do
+            status="$(curl --silent --location --max-time 10 \
+              --output /dev/null --write-out '%{http_code}' "$FRONTEND_URL")" || status=000
+            if [[ "$status" == "200" ]]; then
+              echo "El frontend respondió HTTP 200." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::El frontend no respondió HTTP 200."
+          exit 1
