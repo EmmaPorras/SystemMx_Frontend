@@ -6,6 +6,7 @@ on:
       - main
       - deploy-render
       - prep-entrega-final
+      - development
   pull_request:
     branches:
       - main
@@ -37,4 +38,30 @@ jobs:
 
       - name: Run automated tests
         run: npm test -- --run
-        
+
+  deploy-render:
+    name: Deploy frontend to Render
+    needs: lint-build-test
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/development' &&
+      vars.RENDER_FRONTEND_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    permissions: {}
+
+    steps:
+      - name: Request deployment of the tested commit
+        shell: bash
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
+        run: |
+          : "${RENDER_DEPLOY_HOOK:?Falta el secreto RENDER_DEPLOY_HOOK_FRONTEND}"
+          curl --fail --silent --max-time 30 --get \
+            --data-urlencode "ref=${GITHUB_SHA}" \
+            --output /dev/null \
+            "$RENDER_DEPLOY_HOOK" || {
+              echo "::error::Render no aceptó la solicitud de despliegue."
+              exit 1
+            }
+          printf 'Render recibió la solicitud para el commit `%s`.\n' \
+            "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
